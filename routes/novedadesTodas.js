@@ -116,7 +116,8 @@ router.post('/NO', logueado, async (req, res) => {
         enviarMensaje(req, res, 'Error', error.message, 'error');
         return res.redirect('/novedadesTodas');
     }
-}); router.get('/Agregar', logueado, async (req, res) => {
+}); 
+router.get('/Agregar', logueado, async (req, res) => {
     const sqlPersonal = "SELECT * FROM personal WHERE FechaBaja IS NULL ORDER BY ApellidoYNombre ASC";
     const sqlSectores = 'SELECT * FROM sectores ORDER BY Descripcion ASC';
     const sqlNomina = 'SELECT * FROM nomina ORDER BY Descripcion ASC';

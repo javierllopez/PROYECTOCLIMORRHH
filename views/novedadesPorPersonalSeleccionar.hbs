@@ -6,7 +6,7 @@
                     <h4 class="mb-0">Seleccionar empleado</h4>
                 </div>
                 <div class="card-body">
-                    <form action="/novedadesPorPersonal" method="POST">
+                    <form action="/novedadesPorPersonal/{{IdPersonal}}" method="GET">
                         <div class="mb-3">
                             <label for="idPersonal" class="form-label">Empleado</label>
                             <select class="form-select" id="idPersonal" name="IdPersonal" required>
