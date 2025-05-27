@@ -81,6 +81,7 @@ app.use("/novedades",require('./routes/novedades'));
 app.use("/liquidaciones",require('./routes/crearLiquidacion'));
 app.use("/autorizarHoras",require('./routes/autorizarHoras'));
 app.use("/novedadesTodas",require('./routes/novedadesTodas'));
+app.use("/novedadesPorPersonal",require('./routes/novedadesPorPersonal'));
 // Inicializo servidor
 app.listen(port, () => {
   console.log(`Aplicación corriendo en el puerto: ${port}`)

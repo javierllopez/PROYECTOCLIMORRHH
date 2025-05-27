@@ -66,8 +66,6 @@ router.get('/', logueado, async (req, res) => {
 
         const [novedadesR] = await pool.query(sqlNovedadesR, [novedadesE[0].Id]);
 
-        console.log('novedadesR', novedadesR);
-
         return render(req, res, 'novedadesTodas', { novedades: novedadesR });
     }
     catch (error) {

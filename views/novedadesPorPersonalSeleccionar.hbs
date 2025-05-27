@@ -1,0 +1,32 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Seleccionar empleado</h4>
+                </div>
+                <div class="card-body">
+                    <form action="/novedadesPorPersonal" method="POST">
+                        <div class="mb-3">
+                            <label for="idPersonal" class="form-label">Empleado</label>
+                            <select class="form-select" id="idPersonal" name="IdPersonal" required>
+                                <option value="">Seleccione un empleado...</option>
+                                {{#each personal}}
+                                    <option value="{{this.Id}}">{{this.ApellidoYNombre}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">Seleccionar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('idPersonal').focus();
+    });
+</script>
