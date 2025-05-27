@@ -1,0 +1,62 @@
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-sm-10">
+        <div class="row">
+            <h1 class="text-center">Turnos</h1>
+        </div>
+        <div class="row">
+            <div class="container">
+                <div class="card">
+                    <div class="card-header">
+                        {{#if Id}} <!-- If Id is defined, we are editing a sector -->
+                        <h2 class="text-center">Editando turno</h2>
+                        {{else}}
+                        <h2 class="text-center">Nuevo turno</h2>
+                        {{/if}}
+                    </div>
+                    {{#if Id}} <!-- If Id is defined, we are editing a sector -->
+                    <form action="/turnos/editar/{{Id}}" method="POST" class="form-group">
+                        <div class="card-body">
+                            <label for="Descripcion" class="form-label">Descripción</label>
+                            <input type="text" class="form-control" id="Descripcion" name="Descripcion"
+                                value="{{turno.Descripcion}}">
+                            <label for="Tipo" class="form-label mt-2">Tipo</label>
+                            <select class="form-select" aria-label="Default select example" name="Tipo" id="Tipo">
+                                <option {{#ifeq turno.Tipo 'Semana Hábil' }} selected {{/ifeq}}value="1">Semana Hábil
+                                </option>
+                                <option {{#ifeq turno.Tipo 'Nocturno' }} selected {{/ifeq}}value="2">Nocturno</option>
+                                <option {{#ifeq turno.Tipo 'SADOFE' }} selected {{/ifeq}}value="3">SADOFE</option>
+                            </select>
+                        </div>
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary mt-2">Grabar</button>
+                            <button type="button" class="btn btn-primary mt-2"
+                                onclick="window.location.href='/turnos'">Cancelar</button>
+                        </div>
+                    </form>
+                    {{else}}
+                    <form action="/turnos/editar" method="POST" class="form-group">
+                        <div class="card-body">
+                            <label for="Descripcion" class="form-label">Descripción</label>
+                            <input type="text" class="form-control" id="Descripcion" name="Descripcion">
+                            <label for="Tipo" class="form-label mt-2">Tipo</label>
+                            <select class="form-select" aria-label="Default select example" name="Tipo" id="Tipo">
+                                <option {{#ifeq turno.Tipo 'Semana Hábil' }} selected {{/ifeq}}value="1">Semana Hábil
+                                </option>
+                                <option {{#ifeq turno.Tipo 'Nocturno' }} selected {{/ifeq}}value="2">Nocturno</option>
+                                <option {{#ifeq turno.Tipo 'SADOFE' }} selected {{/ifeq}}value="3">SADOFE</option>
+                            </select>
+                        </div>
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary mt-2">Agregar</button>
+                            <button type="button" class="btn btn-primary mt-2"
+                                onclick="window.location.href='/turnos'">Cancelar</button>
+                        </div>
+                    </form>
+
+                    {{/if}}
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

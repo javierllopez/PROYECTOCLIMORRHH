@@ -1,0 +1,26 @@
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-sm-10">
+        <div class="card mt-5">
+            <form action="/personal/baja" method="POST">
+                <input type="hidden" name="Id" value="{{Id}}">
+                <input type="hidden" name="IdUsuario" value="{{idUsuario}}">
+                <div class="card-header text-center">
+                    <div class="h2">{{ApellidoYNombre}}</div>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="fechaBaja">Fecha de Baja</label>
+                        <input type="date" class="form-control" id="fechaBaja" name="fechaBaja" required>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <button type="button" class="btn btn-primary"
+                        onclick="window.location.href='/personal'">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Dar de Baja</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+</div>

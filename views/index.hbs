@@ -1,0 +1,243 @@
+{{! filepath: d:\ProyectoClimoRRHH\views\index.hbs }}
+{{#ifeq nivelUsuario 1}}
+<div id="admin-div" class="alert alert-primary text-center">
+    {{#if dashboard.periodoActual}}
+    <h2 class="mt-2">Período actual: <span class="badge bg-secondary">{{dashboard.periodoActual}}</span></h2>
+    {{/if}}
+    {{#if dashboard.observacionesPeriodo}}
+    <p class="text-muted">{{dashboard.observacionesPeriodo}}</p>
+    {{/if}}
+    <!-- Dashboard para Administrador -->
+    <div class="container my-4">
+        <div class="row mb-4">
+            <!-- Tarjeta: Minutos por sector -->
+            <div class="col-12 col-md-6 mb-3">
+                <div class="card text-bg-info h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Distribución de horas trabajados por sector</h5>
+                        <div class="row align-items-center">
+                            <div class="col-6">
+                                <canvas id="tortaMinutosSectores" height="140"></canvas>
+                            </div>
+                            <div class="col-6">
+                                <ul class="list-group list-group-flush">
+                                    {{#each dashboard.graficoTortaSectores.labels}}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center py-1">
+                                        {{this}}
+                                        <span class="badge bg-primary rounded-pill">
+                                            {{#if (lookup ../dashboard.graficoTortaSectores.data @index)}}
+                                                {{minutosAHoras (lookup ../dashboard.graficoTortaSectores.data @index)}}
+                                            {{else}}
+                                                00:00
+                                            {{/if}}
+                                        </span>
+                                    </li>
+                                    {{/each}}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center fw-bold py-1">
+                                        Total
+                                        <span class="badge bg-dark rounded-pill">
+                                            {{minutosAHoras (sumArray dashboard.graficoTortaSectores.data)}}
+                                        </span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Tarjeta: Minutos por estado -->
+            <div class="col-12 col-md-6 mb-3">
+                <div class="card text-bg-warning h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Distribución de horas trabajadas por estado</h5>
+                        <div class="row align-items-center">
+                            <div class="col-6">
+                                <canvas id="tortaMinutos" height="140"></canvas>
+                            </div>
+                            <div class="col-6">
+                                <ul class="list-group list-group-flush">
+                                    {{#each dashboard.graficoTorta.labels}}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center py-1">
+                                        {{this}}
+                                        <span class="badge bg-primary rounded-pill">
+                                            {{#if (lookup ../dashboard.graficoTorta.data @index)}}
+                                                {{minutosAHoras (lookup ../dashboard.graficoTorta.data @index)}}
+                                            {{else}}
+                                                00:00
+                                            {{/if}}
+                                        </span>
+                                    </li>
+                                    {{/each}}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center fw-bold py-1">
+                                        Total
+                                        <span class="badge bg-dark rounded-pill">
+                                            {{minutosAHoras dashboard.totalMinutos}}
+                                        </span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Resumen mensual</h5>
+                        <canvas id="adminChart" height="80"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Gráfico de barras
+            var adminChartCanvas = document.getElementById('adminChart');
+            if (adminChartCanvas && typeof Chart !== 'undefined') {
+                var ctx = adminChartCanvas.getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo'],
+                        datasets: [
+                            {
+                                label: 'Novedades',
+                                data: [12, 19, 3, 5, 2],
+                                backgroundColor: 'rgba(54, 162, 235, 0.7)'
+                            },
+                            {
+                                label: 'Guardias',
+                                data: [2, 3, 4, 1, 2],
+                                backgroundColor: 'rgba(255, 206, 86, 0.7)'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'top' },
+                            title: { display: true, text: 'Actividad Mensual' }
+                        }
+                    }
+                });
+            }
+            // Gráfico de torta por estado
+            var tortaData = {{{json dashboard.graficoTorta}}};
+            var ctxTorta = document.getElementById('tortaMinutos');
+            if (ctxTorta && typeof Chart !== 'undefined' && tortaData) {
+                new Chart(ctxTorta, {
+                    type: 'doughnut',
+                    data: {
+                        labels: tortaData.labels,
+                        datasets: [
+                            {
+                                data: tortaData.data,
+                                backgroundColor: [
+                                    '#0d6efd', '#dc3545', '#198754', '#ffc107', '#20c997'
+                                ]
+                            }
+                        ]
+                    },
+                    options: {
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            datalabels: {
+                                color: '#222',
+                                font: { weight: 'bold', size: 14 },
+                                formatter: function(value, context) {
+                                    if (value > 0) {
+                                        return context.chart.data.labels[context.dataIndex];
+                                    }
+                                    return '';
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        var minutos = context.parsed;
+                                        return context.label + ': ' + minutosAFormato(minutos);
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [ChartDataLabels]
+                });
+            }
+            // Gráfico de torta por sector (en la card de sectores)
+            var tortaSectoresData = {{{json dashboard.graficoTortaSectores}}};
+            var ctxTortaSectores = document.getElementById('tortaMinutosSectores');
+            if (ctxTortaSectores && typeof Chart !== 'undefined' && tortaSectoresData) {
+                var colores = [
+                    '#0d6efd', '#dc3545', '#198754', '#ffc107', '#20c997',
+                    '#6f42c1', '#fd7e14', '#6610f2', '#adb5bd', '#198754',
+                    '#e83e8c', '#20c997', '#343a40', '#ffc107', '#6c757d'
+                ];
+                while (colores.length < tortaSectoresData.labels.length) {
+                    colores.push('#' + Math.floor(Math.random()*16777215).toString(16));
+                }
+                new Chart(ctxTortaSectores, {
+                    type: 'doughnut',
+                    data: {
+                        labels: tortaSectoresData.labels,
+                        datasets: [
+                            {
+                                data: tortaSectoresData.data,
+                                backgroundColor: colores.slice(0, tortaSectoresData.labels.length)
+                            }
+                        ]
+                    },
+                    options: {
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            datalabels: {
+                                color: '#222',
+                                font: { weight: 'bold', size: 13 },
+                                formatter: function(value, context) {
+                                    if (value > 0) {
+                                        return context.chart.data.labels[context.dataIndex];
+                                    }
+                                    return '';
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        var minutos = context.parsed;
+                                        return context.label + ': ' + minutosAFormato(minutos);
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [ChartDataLabels]
+                });
+            }
+        });
+        function minutosAFormato(minutos) {
+            var horas = Math.floor(minutos / 60).toString().padStart(2, '0');
+            var mins = (minutos % 60).toString().padStart(2, '0');
+            return horas + ':' + mins;
+        }
+    </script>
+</div>
+{{/ifeq}}
+
+{{#ifeq nivelUsuario 2}}
+<div id="supervisor-div" class="alert alert-success text-center">
+    <h2>Bienvenido Supervisor</h2>
+    <p>Esta es la vista exclusiva para supervisores.</p>
+</div>
+{{/ifeq}}
+
+{{#ifeq nivelUsuario 3}}
+<div id="usuario-div" class="alert alert-info text-center">
+    <h2>Bienvenido Usuario</h2>
+    <p>Esta es la vista exclusiva para usuarios.</p>
+</div>
+{{/ifeq}}
+

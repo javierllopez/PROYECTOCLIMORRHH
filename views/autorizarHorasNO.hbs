@@ -1,0 +1,40 @@
+<div class="row justify-content-center mt-2">
+    <div class="col-lg-6 col-12">
+        <form id="autorizarHorasForm" action="/autorizarHoras/NO/{{novedad.Id}}" method="POST">
+            <input type="hidden" name="Id" value="{{novedad.Id}}">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="text-responsive">Rechazo de horas de {{Apenom}}</h1>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="detalle" class="text-responsive mt-2">Detalle:</label>
+                                <textarea class="form-control text-responsive mt-2" id="detalle" name="detalle" rows="3"
+                                    disabled>{{detalleNomina}}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" id="ObservacionesArea" style="display: block;">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="observaciones" class="text-responsive mt-2">Detallar el motivo del rechazo:</label>
+                                <textarea class="form-control text-responsive mt-2" id="observaciones"
+                                    name="observaciones" rows="3" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">Rechazar</button>
+                            <a href="/autorizarHoras" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

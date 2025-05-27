@@ -1,0 +1,42 @@
+<div class="d-flex w-auto row flex-fill mx-2">
+    <div class="row flex-row justify-content-between my-2">
+        <div class="col flex-col">
+            <div class="h1">Motivos</div>
+        </div>
+        <div class="col flex-col text-end">
+            <div class="container">
+                <a href="/motivos/editar" class="btn btn-primary rounded-circle"> <i class="bi-plus h3"></i> </a>
+            </div>
+        </div>
+    </div>
+    <div class="row flex-row">
+        <table class="table table-bordered table-striped">
+            <thead>
+                {{{encabezadoHTML}}}
+            </thead>
+
+            <tbody>
+                {{#each tabla}}
+                <tr>
+                    <td>{{this.Id}}</td>
+                    <td>{{this.Descripcion}}</td>
+                    <td class="text-center">
+                        {{#if @root.permiteEditar}}
+                        <a type="button" class="btn btn-primary rounded-circle" href="/motivos/editar/{{this.Id}}">
+                            <i class="bi-pencil-fill"></i> </a>
+                        {{/if}}
+                        {{#if @root.permiteBorrar}}
+                        <a type="button" class="btn btn-danger rounded-circle" href="/motivos/borrar/{{this.id}}">
+                            <i class="bi-trash-fill"></i> </a>
+                        {{/if}}
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>
+{{{paginador}}}
+
+
+{{{funciones}}}

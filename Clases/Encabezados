@@ -1,0 +1,210 @@
+
+class Columna {
+    constructor(args) {
+        this.campo = args.Campo;
+        this.tabla = args.Tabla;
+        this.titulo = args.Titulo;
+        this.ancho = args.Ancho;
+
+        if (args.esEditable == undefined) {
+            this.esEditable = true;
+        }
+        else {
+            this.esEditable = args.esEditable;
+        }
+        if (args.esBorrable == undefined) {
+            this.esBorrable = true;
+        }
+        else {
+            this.esBorrable = args.esBorrable;
+        }
+        if (args.ordenado == undefined) {
+            this.ordenado = false;
+        }
+        else {
+            this.ordenado = args.ordenado;
+        }
+        if (args.orden == undefined) {
+            this.orden = "";
+        }
+        else {
+            this.orden = args.orden;
+        }
+        if (args.filtrado == undefined) {
+            this.filtrado = false;
+        }
+        else {
+            this.filtrado = args.filtrado;
+        };
+        if (args.filtro == undefined) {
+            this.filtro = "";
+        }
+        else {
+            this.filtro = args.filtro;
+        };
+
+    }
+    exportar() {
+        var exportar = {};
+        exportar.campo = this.campo;
+        exportar.tabla = this.tabla;
+        exportar.titulo = this.titulo;
+        exportar.ancho = this.ancho;
+        exportar.esEditable = this.esEditable;
+        exportar.esBorrable = this.esBorrable;
+        exportar.ordenado = this.ordenado;
+        exportar.orden = this.orden;
+        exportar.filtrado = this.filtrado;
+        exportar.filtro = this.filtro;
+        return exportar;
+    }
+};
+class Encabezado {
+    constructor(misColumnas, esEditable, esBorrable) {
+        this.columnas = misColumnas;
+        this.esEditable = esEditable;
+        this.esBorrable = esBorrable;
+    }
+    //Funcion para exportar los datos de la clase a un objeto JSON para poder ser usado en express sessions
+    exportar() {
+        var exportar = {};
+        exportar.columnas = this.columnas;
+        exportar.esEditable = this.esEditable;
+        exportar.esBorrable = this.esBorrable;
+        return exportar;
+    }
+    // Función para importar los datos de un objeto JSON a la clase
+    importar(datos) {
+        this.columnas = datos.columnas;
+        this.esEditable = datos.esEditable;
+        this.esBorrable = datos.esBorrable;
+    }
+    cambiarOrdenColumna(i) {
+        this.columnas[i].ordenado = true;
+        if (this.columnas[i].orden == "" || this.columnas[i].orden == "DESC") {
+            this.columnas[i].orden = "ASC";
+        } else {
+            this.columnas[i].orden = "DESC";
+        }
+    };
+
+    filtrarColumna(i, filtro) {
+        console.log("Filtrando columna " + i + " con filtro " + filtro);
+        console.log(this.columnas[i]);
+        this.columnas[i].filtro = filtro;
+        this.columnas[i].filtrado = true;
+    };
+
+    sacarFiltroColumna(i) {
+
+        this.columnas[i].filtro = "";
+        this.columnas[i].filtrado = false;
+
+    };
+
+    getSQL() {
+        var tablaAnterior = "";
+        var contadorTablas = 0;
+        var primeraVez = true;
+        var sql = "SELECT ";
+        for (var i = 0; i < this.columnas.length; i++) {
+            sql += this.columnas[i].tabla + "." + this.columnas[i].campo;
+            if (i < this.columnas.length - 1) {
+                sql += ", ";
+            }
+        }
+        sql += " FROM ";
+        for (var i = 0; i < this.columnas.length; i++) {
+            if (this.columnas[i].tabla != tablaAnterior) {
+                if (contadorTablas > 0) {
+                    sql += ", ";
+                }
+                sql += this.columnas[i].tabla;
+                tablaAnterior = this.columnas[i].tabla;
+                contadorTablas++;
+            };
+
+        }
+        primeraVez = true;
+        for (var i = 0; i < this.columnas.length; i++) {
+            if (this.columnas[i].filtrado || this.columnas[i].filtro != "") {
+                if (primeraVez) {
+                    primeraVez = false;
+                    sql += " WHERE ";
+                } else {
+
+                    sql += " AND ";
+
+                }
+                sql += this.columnas[i].tabla + "." + this.columnas[i].campo + " LIKE '%" + this.columnas[i].filtro + "%'";
+
+            }
+        }
+        primeraVez = true;
+        //       sql += " ORDER BY ";
+        for (var i = 0; i < this.columnas.length; i++) {
+            if (this.columnas[i].ordenado) {
+                if (primeraVez) {
+                    primeraVez = false;
+                    sql += " ORDER BY ";
+                } else {
+                    if (i < this.columnas.length - 1) {
+                        sql += " AND ";
+                    }
+                }
+                sql += this.columnas[i].tabla + "." + this.columnas[i].campo + " " + this.columnas[i].orden;
+                break;
+            }
+        }
+        return sql;
+    };
+    getHTMLEncabezado() {
+        var html = "<tr class='g-1'>";
+        var columnaEdicion = false;
+        for (var i = 0; i < this.columnas.length; i++) {
+            html += "<th class='border border-dark'>";
+            html += "<a class='link-dark link-underline-opacity-0' href='javascript:ordenar(" + i + ")'>";
+            html += this.columnas[i].titulo;
+            if (this.columnas[i].ordenado) {
+                if (this.columnas[i].orden == "ASC") {
+                    html += "▲";
+                } else {
+                    html += "▼";
+                }
+            }
+            html += "</a>";
+            if (this.columnas[i].filtrado) {
+                html += "<a class='link-dark link-underline-opacity-0' href='javascript:filtrar(" + i + ","+'""'+")'>";
+                html += "<i class='bi-funnel-fill'></i>";
+                html += "</a>";
+            }
+            else {
+                html += "<a class='link-dark link-underline-opacity-0' href='#' data-bs-toggle='dropdown'>";
+                html += "<i class='bi-funnel'></i>";
+                html += "</a>";
+                html += "<div class='dropdown'>";
+                html += "<form class='dropdown-menu p-3'>";
+                html += "<div class='d-grid gap-2'>";
+                html += "<label for=" + "id"+this.columnas[i].titulo+">filtro por " + this.columnas[i].
+                titulo + "</label>";
+                html += "<input type='text' placeholder='Buscar' id='id" + this.columnas[i].titulo + "' ,"; html += "name='id" + this.columnas[i].titulo + "'></input>";
+                html += "<button class='btn btn-primary btn-sm' type='button' onclick='javascript:filtrar(" + i + "," + '"' + "id";
+                html += this.columnas[i].titulo + '")' + "'>Filtrar</button>";
+                html += "</div>";
+                html += "</form>";
+                html += "</div>";
+            }
+            if (this.columnas[i].esEditable || this.columnas[i].esBorrable) {
+                columnaEdicion = true;
+            }
+            html += "</th>";
+        }
+        if (this.esEditable || this.esBorrable) {
+            html += "<th class='border border-dark'>Acciones</th>";
+        }
+        html += "</tr>";
+        return html;
+    };
+};
+
+module.exports = { Columna, Encabezado };

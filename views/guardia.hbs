@@ -1,0 +1,76 @@
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-sm-10">
+        <div class="row">
+            <h1 class="text-center">Guardias</h1>
+        </div>
+        <div class="row">
+            <div class="container">
+                <div class="card">
+                    <div class="card-header">
+                        {{#if Id}} <!-- If Id is defined, we are editing a sector -->
+                        <h2 class="text-center">Editando guardia</h2>
+                        {{else}}
+                        <h2 class="text-center">Nueva guardia</h2>
+                        {{/if}}
+                    </div>
+                    <!-- If Id is defined, we are editing a sector -->
+                    <form action="/guardias/editar/{{#if Id}}{{Id}}{{/if}}" method="POST" class="form-group">
+                        <div class="card-body">
+                            <div class="row">
+                                <label for="Descripcion" class="form-label">Descripción</label>
+                                <input type="text" class="form-control" id="Descripcion" name="Descripcion"
+                                    value="{{guardia.Descripcion}}">
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <label for="Inicio" class="form-label mt-2">Inicio</label>
+                                    <input type="time" class="form-control" id="Inicio" name="Inicio"
+                                        value="{{Hora guardia.Inicio}}">
+                                </div>
+                                <div class="col-6">
+                                    <label for="Fin" class="form-label mt-2">Fin</label>
+                                    <input type="time" class="form-control" id="Fin" name="Fin" value="{{Hora guardia.Fin}}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <label for="Tipo" class="form-label mt-2">Tipo</label>
+                                    <select class="form-select" aria-label="Default select example" name="Tipo"
+                                        id="Tipo">
+                                        <option {{#ifeq guardia.Tipo 1 }} selected {{/ifeq}}value="1">
+                                            Diurna</option>
+                                        <option {{#ifeq guardia.Tipo 2}} selected {{/ifeq}}value="2">Nocturna
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label for="Cantidad" class="form-label mt-2">Cantidad</label>
+                                    <input type="number" class="form-control" id="Cantidad" name="Cantidad"
+                                        value="{{guardia.Cantidad}}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label for="Nomina" class="form-label mt-2">Nómina a aplicar</label>
+                                <select class="form-select" aria-label="Default select example" name="Nomina"
+                                    id="Nomina">
+                                    {{#each nomina}}
+                                    {{#ifeq this.Id guardia.IdNomina}}
+                                    <option selected value="{{this.Id}}">{{this.Descripcion}}</option>
+                                    {{else}}
+                                    <option value="{{this.Id}}">{{this.Descripcion}}</option>
+                                    {{/ifeq}}
+                                    {{/each}}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary mt-2">Grabar</button>
+                            <button type="button" class="btn btn-primary mt-2"
+                                onclick="window.location.href='/guardias'">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

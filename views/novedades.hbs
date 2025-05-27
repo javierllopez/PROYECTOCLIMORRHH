@@ -1,0 +1,411 @@
+<div class="d-flex w-auto row flex-fill mx-2">
+    <div class="row flex-row justify-content-between my-2">
+        <div class="col flex-col">
+            <div class="h1">Mis Horas</div>
+        </div>
+        <div class="col flex-col text-end">
+            <div class="container {{#ifeq pantalla " phone"}}px-2 {{/ifeq}}">
+                {{#if hayLiquidacion}}
+                {{#if botonHoras}}<a href="/novedades/agregarHoras/{{personal.Legajo}}"
+                    class="btn btn-primary rounded-circle"> <i class="bi-clock h3"></i> </a>{{/if}}
+                {{#if botonGuardias}}<a href="/novedades/agregarGuardias/{{personal.Legajo}}"
+                    class="btn btn-primary rounded-circle"> <i class="bi-telephone-forward h3"></i> </a>{{/if}}
+                {{#if botonGuardiasPasivas}}<a href="/novedades/agregarGuardiasPasivas"
+                    class="btn btn-primary rounded-circle"> <i class="bi-telephone-inbound h3"></i> </a>{{/if}}
+                {{/if}}
+                {{#unless hayLiquidacion}}
+                <div class="h2 text-center">
+                    No hay liquidación activa
+                </div>
+                {{/unless}}
+            </div>
+        </div>
+    </div>
+    <div class="row row-flex my-2 justify-content-around">
+        <div class="col col-md-5 mx-1 col-sm-10">
+            <div class="row bg-primary text-white">
+                <div class="col text-center">
+                    <h2>Valores actuales</h2>
+                </div>
+            </div>
+            <div class="row align-items-stretch">
+                <div class="col d-flex align-items-center justify-content-center">
+                    <table class="table table-sm">
+                        <thead class="text-center">
+                            <tr class="align-middle">
+                                <th>Categoría</th>
+                                {{#ifeq columnas.Horas50 true}}<th>Hs. 50%</th>{{/ifeq}}
+                                {{#ifeq columnas.Horas100 true}}<th>Hs. 100%</th>{{/ifeq}}
+                                {{#ifeq columnas.GuardiasDiurnas true}}<th>Guardias Diurnas</th>{{/ifeq}}
+                                {{#ifeq columnas.GuardiasNocturnas true}}<th>Guardias Nocturnas</th>{{/ifeq}}
+                                {{#ifeq columnas.GuardiasPasivas true}}<th>Guardias Pasivas</th>{{/ifeq}}
+                            </tr>
+                        </thead>
+                        <tbody class="text-center">
+                            {{#each nominaValores}}
+                            <tr>
+                                <td>{{this.Descripcion}}</td>
+                                {{#ifeq @root.columnas.Horas50 true}}<td>{{formatoMoneda this.ValorHora50}}</td>
+                                {{/ifeq}}
+                                {{#ifeq @root.columnas.Horas100 true}}<td>{{formatoMoneda this.ValorHora100}}</td>
+                                {{/ifeq}}
+                                {{#ifeq @root.columnas.GuardiasDiurnas true}}<td>{{formatoMoneda
+                                    this.ValorGuardiaDiurna}}</td>
+                                {{/ifeq}}
+                                {{#ifeq @root.columnas.GuardiasNocturnas true}}<td>{{formatoMoneda
+                                    this.ValorGuardiaNocturna}}</td>
+                                {{/ifeq}}
+                                {{#ifeq @root.columnas.GuardiasPasivas true}}<td>{{formatoMoneda
+                                    this.ValorGuardiaPasiva}}</td>
+                                {{/ifeq}}
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col col-md-5 mx-1 col-sm-10">
+            <div class="row bg-primary text-white">
+                <div class="col text-center">
+                    <h2>Totales</h2>
+                </div>
+            </div>
+            <div class="row align-items-stretch">
+                <table class="table table-sm">
+                    <thead class="text-center">
+                        <th>Estado</th>
+                        {{#ifeq columnas.Horas50 true}}<th>Hs. 50%</th>{{/ifeq}}
+                        {{#ifeq columnas.Horas100 true}}<th>Hs. 100%</th>{{/ifeq}}
+                        {{#ifeq columnas.GuardiasDiurnas true}}<th>G. Diur.</th>{{/ifeq}}
+                        {{#ifeq columnas.GuardiasNocturnas true}}<th>G. Noct.</th>{{/ifeq}}
+                        {{#ifeq columnas.GuardiasPasivas true}}<th>G. Pas.</th>{{/ifeq}}
+                        <th>Monto</th>
+                    </thead>
+                    <tbody class="text-center">
+                        <tr>
+                            <td>Pendiente</td>
+                            {{#ifeq columnas.Horas50 true}}
+                            {{#ifmay totalesPendientes.totalMin50 0}} <td>{{minutosAHoras totalesPendientes.totalMin50}}
+                            </td> {{else}} <td>00:00</td> {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.Horas100 true}}
+                            {{#ifmay totalesPendientes.totalMin100 0}} <td>{{minutosAHoras
+                                totalesPendientes.totalMin100}}</td> {{else}} <td>00:00</td> {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.GuardiasDiurnas true}}
+                            {{#ifmay totalesPendientes.totalGuardiasDiurnas 0}} <td>
+                                {{formatoNumero totalesPendientes.totalGuardiasDiurnas}}</td>{{else}} <td>0</td>
+                            {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.GuardiasNocturnas true}}
+                            {{#ifmay totalesPendientes.totalGuardiasNocturnas 0}} <td>
+                                {{formatoNumero totalesPendientes.totalGuardiasNocturnas}}</td>{{else}} <td>0</td>
+                            {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.GuardiasPasivas true}}
+                            {{#ifmay totalesPendientes.totalGuardiasPasivas 0}} <td>
+                                {{formatoNumero totalesPendientes.totalGuardiasPasivas}}</td>{{else}} <td>0</td>
+                            {{/ifmay}}
+                            {{/ifeq}}
+                            <td>{{formatoMoneda totalesPendientes.totalMonto}}</td>
+                        </tr>
+                        <tr>
+                            <td>Rechazados</td>
+                            {{#ifeq columnas.Horas50 true}}
+                            {{#ifmay totalesCancelados.totalMin50 0}} <td>{{minutosAHoras totalesCancelados.totalMin50}}
+                            </td> {{else}} <td>00:00</td> {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.Horas100 true}}
+                            {{#ifmay totalesCancelados.totalMin100 0}} <td>{{minutosAHoras
+                                totalesCancelados.totalMin100}}</td> {{else}} <td>00:00</td> {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.GuardiasDiurnas true}}
+                            {{#ifmay totalesCancelados.totalGuardiasDiurnas 0}} <td>
+                                {{formatoNumero totalesCancelados.totalGuardiasDiurnas}}</td>{{else}} <td>0</td>
+                            {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.GuardiasNocturnas true}}
+                            {{#ifmay totalesCancelados.totalGuardiasNocturnas 0}} <td>
+                                {{formatoNumero totalesCancelados.totalGuardiasNocturnas}}</td>{{else}} <td>0</td>
+                            {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.GuardiasPasivas true}}
+                            {{#ifmay totalesCancelados.totalGuardiasPasivas 0}} <td>
+                                {{formatoNumero totalesCancelados.totalGuardiasPasivas}}</td>{{else}} <td>0</td>
+                            {{/ifmay}}
+                            {{/ifeq}}
+                            <td>{{formatoMoneda totalesCancelados.totalMonto}}</td>
+                        </tr>
+                        <tr>
+                            <td>Confirmado</td>
+                            {{#ifeq columnas.Horas50 true}}
+                            {{#ifmay totalesConfirmados.totalMin50 0}} <td>{{minutosAHoras
+                                totalesConfirmados.totalMin50}}</td> {{else}} <td>00:00</td> {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.Horas100 true}}
+                            {{#ifmay totalesConfirmados.totalMin100 0}} <td>{{minutosAHoras
+                                totalesConfirmados.totalMin100}}</td> {{else}} <td>00:00</td> {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.GuardiasDiurnas true}}
+                            {{#ifmay totalesConfirmados.totalGuardiasDiurnas 0}} <td>
+                                {{totalesConfirmados.totalGuardiasDiurnas}}</td>{{else}} <td>0</td> {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.GuardiasNocturnas true}}
+                            {{#ifmay totalesConfirmados.totalGuardiasNocturnas 0}} <td>
+                                {{totalesConfirmados.totalGuardiasNocturnas}}</td>{{else}} <td>0</td> {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.GuardiasPasivas true}}
+                            {{#ifmay totalesConfirmados.totalGuardiasPasivas 0}} <td>
+                                {{totalesConfirmados.totalGuardiasPasivas}}</td>{{else}} <td>0</td> {{/ifmay}}
+                            {{/ifeq}}
+                            <td>{{formatoMoneda totalesConfirmados.totalMonto}}</td>
+                        </tr>
+                </table>
+            </div>
+
+        </div>
+    </div>
+    <!-- Tabla de novedades a mostrar en pantallas grandes -->
+    <div class="row flex-row d-none d-md-flex">
+        <table class="table table-bordered table-striped">
+            <thead class="align-center">
+                <th class="text-center">Fecha</th>
+                <th class="text-center">Detalle</th>
+                {{#ifeq columnas.Horas50 true}}<th class="text-center">Hs. 50%</th>{{/ifeq}}
+                {{#ifeq columnas.Horas100 true}}<th class="text-center">Hs. 100%</th>{{/ifeq}}
+                {{#ifeq columnas.GuardiasDiurnas true}}<th class="text-center">G.D.</th>{{/ifeq}}
+                {{#ifeq columnas.GuardiasNocturnas true}}<th class="text-center">G.N.</th>{{/ifeq}}
+                {{#ifeq columnas.GuardiasPasivas true}}<th class="text-center">G.P.</th>{{/ifeq}}
+                <th class="text-center">Monto</th>
+                <th class="text-center">Estado</th>
+                <th class="text-center">Acc.</th>
+            </thead>
+
+            <tbody>
+                {{#each novedades}}
+                <tr>
+                    <td>{{FechaDiaSem this.Fecha}}</td>
+                    <td>Sector: {{this.Sector}}
+                    <br>
+                    Nómina: {{this.Nomina}} - De: {{Hora this.Inicio}} a {{Hora this.Fin}}
+                    {{#ifeq this.Estado 2}}<br><strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
+                    {{#ifeq this.Estado 4}}<br><strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
+                    </td>
+                    {{#ifeq @root.columnas.Horas50 true}}<td class="text-center">{{this.Hs50}}</td>{{/ifeq}}
+                    {{#ifeq @root.columnas.Horas100 true}}<td class="text-center">{{this.Hs100}}</td>{{/ifeq}}
+                    {{#ifeq @root.columnas.GuardiasDiurnas true}}<td class="text-center">{{formatoNumero this.GD}}</td>
+                    {{/ifeq}}
+                    {{#ifeq @root.columnas.GuardiasNocturnas true}}<td class="text-center">{{this.GN}}</td>{{/ifeq}}
+                    {{#ifeq @root.columnas.GuardiasPasivas true}}<td class="text-center">{{this.GP}}</td>{{/ifeq}}
+                    <td class="text-end">{{formatoMoneda this.Monto}}</td>
+                    <td>
+                        {{#ifeq this.Estado 1}}<img src="/img/estado1.png" alt="Ingresado" title="Ingresado" width="50"
+                            height="10"> {{/ifeq}}
+                        {{#ifeq this.Estado 2}}<img src="/img/estado2.png" alt="Rechazado Supervisor"
+                            title="Rechazado Supervisor" width="50" height="10"> {{/ifeq}}
+                        {{#ifeq this.Estado 3}}<img src="/img/estado3.png" alt="Aprobado Supervisor"
+                            title="Aprobado Supervisor" width="50" height="10"> {{/ifeq}}
+                        {{#ifeq this.Estado 4}}<img src="/img/estado4.png" alt="Rechazado Recursos Humanos"
+                            title="Rechazado Recursos Humanos" width="50" height="10"> {{/ifeq}}
+                        {{#ifeq this.Estado 5}}<img src="/img/estado5.png" alt="Liquidado" title="Liquidado" width="50"
+                            height="10"> {{/ifeq}}
+                    </td>
+                    <td class="text-center">
+                        {{#ifmen this.Estado 3}}
+                        {{#if @root.botonGuardias}}
+                        <a href="/novedades/EditarGuardias/{{this.IdNovedadesR}}"
+                            class="btn btn-primary rounded-circle mt-2">
+                            <i class="bi-pencil"></i> </a> {{/if}}
+                        {{#if @root.botonHoras}}
+                        <a href="/novedades/EditarHoras/{{this.IdNovedadesR}}"
+                            class="btn btn-primary rounded-circle mt-2">
+                            <i class="bi-pencil"></i> </a> {{/if}}
+                        <a type="button" class="btn btn-danger rounded-circle mt-2" data-bs-toggle="modal"
+                            data-bs-target="#exampleModal{{this.IdNovedadesR}}">
+                            <i class="bi-trash-fill"></i> </a>
+                        <!-- Modal -->
+                        <div class="modal fade" id="exampleModal{{this.IdNovedadesR}}" tabindex="-1"
+                            aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="exampleModalLabel">Atención</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        ¿Está seguro que desea borrar esta novedad {{FechaDiaSem this.Fecha}} {{#if
+                                        @root.columnas.Horas50}}De: {{Hora
+                                        this.Inicio}} a {{Hora this.Fin}} {{/if}}?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Cancelar</button>
+                                        <a type="button" class="btn btn-primary"
+                                            href="/novedades/borrar/{{this.IdNovedadesR}}">Aceptar</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{/ifmen}}
+                        {{#ifeq this.Estado 4}}
+                        {{#if @root.botonGuardias}}
+                        <a href="/novedades/EditarGuardias/{{this.IdNovedadesR}}"
+                            class="btn btn-primary rounded-circle mt-2">
+                            <i class="bi-pencil"></i> </a> {{/if}}
+                        {{#if @root.botonHoras}}
+                        <a href="/novedades/EditarHoras/{{this.IdNovedadesR}}"
+                            class="btn btn-primary rounded-circle mt-2">
+                            <i class="bi-pencil"></i> </a> {{/if}}
+                        <a type="button" class="btn btn-danger rounded-circle mt-2" data-bs-toggle="modal"
+                            data-bs-target="#exampleModal{{this.IdNovedadesR}}">
+                            <i class="bi-trash-fill"></i> </a>
+                        <!-- Modal -->
+                        <div class="modal fade" id="exampleModal{{this.IdNovedadesR}}" tabindex="-1"
+                            aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="exampleModalLabel">Atención</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        ¿Está seguro que desea borrar esta novedad {{FechaDiaSem this.Fecha}} {{#if
+                                        @root.columnas.Horas50}}De: {{Hora
+                                        this.Inicio}} a {{Hora this.Fin}} {{/if}}?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Cancelar</button>
+                                        <a type="button" class="btn btn-primary"
+                                            href="/novedades/borrar/{{this.IdNovedadesR}}">Aceptar</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{/ifeq}}
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+    <div class="row flex-row d-md-none align-items-center">
+        <table class="table table-sm table-bordered table-striped small">
+            <thead>
+                <th class="text-center">Detalle</th>
+                <th class="text-center">Estado</th>
+                <th class="text-center">Acc.</th>
+            </thead>
+
+            <tbody>
+                {{#each novedades}}
+                <tr class="align-middle">
+                    <td class="text-center">
+                        Fecha: {{FechaDiaSem this.Fecha}} De: {{Hora this.Inicio}} a
+                        {{Hora this.Fin}} - {{this.Nomina}} Monto: {{formatoMoneda this.Monto}} {{#ifeq this.Estado
+                        2}}<br>
+                        <strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
+                        {{#ifeq this.Estado 4}}<br>
+                        <strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
+                    </td>
+                    <td class="text-center">
+                        {{#ifeq this.Estado 1}}<img src="/img/estado1.png" alt="Ingresado" title="Ingresado" width="40"
+                            height="15"> {{/ifeq}}
+                        {{#ifeq this.Estado 2}}<img src="/img/estado2.png" alt="Rechazado Supervisor"
+                            title="Rechazado Supervisor" width="40" height="15"> {{/ifeq}}
+                        {{#ifeq this.Estado 3}}<img src="/img/estado3.png" alt="Aprobado Supervisor"
+                            title="Aprobado Supervisor" width="40" height="15"> {{/ifeq}}
+                        {{#ifeq this.Estado 4}}<img src="/img/estado4.png" alt="Rechazado Recursos Humanos"
+                            title="Rechazado Recursos Humanos" width="40" height="15"> {{/ifeq}}
+                        {{#ifeq this.Estado 5}}<img src="/img/estado5.png" alt="Liquidado" title="Liquidado" width="40"
+                            height="15"> {{/ifeq}}
+                    </td>
+                    <td class="text-center">
+                        {{#ifmen this.Estado 3}}
+                        {{#if @root.botonGuardias}}
+                        <a href="/novedades/EditarGuardias/{{this.IdNovedadesR}}"
+                            class="btn btn-primary rounded-circle mt-2">
+                            <i class="bi-pencil"></i> </a> {{/if}}
+                        {{#if @root.botonHoras}}
+                        <a href="/novedades/EditarHoras/{{this.IdNovedadesR}}"
+                            class="btn btn-primary rounded-circle mt-2">
+                            <i class="bi-pencil"></i> </a> {{/if}}
+                        <a type="button" class="btn btn-danger rounded-circle mt-2" data-bs-toggle="modal"
+                            data-bs-target="#exampleModal2{{this.IdNovedadesR}}">
+                            <i class="bi-trash-fill"></i> </a>
+                        <!-- Modal -->
+                        <div class="modal fade" id="exampleModal2{{this.IdNovedadesR}}" tabindex="-1"
+                            aria-labelledby="exampleModalLabel2" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="exampleModalLabel">Atención</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        ¿Está seguro que desea borrar esta novedad {{FechaDiaSem this.Fecha}} {{#if
+                                        @root.columnas.Horas50}}De: {{Hora
+                                        this.Inicio}} a {{Hora this.Fin}} {{/if}}?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Cancelar</button>
+                                        <a type="button" class="btn btn-primary"
+                                            href="/novedades/borrar/{{this.IdNovedadesR}}">Aceptar</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{/ifmen}}
+                        {{#ifeq this.Estado 4}}
+                        {{#if @root.botonGuardias}}
+                        <a href="/novedades/EditarGuardias/{{this.IdNovedadesR}}"
+                            class="btn btn-primary rounded-circle mt-2">
+                            <i class="bi-pencil"></i> </a> {{/if}}
+                        {{#if @root.botonHoras}}
+                        <a href="/novedades/EditarHoras/{{this.IdNovedadesR}}"
+                            class="btn btn-primary rounded-circle mt-2">
+                            <i class="bi-pencil"></i> </a> {{/if}}
+                        <a type="button" class="btn btn-danger rounded-circle mt-2" data-bs-toggle="modal"
+                            data-bs-target="#exampleModal2{{this.IdNovedadesR}}">
+                            <i class="bi-trash-fill"></i> </a>
+                        <!-- Modal -->
+                        <div class="modal fade" id="exampleModal2{{this.IdNovedadesR}}" tabindex="-1"
+                            aria-labelledby="exampleModalLabel2" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="exampleModalLabel">Atención</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        ¿Está seguro que desea borrar esta novedad {{FechaDiaSem this.Fecha}} {{#if
+                                        @root.columnas.Horas50}}De: {{Hora
+                                        this.Inicio}} a {{Hora this.Fin}} {{/if}}?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Cancelar</button>
+                                        <a type="button" class="btn btn-primary"
+                                            href="/novedades/borrar/{{this.IdNovedadesR}}">Aceptar</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{/ifeq}}
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+    <div class='d-lg-none text-center mt-3'>
+        <button class='btn btn-primary h1' onclick='window.location.href="/"'> <i
+                class='bi-box-arrow-left h1 me-2'></i>Atrás</button>
+    </div>
+</div>

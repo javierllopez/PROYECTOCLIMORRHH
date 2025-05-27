@@ -1,0 +1,110 @@
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-sm-10">
+        <div class="row">
+            <h1 class="text-center">Motivos</h1>
+        </div>
+        <div class="row">
+            <div class="container">
+                <div class="card">
+                    <div class="card-header">
+                        {{#if Id}} <!-- If Id is defined, we are editing a sector -->
+                        <h2 class="text-center">Editando motivo</h2>
+                        {{else}}
+                        <h2 class="text-center">Nuevo motivo</h2>
+                        {{/if}}
+                    </div>
+                    {{#if Id}} <!-- If Id is defined, we are editing a sector -->
+                    <form action="/motivos/editar/{{Id}}" method="POST" class="form-group">
+                        <div class="card-body">
+                            <div class="row mt-2">
+                                <label for="Descripcion" class="form-label">Descripción</label>
+                                <input type="text" class="form-control" id="Descripcion" name="Descripcion"
+                                    value="{{motivo.Descripcion}}">
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col">
+                                    <div class="form-check  form-switch">
+                                        <input class="form-check-input" type="checkbox" id="InformaReemplazo"
+                                            name="InformaReemplazo" {{#if motivo.InformaReemplazo}}checked{{/if}}>
+                                        <label class="form-check-label" for="InformaReemplazo">
+                                            Informa reemplazo
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="DescripcionObligatoria"
+                                            name="DescripcionObligatoria" {{#if
+                                            motivo.DescripcionObligatoria}}checked{{/if}}>
+                                        <label class="form-check-label" for="DescripcionObligatoria">
+                                            Descripción obligatoria
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="TieneSubmotivos"
+                                            name="TieneSubmotivos" {{#if motivo.TieneSubmotivos}}checked{{/if}}>
+                                        <label class="form-check-label" for="TieneSubmotivos">
+                                            Tiene submotivos
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary mt-2">Grabar</button>
+                            <button type="button" class="btn btn-primary mt-2"
+                                onclick="window.location.href='/motivos'">Cancelar</button>
+                        </div>
+                    </form>
+                    {{else}}
+                    <form action="/motivos/editar" method="POST" class="form-group">
+                        <div class="card-body">
+                            <div class="row mt-2">
+                                <label for="Descripcion" class="form-label">Descripción</label>
+                                <input type="text" class="form-control" id="Descripcion" name="Descripcion">
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col">
+                                    <div class="form-check  form-switch">
+                                        <input class="form-check-input" type="checkbox" id="InformaReemplazo"
+                                            name="InformaReemplazo">
+                                        <label class="form-check-label" for="InformaReemplazo">
+                                            Informa reemplazo
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="DescripcionObligatoria"
+                                            name="DescripcionObligatoria">
+                                        <label class="form-check-label" for="DescripcionObligatoria">
+                                            Descripción obligatoria
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="TieneSubmotivos"
+                                            name="TieneSubmotivos">
+                                        <label class="form-check-label" for="TieneSubmotivos">
+                                            Tiene submotivos
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer text-center">
+                                <button type="submit" class="btn btn-primary mt-2">Agregar</button>
+                                <button type="button" class="btn btn-primary mt-2"
+                                    onclick="window.location.href='/motivos'">Cancelar</button>
+                            </div>
+                    </form>
+
+                    {{/if}}
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

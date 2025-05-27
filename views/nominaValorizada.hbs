@@ -1,0 +1,90 @@
+<div class="row flex-row align-items-center mx-2">
+    <div class="col flex-column">
+        <div class="h2">Nómina Valorizada</div>
+    </div>
+    <div class="col flex-column">
+        <select class="form-select form-select-lg m-2" aria-label="Large select example" id="periodoNomina">
+
+            {{#each tablaNominaValorese}}
+
+            <option {{#ifeq this.Id @root.idNomina}} selected {{/ifeq}}value="{{this.Id}}">
+                Entre {{FechaCorta
+                this.VigenteDesde}}
+                y
+                {{FechaCorta
+                this.VigenteHasta}}
+            </option>
+            {{/each}}
+        </select>
+    </div>
+    <div class="col flex-column text-end">
+        <a type="button" class="btn btn-primary rounded-circle text-end" href="/nomina/generarNomina">
+            <i class="bi-coin h3"></i>
+        </a>
+    </div>
+</div>
+<table class="mt-2 table table-bordered table-striped">
+    <thead>
+        {{{encabezadoHTMLNominaValoresr}}}
+    </thead>
+
+    <tbody>
+        {{#each tablaNominaValoresr}}
+        <tr>
+            <td>{{this.Id}}</td>
+            <td>{{this.Descripcion}}</td>
+            <td class="text-center">{{formatoMoneda this.ValorHora50}}</td>
+            <td class="text-center">{{formatoMoneda this.ValorHora100}}</td>
+            <td class="text-center">{{formatoMoneda
+                this.ValorGuardiaDiurna}}
+            </td>
+            <td class="text-center">{{formatoMoneda
+                this.ValorGuardiaNocturna}}
+            </td>
+            <td class="text-center">{{formatoMoneda
+                this.ValorGuardiaPasiva}}
+            </td>
+            <td class="text-center">
+                {{#if @root.permiteEditarNominaValoresr}}
+                <a type="button" class="btn btn-primary rounded-circle" href="/nominaValorizada/editar/{{this.Id}}">
+                    <i class="bi-pencil-fill"></i> </a>
+                {{/if}}
+                {{#if @root.permiteBorrarNominaValoresr}}
+                <a type="button" class="btn btn-danger rounded-circle" href="/nominaValorizada/borrar/{{this.id}}">
+                    <i class="bi-trash-fill"></i>
+                </a>
+                {{/if}}
+            </td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+{{{paginadorNominaValoresr}}}
+{{{funcionesNominaValoresr}}}
+
+<script>
+    document.getElementById('periodoNomina').addEventListener('change', async function () {
+        const selectedValue = this.value;
+        try {
+            const response = await fetch('/nominaValorizada/filtroGeneral', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ filtro: selectedValue })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            window.location.reload();
+
+            //const data = await response.json();
+            // Handle the response data as needed
+        } catch (error) {
+            console.error('There was a problem with the fetch operation:', error);
+        }
+
+    });
+</script>

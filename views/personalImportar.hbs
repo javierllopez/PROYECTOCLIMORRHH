@@ -1,0 +1,187 @@
+<div id="main-content">
+  <div class="container mt-5" style="max-width: 600px;">
+      <div class="card shadow border-0">
+          <div class="card-header bg-primary text-white">
+              <h3 class="card-title mb-0"><i class="bi bi-upload"></i> Importar Personal desde Excel</h3>
+          </div>
+          <div class="card-body">
+              <form id="formImportarPersonal" action="/personal/importar/preparar" method="POST" enctype="multipart/form-data">
+                  <div class="mb-4">
+                      <label for="archivoExcel" class="form-label fw-bold">Seleccionar archivo Excel</label>
+                      <input class="form-control form-control-lg" type="file" id="archivoExcel" name="archivoExcel" accept=".xlsx,.xls" required>
+                  </div>
+                  <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" id="tieneEncabezado" name="tieneEncabezado" checked>
+                      <label class="form-check-label" for="tieneEncabezado">El archivo contiene fila de encabezado</label>
+                  </div>
+                  <div class="mb-4">
+                      <label class="form-label fw-bold">¿Cómo importar los datos?</label>
+                      <div class="d-flex gap-3">
+                          <div class="form-check">
+                              <input class="form-check-input" type="radio" name="modoImportacion" id="modoAgregar" value="agregar" checked>
+                              <label class="form-check-label" for="modoAgregar">Agregar a los existentes</label>
+                          </div>
+                          <div class="form-check">
+                              <input class="form-check-input" type="radio" name="modoImportacion" id="modoSobreescribir" value="sobreescribir">
+                              <label class="form-check-label" for="modoSobreescribir">Sobrescribir todos los registros</label>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="d-flex justify-content-end gap-2">
+                      <button type="submit" class="btn btn-primary px-4">Siguiente</button>
+                      <a href="/personal" class="btn btn-outline-secondary">Cancelar</a>
+                  </div>
+              </form>
+
+              {{#if columnas}}
+              <hr class="my-4">
+              <form id="formMapeoPersonal" action="/personal/importar/ejecutar" method="POST">
+                  <input type="hidden" name="archivo" value="{{archivo}}">
+                  <input type="hidden" name="tieneEncabezado" value="{{#if tieneEncabezado}}on{{/if}}">
+                  <input type="hidden" name="modoImportacion" value="{{modoImportacion}}">
+                  <h5 class="mb-3">Mapear campos de la tabla a columnas del Excel</h5>
+                  <div class="mb-3">
+                      <label class="form-label">Legajo</label>
+                      <select class="form-select" name="Legajo" required>
+                          {{#each columnas}}
+                          <option value="{{this}}">{{this}}</option>
+                          {{/each}}
+                      </select>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Apellido</label>
+                      <select class="form-select" name="Apellido" required>
+                          {{#each columnas}}
+                          <option value="{{this}}">{{this}}</option>
+                          {{/each}}
+                      </select>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Nombres</label>
+                      <select class="form-select" name="Nombres" required>
+                          {{#each columnas}}
+                          <option value="{{this}}">{{this}}</option>
+                          {{/each}}
+                      </select>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">FechaNacimiento</label>
+                      <select class="form-select" name="FechaNacimiento" required>
+                          {{#each columnas}}
+                          <option value="{{this}}">{{this}}</option>
+                          {{/each}}
+                      </select>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">FechaIngreso</label>
+                      <select class="form-select" name="FechaIngreso" required>
+                          {{#each columnas}}
+                          <option value="{{this}}">{{this}}</option>
+                          {{/each}}
+                      </select>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">CUIL</label>
+                      <select class="form-select" name="CUIL" required>
+                          {{#each columnas}}
+                          <option value="{{this}}">{{this}}</option>
+                          {{/each}}
+                      </select>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">DNI</label>
+                      <select class="form-select" name="DNI" required>
+                          {{#each columnas}}
+                          <option value="{{this}}">{{this}}</option>
+                          {{/each}}
+                      </select>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">IdSector</label>
+                      <select class="form-select" name="IdSector" required>
+                          {{#each columnas}}
+                          <option value="{{this}}">{{this}}</option>
+                          {{/each}}
+                      </select>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">IdCategoria</label>
+                      <select class="form-select" name="IdCategoria" required>
+                          {{#each columnas}}
+                          <option value="{{this}}">{{this}}</option>
+                          {{/each}}
+                      </select>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">IdTurno</label>
+                      <select class="form-select" name="IdTurno" required>
+                          {{#each columnas}}
+                          <option value="{{this}}">{{this}}</option>
+                          {{/each}}
+                      </select>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">CorreoElectronico</label>
+                      <select class="form-select" name="CorreoElectronico" required>
+                          {{#each columnas}}
+                          <option value="{{this}}">{{this}}</option>
+                          {{/each}}
+                      </select>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Nivel</label>
+                      <select class="form-select" name="Nivel" required>
+                          {{#each columnas}}
+                          <option value="{{this}}">{{this}}</option>
+                          {{/each}}
+                      </select>
+                  </div>
+                  <div class="d-flex justify-content-end gap-2">
+                      <button type="submit" class="btn btn-success px-4">Importar</button>
+                      <a href="/personal" class="btn btn-outline-secondary">Cancelar</a>
+                  </div>
+              </form>
+              {{/if}}
+          </div>
+      </div>
+  </div>
+</div>
+
+{{!-- Overlay de importación en proceso --}}
+<style>
+  #import-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.7);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
+  }
+  .blur-on-import {
+    filter: blur(3px);
+    pointer-events: none;
+    user-select: none;
+  }
+</style>
+<div id="import-overlay">
+  <div class="text-center">
+    <div class="spinner-border text-primary mb-3" style="width: 4rem; height: 4rem;" role="status">
+      <span class="visually-hidden">Importando...</span>
+    </div>
+    <div class="fw-bold fs-5">Importando datos...<br><span class="fs-6">Por favor, espere.</span></div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var form = document.getElementById('formMapeoPersonal');
+    if(form) {
+      form.addEventListener('submit', function() {
+        document.getElementById('main-content').classList.add('blur-on-import');
+        document.getElementById('import-overlay').style.display = 'flex';
+      });
+    }
+  });
+</script>

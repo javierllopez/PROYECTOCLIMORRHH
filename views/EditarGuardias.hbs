@@ -1,0 +1,148 @@
+<div class="row justify-content-center">
+    <div class="col col-lg-6 col-sm-10">
+        <div class="row">
+            <h1 class="text-center">Guardias realizadas por {{Apenom}}</h1>
+        </div>
+        <div class="row">
+            <div class="col mx-2">
+                <div class="card">
+                    <div class="card-header">
+                        {{#if Id}} <!-- Si Id está definido, se está modificando un registro -->
+                        <h2 class="text-center">Modificar guardias ingresdas</h2>
+                        {{else}}
+                        <h2 class="text-center">Ingresar nueva guardia</h2>
+                        {{/if}}
+                    </div>
+                    {{#if Id}} <!-- Si Id está definido, se está modificando un registro -->
+                    <form action="/novedades/EditarGuardia/{{Id}}" method="POST" class="form-group">
+                        <input type="hidden" name="Legajo" value="{{Legajo}}">
+                        <div class="card-body">
+                            <span>Seleccionar el tipo de guardia realizada, e informar si fue una guardia completa o
+                                parcial. En caso de que sea parcial informar el horario de inicio y fin de la
+                                misma.</span>
+                            <hr>
+                            <div class="row">
+                                <div class="col-4">
+                                    <label for="Fecha" class="form-label">Fecha</label>
+                                    <input type="date" class="form-control" id="Fecha" name="Fecha" value="{{FechaIso novedadesR.Fecha}}"
+                                        required>
+                                </div>
+                                <div class="col-8">
+                                    <label for="IdGuardia" class="form-label">Guardia realizada</label>
+                                    <select class="form-select" id="IdGuardia" name="IdGuardia">
+                                        {{#each guardias}}
+                                        <option value="{{this.Id}}" {{#ifeq this.Id @root.novedadesR.IdGuardia}}selected{{/ifeq}}>{{this.Descripcion}}</option>
+                                        {{/each}}
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <label for="TipoGuardia" class="form-label">Tipo</label>
+                                    <select name="TipoGuardia" id="TipoGuardia" class="form-select">
+                                        <option value="1" {{#ifeq novedadesR.IdParcial 1}}selected{{/ifeq}}>Completa
+                                        </option>
+                                        <option value="2" {{#ifeq novedadesR.IdParcial 2}}selected{{/ifeq}}>Parcial
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row" id="partialGuardiaDetails" {{#ifeq novedadesR.IdParcial 1}}style="display: none";{{/ifeq}} {{#ifeq novedadesR.IdParcial 2}}style="display: flex";{{/ifeq}}>
+                                <div class="col">
+                                    <label for="HoraInicio" class="form-label">Hora Inicio</label>
+                                    <input type="time" class="form-control" id="HoraInicio" name="HoraInicio"
+                                        value="{{Hora novedadesR.Inicio}}">
+                                </div>
+                                <div class="col">
+                                    <label for="HoraFin" class="form-label">Hora Fin</label>
+                                    <input type="time" class="form-control" id="HoraFin" name="HoraFin"
+                                        value="{{Hora novedadesR.Fin}}">
+                                </div>
+                            </div>
+                            <script>
+                                document.addEventListener("DOMContentLoaded", function () {
+                                    const tipoGuardiaSelect = document.getElementById("TipoGuardia");
+                                    const partialGuardiaDetails = document.getElementById("partialGuardiaDetails");
+
+                                    tipoGuardiaSelect.addEventListener("change", function () {
+                                        if (tipoGuardiaSelect.value == "2") {
+                                            partialGuardiaDetails.style.display = "flex";
+                                        } else {
+                                            partialGuardiaDetails.style.display = "none";
+                                        }
+                                    });
+                                });
+                            </script>
+
+                        </div>
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary mt-2">Grabar</button>
+                            <button type="button" class="btn btn-primary mt-2"
+                                onclick="window.location.href='/novedades'">Cancelar</button>
+                        </div>
+                    </form>
+                    {{else}}
+                    <form action="/novedades/agregarGuardias" method="POST" class="form-group">
+                        <input type="hidden" name="Legajo" value="{{Legajo}}">
+                        <div class="card-body">
+                            <span>Seleccionar el tipo de guardia realizada, e informar si fue una guardia completa o
+                                parcial. En caso de que sea parcial informar el horario de inicio y fin de la
+                                misma.</span>
+                            <hr>
+                            <div class="row">
+                                <div class="col-4">
+                                    <label for="Fecha" class="form-label">Fecha</label>
+                                    <input type="date" class="form-control" id="Fecha" name="Fecha" value="{{Fecha}}"
+                                        required>
+                                </div>
+                                <div class="col-5">
+                                    <label for="IdGuardia" class="form-label">Guardia realizada</label>
+                                    <select class="form-select" id="IdGuardia" name="IdGuardia">
+                                        {{#each guardias}}
+                                        <option value="{{this.Id}}">{{this.Descripcion}}</option>
+                                        {{/each}}
+                                    </select>
+                                </div>
+                                <div class="col-3">
+                                    <label for="TipoGuardia" class="form-label">Tipo</label>
+                                    <select class="form-select" name="TipoGuardia" id="TipoGuardia">
+                                        <option value="1">Completa</option>
+                                        <option value="2">Parcial</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row" id="partialGuardiaDetails" style="display: none;">
+                                <div class="col">
+                                    <label for="HoraInicio" class="form-label">Hora Inicio</label>
+                                    <input type="time" class="form-control" id="HoraInicio" name="HoraInicio">
+                                </div>
+                                <div class="col">
+                                    <label for="HoraFin" class="form-label">Hora Fin</label>
+                                    <input type="time" class="form-control" id="HoraFin" name="HoraFin">
+                                </div>
+                            </div>
+                            <script>
+                                document.addEventListener("DOMContentLoaded", function () {
+                                    const tipoGuardiaSelect = document.getElementById("TipoGuardia");
+                                    const partialGuardiaDetails = document.getElementById("partialGuardiaDetails");
+
+                                    tipoGuardiaSelect.addEventListener("change", function () {
+                                        if (tipoGuardiaSelect.value == "2") {
+                                            partialGuardiaDetails.style.display = "flex";
+                                        } else {
+                                            partialGuardiaDetails.style.display = "none";
+                                        }
+                                    });
+                                });
+                            </script>
+                        </div>
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary mt-2">Grabar</button>
+                            <button type="button" class="btn btn-primary mt-2"
+                                onclick="window.location.href='/novedades'">Cancelar</button>
+                        </div>
+                    </form>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

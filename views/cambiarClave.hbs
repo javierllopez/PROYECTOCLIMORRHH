@@ -1,0 +1,45 @@
+<div class="container d-flex justify-content-center align-items-center vh-100">
+    <div class="card w-50">
+        <div class="card-header bg-primary text-white text-center">
+            {{#if primeraVez}}
+            <h3>Cambiar Clave</h3>
+            {{else}}
+            <h3>Datos de Usuario</h3>
+            {{/if}}
+        </div>
+        <div class="card-body">
+            <form action="/login/cambiarClave" method="POST">
+                <input type="hidden" name="Id" value="{{Id}}">
+                {{#if primeraVez}}
+                <p>Al ingresar por primera vez al sistema debe cambiar el nombre de usuario y la contraseña asignadas
+                    por defecto</p>
+                <div class="form-group mt-2">
+                    <label for="nuevoUsuario">Nuevo nombre de usuario</label>
+                    <input type="text" class="form-control" id="nuevoUsuario" name="nuevoUsuario" required>
+                </div>
+                {{else}}
+                <div class="form-group mt-2">
+                    <label for="usuarioActual">Nombre de usuario</label>
+                    <input type="text" class="form-control" id="usuarioActual" name="usuarioActual"
+                        value="{{UsuarioActual}}" disabled>
+                </div>
+                {{/if}}
+                <div class="form-group mt-2">
+                    <label for="correoElectronico">Correo Electrónico</label>
+                    <input type="email" class="form-control" id="correoElectronico" name="correoElectronico" value="{{CorreoElectronico}}">
+                </div>
+                <div class="form-group mt-2">
+                    <label for="newPassword">Nueva Clave</label>
+                    <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                </div>
+                <div class="form-group mt-2">
+                    <label for="confirmPassword">Confirmar Nueva Clave</label>
+                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary btn-block mt-2">Cambiar Clave</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

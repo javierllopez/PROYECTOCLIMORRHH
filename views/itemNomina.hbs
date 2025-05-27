@@ -1,0 +1,362 @@
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-sm-10">
+        <div class="row">
+            <h1 class="text-center">Items de Nómina</h1>
+        </div>
+        <div class="row">
+            <div class="container">
+                <div class="card mb-2">
+                    <div class="card-header">
+                        {{#if Id}} <!-- If Id is defined, we are editing a sector -->
+                        <h2 class="text-center">Editando Item de Nómina</h2>
+                        {{else}}
+                        <h2 class="text-center">Nuevo Item de Nómina</h2>
+                        {{/if}}
+                    </div>
+                    <form action="/itemsNomina/editar/{{#if Id}}{{Id}}{{/if}}" method="POST" class="form-group">
+                        <div class="card-body">
+
+                            <label for="Descripcion" class="form-label">Descripción</label>
+                            <input type="text" class="form-control" id="Descripcion" name="Descripcion" {{#if
+                                Id}}value="{{nomina.Descripcion}}" {{/if}}>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="mt-2 form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                            id="idInformaValorSueldoBasico" name="InformaValorSueldoBasico" {{#if Id}}
+                                            {{#if nomina.InformaValorSueldoBasico}} checked {{/if}}{{/if}}>
+                                        <label class="form-check-label" for="idInformaValorSueldoBasico">Informa valor
+                                            de
+                                            sueldo
+                                            básico</label>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <label for="HorasMensuales" class="form-label" id="lblHorasMensuales"
+                                        name="lblHorasMensuales">Cantidad de horas mensuales</label>
+                                    <input type="number" class="form-control" id="HorasMensuales" name="HorasMensuales"
+                                        {{#if Id}}value="{{nomina.HorasMensuales}}" {{/if}}>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="mt-2 form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                            id="idInformaGuardiaDiurna" name="HaceGuardiasDiurnas" {{#if Id}} {{#if
+                                            nomina.HaceGuardiasDiurnas}} checked {{/if}}{{/if}}>
+                                        <label class="form-check-label" for="idInformaGuardiaDiurna">Informa guardias
+                                            diurnas</label>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <label for="HorasGuardiaDiurna" class="form-label" id="lblHorasGuardiaDiurna">Horas
+                                        en
+                                        guardia diurna</label>
+                                    <input type="number" class="form-control" id="HorasGuardiaDiurna"
+                                        name="HorasGuardiaDiurna" {{#if Id}} value="{{nomina.HorasGuardiaDiurna}}"
+                                        {{/if}}>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="mt-2 form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                            id="idInformaGuardiaNocturna" name="HaceGuardiasNocturnas" {{#if Id}} {{#if
+                                            nomina.HaceGuardiasNocturnas}} checked {{/if}}{{/if}}>
+                                        <label class="form-check-label" for="idInformaGuardiaNocturna">Informa guardias
+                                            nocturnas</label>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <label for="HorasGuardiaNocturna" class="form-label"
+                                        id="lblHorasGuardiaNocturna">Horas
+                                        en guardia nocturna</label>
+                                    <input type="number" class="form-control" id="HorasGuardiaNocturna"
+                                        name="HorasGuardiaNocturna" {{#if Id}} value="{{nomina.HorasGuardiaNocturna}}"
+                                        {{/if}}>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="mt-2 form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                            id="idInformaGuardiasPasivas" name="HaceGuardiasPasivas" {{#if Id}} {{#if
+                                            nomina.HaceGuardiasPasivas}} checked {{/if}}{{/if}}>
+                                        <label class="form-check-label" for="idInformaGuardiasPasivas">Informa guardias
+                                            pasivas</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="mt-2 form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                            id="idInformaAdicionalMensual" name="TieneAdicionalMensual" {{#if Id}} {{#if
+                                            nomina.TieneAdicionalMensual}} checked {{/if}}{{/if}}>
+                                        <label class="form-check-label" for="idInformaAdicionalMensual">Tiene adicional
+                                            Mensual</label>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <label for="TextoAdicionalMensual" class="form-label"
+                                        id="LblTextoAdicionalMensual">Texto adicional mensual</label>
+                                    <input type="text" class="form-control" id="TextoAdicionalMensual"
+                                        name="TextoAdicional" {{#if Id}} value="{{nomina.TextoAdicional}} " {{/if}}>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary mt-2">Grabar</button>
+                            <button type="button" class="btn btn-primary mt-2"
+                                onclick="window.location.href='/itemsNomina'">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const idInformaValorSueldoBasico = document.getElementById('idInformaValorSueldoBasico');
+        const idHorasMensuales = document.getElementById('HorasMensuales');
+        const idLblHorasMensuales = document.getElementById('lblHorasMensuales');
+
+        const idInformaGuardiaDiurna = document.getElementById('idInformaGuardiaDiurna');
+        const idLblHorasGuardiaDiurna = document.getElementById('lblHorasGuardiaDiurna');
+        const idHorasGuardiaDiurna = document.getElementById('HorasGuardiaDiurna');
+
+        const idInformaGuardiaNocturna = document.getElementById('idInformaGuardiaNocturna');
+        const idLblHorasGuardiaNocturna = document.getElementById('lblHorasGuardiaNocturna');
+        const idHorasGuardiaNocturna = document.getElementById('HorasGuardiaNocturna');
+
+        const idInformaAdicionalMensual = document.getElementById('idInformaAdicionalMensual');
+        const idLblTextoAdicionalMensual = document.getElementById('LblTextoAdicionalMensual');
+        const idTextoAdicionalMensual = document.getElementById('TextoAdicionalMensual');
+
+        idInformaValorSueldoBasico.addEventListener('change', function () {
+            idHorasMensuales.style.visibility = idInformaValorSueldoBasico.checked ? 'visible' : 'hidden';
+            idLblHorasMensuales.style.visibility = idInformaValorSueldoBasico.checked ? 'visible' : 'hidden';
+        });
+
+        idInformaGuardiaDiurna.addEventListener('change', function () {
+
+            idHorasGuardiaDiurna.style.visibility = idInformaGuardiaDiurna.checked ? 'visible' : 'hidden';
+            idLblHorasGuardiaDiurna.style.visibility = idInformaGuardiaDiurna.checked ? 'visible' : 'hidden';
+        });
+
+        idInformaGuardiaNocturna.addEventListener('change', function () {
+            //idInformaGuardiaNocturna.checked = !idInformaGuardiaNocturna.checked;
+            idHorasGuardiaNocturna.style.visibility = idInformaGuardiaNocturna.checked ? 'visible' : 'hidden';
+            idLblHorasGuardiaNocturna.style.visibility = idInformaGuardiaNocturna.checked ? 'visible' : 'hidden';
+        });
+
+        idInformaAdicionalMensual.addEventListener('change', function () {
+            //idInformaAdicionalMensual.checked = !idInformaAdicionalMensual.checked;
+            idTextoAdicionalMensual.style.visibility = idInformaAdicionalMensual.checked ? 'visible' : 'hidden';
+            idLblTextoAdicionalMensual.style.visibility = idInformaAdicionalMensual.checked ? 'visible' : 'hidden';
+        });
+    });
+    function inicializar() {
+        const idInformaValorSueldoBasico = document.getElementById('idInformaValorSueldoBasico');
+        const idHorasMensuales = document.getElementById('HorasMensuales');
+        const idLblHorasMensuales = document.getElementById('lblHorasMensuales');
+
+        const idInformaGuardiaDiurna = document.getElementById('idInformaGuardiaDiurna');
+        const idLblHorasGuardiaDiurna = document.getElementById('lblHorasGuardiaDiurna');
+        const idHorasGuardiaDiurna = document.getElementById('HorasGuardiaDiurna');
+
+        const idInformaGuardiaNocturna = document.getElementById('idInformaGuardiaNocturna');
+        const idLblHorasGuardiaNocturna = document.getElementById('lblHorasGuardiaNocturna');
+        const idHorasGuardiaNocturna = document.getElementById('HorasGuardiaNocturna');
+
+        const idInformaAdicionalMensual = document.getElementById('idInformaAdicionalMensual');
+        const idLblTextoAdicionalMensual = document.getElementById('LblTextoAdicionalMensual');
+        const idTextoAdicionalMensual = document.getElementById('TextoAdicionalMensual');
+
+        idHorasMensuales.style.visibility = idInformaValorSueldoBasico.checked ? 'visible' : 'hidden';
+        idLblHorasMensuales.style.visibility = idInformaValorSueldoBasico.checked ? 'visible' : 'hidden';
+        idHorasGuardiaDiurna.style.visibility = idInformaGuardiaDiurna.checked ? 'visible' : 'hidden';
+        idLblHorasGuardiaDiurna.style.visibility = idInformaGuardiaDiurna.checked ? 'visible' : 'hidden';
+        idHorasGuardiaNocturna.style.visibility = idInformaGuardiaNocturna.checked ? 'visible' : 'hidden';
+        idLblHorasGuardiaNocturna.style.visibility = idInformaGuardiaNocturna.checked ? 'visible' : 'hidden';
+        idTextoAdicionalMensual.style.visibility = idInformaAdicionalMensual.checked ? 'visible' : 'hidden';
+        idLblTextoAdicionalMensual.style.visibility = idInformaAdicionalMensual.checked ? 'visible' : 'hidden';
+    }
+    inicializar();
+</script>
+
+<!--
+
+<div class="m-2 container border border-primary rounded-4 bg-primary text-white">
+    <h1 class="text-center">Nómina</h1>
+</div>
+<div class="container-fluid m-2">
+    <div class="row justify-content-center">
+        <div class="col-6">
+            <div class="card">
+                <div class="card-header">
+                    {{#if Id}} <!-- If Id is defined, we are editing a sector 
+                    <h2 class="text-center">Editando ítem de nómina</h2>
+                    {{else}}
+                    <h2 class="text-center">Nuevo ítem de nómina</h2>
+                    {{/if}}
+                </div>
+                <div class="card-body">
+                    <form action="/nomina/editar/{{#if Id}}{{Id}}{{/if}}" method="POST" class="form-group">
+                        <label for="Descripcion" class="form-label">Descripción</label>
+                        <input type="text" class="form-control" id="Descripcion" name="Descripcion" {{#if
+                            Id}}value="{{nomina.Descripcion}}" {{/if}}>
+                        <div class="row">
+                            <div class="col">
+                                <div class="mt-2 form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                        id="idInformaValorSueldoBasico" name="InformaValorSueldoBasico" {{#if Id}} {{#if
+                                        nomina.InformaValorSueldoBasico}} checked {{/if}}{{/if}}>
+                                    <label class="form-check-label" for="idInformaValorSueldoBasico" >Informa valor de sueldo
+                                        básico</label>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label for="HorasMensuales" class="form-label" id="lblHorasMensuales" name="lblHorasMensuales">Cantidad de horas mensuales</label>
+                                <input type="number" class="form-control" id="HorasMensuales" name="HorasMensuales"
+                                    {{#if Id}}value="{{nomina.HorasMensuales}}" {{/if}}>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="mt-2 form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                        id="idInformaGuardiaDiurna" name="HaceGuardiasDiurnas"  {{#if Id}} {{#if nomina.HaceGuardiasDiurnas}} checked {{/if}}{{/if}}>
+                                    <label class="form-check-label" for="idInformaGuardiaDiurna">Informa guardias diurnas</label>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label for="HorasGuardiaDiurna" class="form-label" id="lblHorasGuardiaDiurna">Horas en guardia diurna</label>
+                                <input type="number" class="form-control" id="HorasGuardiaDiurna"
+                                    name="HorasGuardiaDiurna" {{#if Id}} value="{{nomina.HorasGuardiaDiurna}}" {{/if}}>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="mt-2 form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                        id="idInformaGuardiaNocturna" name="HaceGuardiasNocturnas" {{#if Id}} {{#if nomina.HaceGuardiasNocturnas}} checked {{/if}}{{/if}}>
+                                    <label class="form-check-label" for="idInformaGuardiaNocturna" >Informa guardias
+                                        nocturnas</label>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label for="HorasGuardiaNocturna" class="form-label" id="lblHorasGuardiaNocturna">Horas en guardia nocturna</label>
+                                <input type="number" class="form-control" id="HorasGuardiaNocturna"
+                                    name="HorasGuardiaNocturna" {{#if Id}} value="{{nomina.HorasGuardiaNocturna}}"
+                                    {{/if}}>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="mt-2 form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                        id="idInformaGuardiasPasivas" name="HaceGuardiasPasivas" {{#if Id}} {{#if
+                                        nomina.HaceGuardiasPasivas}} checked {{/if}}{{/if}}>
+                                    <label class="form-check-label" for="idInformaGuardiasPasivas">Informa guardias
+                                        pasivas</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="mt-2 form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                        id="idInformaAdicionalMensual" name="TieneAdicionalMensual"  {{#if Id}} {{#if nomina.TieneAdicionalMensual}} checked {{/if}}{{/if}}>
+                                    <label class="form-check-label" for="idInformaAdicionalMensual">Tiene adicional Mensual</label>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label for="TextoAdicionalMensual" class="form-label" id="LblTextoAdicionalMensual">Texto adicional mensual</label>
+                                <input type="text" class="form-control" id="TextoAdicionalMensual"
+                                    name="TextoAdicional" {{#if Id}} value="{{nomina.TextoAdicional}} " {{/if}}>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-2">Grabar</button>
+                        <button type="button" class="btn btn-primary mt-2"
+                            onclick="window.location.href='/nomina'">Cancelar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const idInformaValorSueldoBasico = document.getElementById('idInformaValorSueldoBasico');
+        const idHorasMensuales = document.getElementById('HorasMensuales');
+        const idLblHorasMensuales = document.getElementById('lblHorasMensuales');
+
+        const idInformaGuardiaDiurna = document.getElementById('idInformaGuardiaDiurna');
+        const idLblHorasGuardiaDiurna = document.getElementById('lblHorasGuardiaDiurna');
+        const idHorasGuardiaDiurna = document.getElementById('HorasGuardiaDiurna');
+
+        const idInformaGuardiaNocturna = document.getElementById('idInformaGuardiaNocturna');
+        const idLblHorasGuardiaNocturna = document.getElementById('lblHorasGuardiaNocturna');
+        const idHorasGuardiaNocturna = document.getElementById('HorasGuardiaNocturna');
+
+        const idInformaAdicionalMensual = document.getElementById('idInformaAdicionalMensual');
+        const idLblTextoAdicionalMensual = document.getElementById('LblTextoAdicionalMensual');
+        const idTextoAdicionalMensual = document.getElementById('TextoAdicionalMensual');
+
+        idInformaValorSueldoBasico.addEventListener('change', function () {
+            idHorasMensuales.style.visibility= idInformaValorSueldoBasico.checked? 'visible' : 'hidden';
+            idLblHorasMensuales.style.visibility= idInformaValorSueldoBasico.checked? 'visible' : 'hidden';
+        });
+
+        idInformaGuardiaDiurna.addEventListener('change', function () {
+    
+            idHorasGuardiaDiurna.style.visibility= idInformaGuardiaDiurna.checked? 'visible' : 'hidden';
+            idLblHorasGuardiaDiurna.style.visibility= idInformaGuardiaDiurna.checked? 'visible' : 'hidden';
+        });
+
+        idInformaGuardiaNocturna.addEventListener('change', function () {
+            //idInformaGuardiaNocturna.checked = !idInformaGuardiaNocturna.checked;
+            idHorasGuardiaNocturna.style.visibility= idInformaGuardiaNocturna.checked? 'visible' : 'hidden';
+            idLblHorasGuardiaNocturna.style.visibility= idInformaGuardiaNocturna.checked? 'visible' : 'hidden';
+        });
+
+        idInformaAdicionalMensual.addEventListener('change', function () {
+            //idInformaAdicionalMensual.checked = !idInformaAdicionalMensual.checked;
+            idTextoAdicionalMensual.style.visibility= idInformaAdicionalMensual.checked? 'visible' : 'hidden';
+            idLblTextoAdicionalMensual.style.visibility= idInformaAdicionalMensual.checked? 'visible' : 'hidden';
+        });
+    });
+    function inicializar() {
+        const idInformaValorSueldoBasico = document.getElementById('idInformaValorSueldoBasico');
+        const idHorasMensuales = document.getElementById('HorasMensuales');
+        const idLblHorasMensuales = document.getElementById('lblHorasMensuales');
+
+        const idInformaGuardiaDiurna = document.getElementById('idInformaGuardiaDiurna');
+        const idLblHorasGuardiaDiurna = document.getElementById('lblHorasGuardiaDiurna');
+        const idHorasGuardiaDiurna = document.getElementById('HorasGuardiaDiurna');
+
+        const idInformaGuardiaNocturna = document.getElementById('idInformaGuardiaNocturna');
+        const idLblHorasGuardiaNocturna = document.getElementById('lblHorasGuardiaNocturna');
+        const idHorasGuardiaNocturna = document.getElementById('HorasGuardiaNocturna');
+
+        const idInformaAdicionalMensual = document.getElementById('idInformaAdicionalMensual');
+        const idLblTextoAdicionalMensual = document.getElementById('LblTextoAdicionalMensual');
+        const idTextoAdicionalMensual = document.getElementById('TextoAdicionalMensual');
+
+            idHorasMensuales.style.visibility= idInformaValorSueldoBasico.checked? 'visible' : 'hidden';
+            idLblHorasMensuales.style.visibility= idInformaValorSueldoBasico.checked? 'visible' : 'hidden';
+            idHorasGuardiaDiurna.style.visibility= idInformaGuardiaDiurna.checked? 'visible' : 'hidden';
+            idLblHorasGuardiaDiurna.style.visibility= idInformaGuardiaDiurna.checked? 'visible' : 'hidden';
+            idHorasGuardiaNocturna.style.visibility= idInformaGuardiaNocturna.checked? 'visible' : 'hidden';
+            idLblHorasGuardiaNocturna.style.visibility= idInformaGuardiaNocturna.checked? 'visible' : 'hidden';
+            idTextoAdicionalMensual.style.visibility= idInformaAdicionalMensual.checked? 'visible' : 'hidden';
+            idLblTextoAdicionalMensual.style.visibility= idInformaAdicionalMensual.checked? 'visible' : 'hidden';
+    }
+    inicializar();
+</script>
+
+-->

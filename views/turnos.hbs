@@ -1,0 +1,50 @@
+<div class="d-flex w-auto row flex-fill mx-2">
+    <div class="row flex-row justify-content-between my-2">
+        <div class="col flex-col">
+            <div class="h1">Turnos</div>
+        </div>
+        <div class="col flex-col text-end">
+            <div class="container">
+                <a href="/turnos/editar" class="btn btn-primary rounded-circle"> <i class="bi-plus h3"></i>
+                </a>
+                <a href="/turnos/importar" class="btn btn-success rounded-circle ms-2" title="Importar desde Excel">
+                    <i class="bi bi-upload h3"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="row flex-row">
+        <table class="table table-bordered table-striped">
+            <thead>
+                {{{encabezadoHTML}}}
+            </thead>
+
+            <tbody>
+                {{#each tabla}}
+                <tr>
+                    <td>{{this.Id}}</td>
+                    <td>{{this.Descripcion}}</td>
+                    <td class="d-none d-lg-table-cell">{{this.Tipo}}</td>
+
+                    <td class="text-center">
+                        {{#if @root.permiteEditar}}
+                        <a type="button" class="btn btn-primary rounded-circle" href="/turnos/editar/{{this.Id}}">
+                            <i class="bi-pencil-fill"></i> </a>
+                        {{/if}}
+                        {{#if @root.permiteBorrar}}
+                        <a type="button" class="btn btn-danger rounded-circle" href="/turnos/borrar/{{this.id}}">
+                            <i class="bi-trash-fill"></i> </a>
+                        {{/if}}
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>
+{{{paginador}}}
+
+
+
+
+{{{funciones}}}

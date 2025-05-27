@@ -1,0 +1,105 @@
+{{#if periodo}}
+<div class="row mt-3 justify-content-center">
+    <div class="col-10">
+        <div class="card shadow-sm px-2 rounded-0">
+            <div class="row row-flex align-items-stretch">
+                <div class="col-4 bg-primary text-white d-flex align-items-center justify-content-center">
+                    <h1 class="text-center h1">Periodo Actual</h1>
+                </div>
+                <div class="col-8">
+                    <div class="row">
+                        <h2 class="text-center">{{periodo}}</h2>
+                    </div>
+                    <div class="row">
+                        <div class="h3 text-center">Se liquidarán horas hasta el: <strong>{{NovedadesHasta}}</strong></div>
+                    </div>
+                    <div class="row">
+                        <span>{{observaciones}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{/if}}
+{{#unless periodo}}
+<div class="row mt-3 justify-content-center">
+    <div class="col-md-6 col-sm-10">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h1 class="h1 text-center">Nuevo Período</h1>
+            </div>
+            <div class="row m-2">
+                <form action="/liquidaciones" method="POST">
+                    <div class="row align-items-center mt-2">
+                        <div class="col-4">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <input type="number" class="form-control" id="mes" name="mes" min="1" max="12"
+                                        placeholder="Mes" required>
+                                </div>
+                                <div class="col">
+                                    <input type="number" class="form-control" id="anio" name="anio" min="1900"
+                                        max="2100" placeholder="Año" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-8">
+                            <div class="h2 text-center">
+                                <div id="periodoDisplay">
+
+                                    <script>
+                                        document.addEventListener('DOMContentLoaded', function () {
+                                            const mesInput = document.getElementById('mes');
+                                            const anioInput = document.getElementById('anio');
+                                            const novedadesHasta = document.getElementById('NovedadesHasta');
+                                            const periodoDisplay = document.getElementById('periodoDisplay');
+
+                                            function updatePeriodoDisplay() {
+                                                const mes = mesInput.value;
+                                                const anio = anioInput.value;
+                                                if (mes && anio) {
+                                                    const mesNombre = new Date(0, mes - 1).toLocaleString('es-ES', { month: 'long' });
+                                                    periodoDisplay.textContent = `${mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1)} ${anio}`;
+                                                    const lastDayOfMonth = new Date(anio, mes, 0).toISOString().split('T')[0];
+                                                    novedadesHasta.value = lastDayOfMonth;
+                                                } else {
+                                                    periodoDisplay.textContent = '';
+                                                }
+                                            }
+
+                                            mesInput.addEventListener('input', updatePeriodoDisplay);
+                                            anioInput.addEventListener('input', updatePeriodoDisplay);
+
+                                        });
+                                    </script>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row m-2">
+                            <div class="col-4">
+                                <div class="form-group">
+                                    <label for="NovedadesHasta">Se liquidarán horas hasta</label>
+                                    <input type="date" class="form-control" id="NovedadesHasta" name="NovedadesHasta"
+                                        required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row m-2">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="observaciones">Observaciones</label>
+                                    <textarea class="form-control" id="observaciones" name="observaciones" rows="3"
+                                        placeholder="Ingrese sus observaciones"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <button type="submit" class="btn btn-primary m-2">Guardar</button>
+                        </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{/unless}}

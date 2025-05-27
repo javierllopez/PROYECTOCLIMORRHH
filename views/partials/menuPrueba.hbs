@@ -1,0 +1,100 @@
+<!-- Contenido a mostrar en pantallas grandes y medianas -->
+<div class="d-none d-md-block">
+    <div class="d-flex flex-column flex-shrink-0 p-3 shadow-sm vh-100 fixed-top" style="width: 250px;">
+        <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+            <img src="/img/DelBuenPastor.jpg" alt="" width="80" height="60" class="me-2">
+            <span class="fs-4">CLIMO S.A.</span>
+        </a>
+        <hr>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li>
+                <a href="/personal" class="nav-link link-body-emphasis" aria-current="page">
+                    <i class="bi-people-fill p-2"></i>
+                    Personal
+                </a>
+            </li>
+            <li>
+                <a href="/sectores" class="nav-link link-body-emphasis">
+                    <i class="bi-building-fill-check p-2"></i>
+                    Sectores
+                </a>
+            </li>
+            <li>
+                <a href="/categorias" class="nav-link link-body-emphasis">
+                    <i class="bi-person-badge-fill p-2"></i>Categorías
+                </a>
+            </li>
+            <li>
+                <a href="/turnos" class="nav-link link-body-emphasis">
+                    <i class="bi-clock p-2"></i>Turnos
+                </a>
+            </li>
+            <li>
+                <a href="/motivos" class="nav-link link-body-emphasis">
+                    <i class="bi-menu-button p-2"></i>Motivos
+                </a>
+            </li>
+            <li>
+                <a href="#submenu" class="nav-link link-body-emphasis" data-bs-toggle="collapse" aria-expanded="false">
+                    <i class="bi-folder-fill p-2"></i>Nómina
+                </a>
+                <div class="collapse" id="submenu">
+                    <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                        <li>
+                            <a href="/itemsNomina" class="nav-link link-body-emphasis">
+                                <i class="bi-file-earmark-text p-2"></i>Items de Nómina
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/nominaValorizada" class="nav-link link-body-emphasis">
+                                <i class="bi-file-earmark-text p-2"></i>Nómina valorizada
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+            </li>
+        </ul>
+        <hr>
+        <div class="dropdown">
+            <a href="#" class="d-flex align-items-center link-body-emphasis text-decoration-none dropdown-toggle"
+                data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="https://github.com/mdo.png" alt="" width="32" height="32" class="rounded-circle me-2">
+                <strong>mdo</strong>
+            </a>
+            <ul class="dropdown-menu text-small shadow">
+                <li><a class="dropdown-item" href="#">New project...</a></li>
+                <li><a class="dropdown-item" href="#">Settings</a></li>
+                <li><a class="dropdown-item" href="#">Profile</a></li>
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+                <li><a class="dropdown-item" href="#">Sign out</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+<!-- Contenido a mostrar en pantallas pequeñas -->
+<div class="d-block d-md-none">
+    <div class="d-flex flex-column flex-shrink-0 p-3 shadow-sm vh-100 fixed-top" style="width: 250px;">
+        <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+            <img src="/img/DelBuenPastor.jpg" alt="" width="80" height="60" class="me-2">
+            <span class="fs-4">CLIMO S.A.</span>
+        </a>
+    <div class="card shadow-sm mb-3">
+        <div class="card-body text-center">
+            <a href="/personal" class="text-decoration-none link-body-emphasis">
+                <i class="bi-people-fill display-4"></i>
+                <div class="mt-2">Personal</div>
+            </a>
+        </div>
+    </div>
+    <div class="card shadow-sm mb-3">
+        <div class="card-body text-center">
+            <a href="/sectores" class="text-decoration-none link-body-emphasis">
+                <i class="bi-building-fill-check display-4"></i>
+                <div class="mt-2">SEctores</div>
+            </a>
+        </div>
+    </div>
+</div>

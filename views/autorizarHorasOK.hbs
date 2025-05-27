@@ -1,0 +1,108 @@
+<div class="row justify-content-center mt-2">
+    <div class="col-lg-6 col-12">
+        <form id="autorizarHorasForm" action="/autorizarHoras/OK/{{novedad.Id}}" method="POST">
+            <input type="hidden" name="Id" value="{{novedad.Id}}">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="text-responsive">Autorización de horas de {{Apenom}}</h1>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="detalle" class="text-responsive mt-2">Detalle:</label>
+                                <textarea class="form-control text-responsive mt-2" id="detalle" name="detalle" rows="3"
+                                    disabled>{{detalleNomina}}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 col-12">
+                            <div class="form-group">
+                                <label for="motivo" class="text-responsive mt-2">Motivo:</label>
+                                <select class="form-select text-responsive mt-2" id="motivo" name="motivo" required>
+                                    <option disabled selected value="">Seleccione un motivo</option>
+                                    {{#each motivos}}
+                                    <option value="{{this.Id}}" data-reemplaza="{{this.InformaReemplazo}}"
+                                        data-observaciones="{{this.DescripcionObligatoria}}">{{this.Descripcion}}
+                                    </option>
+                                    {{/each}}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-12" id="ReemplazaArea" style="display: none;">
+                            <div class="form-group">
+                                <label for="reemplazo" class="text-responsive mt-2">Reemplaza a:</label>
+                                <select class="form-select text-responsive mt-2" id="reemplazo" name="reemplazo">
+                                    <option disabled selected value="">Seleccione un empleado</option>
+                                    {{#each personal}}
+                                    <option value="{{this.Id}}">{{this.ApellidoYNombre}}</option>
+                                    {{/each}}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" id="ObservacionesArea" style="display: none;">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="observaciones" class="text-responsive mt-2">Observaciones:</label>
+                                <textarea class="form-control text-responsive mt-2" id="observaciones"
+                                    name="observaciones" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">Autorizar</button>
+                            <a href="/autorizarHoras" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const selectElement = document.getElementById('motivo');
+        selectElement.addEventListener('change', (event) => {
+            const selectedOption = event.target.options[event.target.selectedIndex];
+            const observaciones = selectedOption.getAttribute('data-observaciones');
+            const reemplaza = selectedOption.getAttribute('data-reemplaza');
+            handleSelectChange(reemplaza, observaciones);
+        });
+
+        const form = document.getElementById('autorizarHorasForm');
+        form.addEventListener('submit', (event) => {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    });
+
+    function handleSelectChange(reemplaza, observaciones) {
+        const r = reemplaza;
+        const o = observaciones;
+        const reemplazaArea = document.getElementById('ReemplazaArea');
+        const observacionesArea = document.getElementById('ObservacionesArea');
+        if (r === '1') {
+            reemplazaArea.style.display = 'block';
+            document.getElementById('reemplazo').setAttribute('required', 'required');
+        } else {
+            reemplazaArea.style.display = 'none';
+            document.getElementById('reemplazo').removeAttribute('required');
+        }
+        if (o === '1') {
+            observacionesArea.style.display = 'block';
+            document.getElementById('observaciones').setAttribute('required', 'required');
+        } else {
+            observacionesArea.style.display = 'none';
+            document.getElementById('observaciones').removeAttribute('required');
+        }
+    }
+</script>

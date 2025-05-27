@@ -1,0 +1,154 @@
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-sm-10">
+        <div class="row">
+            <h1 class="text-center">Categorías</h1>
+        </div>
+        <div class="row">
+            <div class="container">
+                <div class="card">
+                    <div class="card-header">
+                        {{#if Id}} <!-- If Id is defined, we are editing a sector -->
+                        <h2 class="text-center">Editando categoría</h2>
+                        {{else}}
+                        <h2 class="text-center">Nueva categoría</h2>
+                        {{/if}}
+                    </div>
+                    <!-- If Id is defined, we are editing a sector -->
+                    <form action="/categorias/editar/{{#if Id}}{{Id}}{{/if}}" method="POST" class="form-group">
+                        
+                        <input type="hidden" name="Items" id="Items">
+                        <div class="card-body">
+                            <label for="Descripcion" class="form-label">Descripción</label>
+                            <input type="text" class="form-control" id="Descripcion" name="Descripcion"
+                                value="{{categoria.Descripcion}}">
+                            <label for="Area" class="form-label mt-2">Area</label>
+                            <select class="form-select" aria-label="Default select example" name="Area" id="Area">
+                                <option {{#ifeq categoria.Area 'Administrativa' }} selected {{/ifeq}}value="1">
+                                    Administrativa</option>
+                                <option {{#ifeq categoria.Area 'Operativa' }} selected {{/ifeq}}value="2">Operativa
+                                </option>
+                            </select>
+                            <hr>
+                            <div class="row mt-2">
+                                <div class="col-10">
+                                    <div class="h5">
+                                        Items de nómina habilitados
+                                    </div>
+                                </div>
+                                <div class="col-2 text-end">
+                                    <div class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                        data-bs-target="#addItemModal">Agregar</div>
+
+                                    <!-- Modal -->
+                                    <div class="modal fade" id="addItemModal" tabindex="-1"
+                                        aria-labelledby="addItemModalLabel" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="addItemModalLabel">Agregar Item de
+                                                        Nómina</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                        aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <select class="form-select" id="itemNominaSelect">
+                                                            {{#each ItemsNomina}}
+                                                            <option value="{{this.Id}}">{{this.Descripcion}}</option>
+                                                            {{/each}}
+                                                        </select>
+                                                    </div>
+                                                    <button type="button" class="btn btn-primary"
+                                                        id="addItemButton">Agregar</button>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <table class="table table-bordered table-striped mt-3">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Item de nómina</th>
+                                        <th scope="col" class="text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaItems">
+                                    <!-- Acá vienen los registros de la tabla de items -->
+
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary mt-2">Grabar</button>
+                            <button type="button" class="btn btn-primary mt-2"
+                                onclick="window.location.href='/categorias'">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {{#if itemsHabilitados}} 
+            let items = {{{json itemsHabilitados}}};
+            for (let i= 0; i < items.length; i++) {
+                const item = items[i];
+                const table = document.getElementById('tablaItems');
+                const row = table.insertRow();
+                const cell1 = row.insertCell(0);
+                const cell2 = row.insertCell(1);
+                cell2.className = 'text-center';
+
+                cell1.textContent = item.itemDescripcion;
+                cell2.innerHTML = `<button type="button" class="btn btn-danger btn-sm rounded-circle" onclick="removeItem(${item.itemId}, this)"><i class="bi-trash-fill"></i></button>`;
+            }
+        
+        {{else}} let items = []; 
+        
+        {{/if}}
+        document.getElementById('Items').value = JSON.stringify(items);
+
+        document.getElementById('addItemButton').addEventListener('click', function() {
+            const select = document.getElementById('itemNominaSelect');
+            const selectedItem = select.options[select.selectedIndex];
+            const item = {itemId: selectedItem.value, itemDescripcion: selectedItem.text};
+
+            if (items.includes(item.itemId)) {
+                alert('El item ya está en la lista.');
+                return;
+            }
+
+            // Add the item to the list
+            items.push(item);
+
+            // Add the item to the table
+            const table = document.getElementById('tablaItems');
+            const row = table.insertRow();
+            const cell1 = row.insertCell(0);
+            const cell2 = row.insertCell(1);
+            cell2.className = 'text-center';
+
+            cell1.textContent = item.itemDescripcion;
+            cell2.innerHTML = `<button type="button" class="btn btn-danger btn-sm rounded-circle" onclick="removeItem(${item.itemId}, this)"><i class="bi-trash-fill"></i></button>`;
+            
+            document.getElementById('Items').value = JSON.stringify(items);
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addItemModal'));
+            modal.hide();
+        });
+
+        window.removeItem = function(itemId, button) {
+            // Remove the item from the list
+            items = items.filter(item => item.itemId != itemId);
+
+            // Remove the row from the table
+            const row = button.parentNode.parentNode;
+            row.parentNode.removeChild(row);
+            document.getElementById('Items').value = JSON.stringify(items);
+        };
+    });
+</script>

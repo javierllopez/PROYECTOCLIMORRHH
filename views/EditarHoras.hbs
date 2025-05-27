@@ -1,0 +1,149 @@
+<div class="row justify-content-center">
+    <div class="col col-lg-6 col-sm-10">
+        <div class="row">
+            <h1 class="text-center">Horas extra realizadas {{Apenom}}</h1>
+        </div>
+        <div class="row">
+            <div class="col mx-2">
+                <div class="card">
+                    <div class="card-header">
+                        {{#if Id}} <!-- Si Id está definido => estoy editando el registro -->
+                        <h2 class="text-center">Modificar horas extra ingresdas</h2>
+                        {{else}}
+                        <h2 class="text-center">Ingresar horas extra</h2>
+                        {{/if}}
+                    </div>
+                    {{#if Id}} <!-- If Id is defined, we are editing a sector -->
+                    <form action="/novedades/EditarHoras/{{Id}}" method="POST" class="form-group">
+                        <input type="hidden" name="Legajo" value="{{Legajo}}">
+                        <div class="card-body">
+                            <span>Ingresar la fecha y hora en que se comenzó a hacer horas extra, <strong>no la jornada
+                                completa</strong></span>
+                            <hr>
+                            <div class="row">
+                                <div class="col">
+                                    <label for="NominaHabilitada" class="form-label">valor hora realizada</label>
+                                    <select class="form-select" id="NominaHabilitada" name="NominaHabilitada">
+                                        {{#each nominaHabilitada}}
+                                        <option value="{{this.IdNomina}}"{{#ifeq @root.novedadesR.IdNomina this.idNomina}} selected {{/ifeq}}>{{this.Descripcion}}</option>
+                                        {{/each}}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col d-flex align-items-center">
+                                    <label>Inicio</label>
+                                </div>
+                                <div class="col">
+                                    <label for="FechaInicio" class="form-label">Fecha</label>
+                                    <input type="date" class="form-control" id="FechaInicio" name="FechaInicio"
+                                        value="{{FechaIso novedadesR.Inicio}}">
+                                </div>
+                                <div class="col">
+                                    <label for="HoraInicio" class="form-label">Hora</label>
+                                    <input type="time" class="form-control" id="HoraInicio" name="HoraInicio"
+                                        value="{{Hora novedadesR.Inicio}}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col d-flex align-items-center">
+                                    <label>Salida</label>
+                                </div>
+                                <div class="col">
+                                    <label for="FechaFin" class="form-label">Fecha</label>
+                                    <input type="date" class="form-control" id="FechaFin" name="FechaFin"
+                                        value="{{FechaIso novedadesR.Fin}}">
+                                </div>
+                                <div class="col">
+                                    <label for="HoraFin" class="form-label">Hora</label>
+                                    <input type="time" class="form-control" id="HoraFin" name="HoraFin"
+                                        value="{{Hora novedadesR.Fin}}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary mt-2">Grabar</button>
+                            <button type="button" class="btn btn-primary mt-2"
+                                onclick="window.location.href='/novedades'">Cancelar</button>
+                        </div>
+                    </form>
+                    {{else}}
+                    <form action="/novedades/agregarHoras" method="POST" class="form-group">
+                        <input type="hidden" name="Legajo" value="{{Legajo}}">
+                        <div class="card-body">
+                            <span>Ingresar la fecha y hora en que se comenzó a hacer horas extra, <strong>no la jornada
+                                completa</strong></span>
+                            <hr>
+                            <div class="row">
+                                <div class="col d-flex align-items-center">
+                                    <label for="NominaHabilitada" class="form-label">valor hora realizada</label>
+                                </div>
+                                <div class="col-8">
+                                    <select class="form-select" id="NominaHabilitada" name="ItemNomina">
+                                        {{#each nominaHabilitada}}
+                                        <option value="{{this.IdNomina}}">{{this.Descripcion}}</option>
+                                        {{/each}}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col d-flex align-items-center">
+                                    <label>Inicio</label>
+                                </div>
+                                <div class="col">
+                                    <label for="Fecha" class="form-label">Fecha</label>
+                                    <input type="date" class="form-control" id="FechaEntrada" name="FechaEntrada"
+                                        required>
+                                    <!-- Agrego script para asignar fecha actual a FechaEntrada -->
+                                    <script>
+                                        document.addEventListener("DOMContentLoaded", (event) => {
+                                            const Fecha = document.getElementById("FechaEntrada");
+                                            const ahora = new Date();
+                                            const year = ahora.getFullYear();
+                                            const month = String(ahora.getMonth() + 1).padStart(2, '0');
+                                            const day = String(ahora.getDate()).padStart(2, '0');
+                                            Fecha.value = `${year}-${month}-${day}`;
+                                        });
+                                    </script>
+                                </div>
+                                <div class="col">
+                                    <label for="Hora" class="form-label">Hora</label>
+                                    <input type="time" class="form-control" id="HoraEntrada" name="HoraEntrada"
+                                        required>
+
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col d-flex align-items-center">
+                                    <label>Salida</label>
+                                </div>
+                                <div class="col">
+                                    <label for="Fecha" class="form-label">Fecha</label>
+                                    <input type="date" class="form-control" id="FechaSalida" name="FechaSalida"
+                                        required>
+                                    <script>
+                                        document.getElementById("FechaSalida").addEventListener("focus", (event) => {
+                                            const FechaEntrada = document.getElementById("FechaEntrada");
+                                            event.target.value = FechaEntrada.value;
+                                        });
+                                    </script>
+                                </div>
+                                <div class="col">
+                                    <label for="Hora" class="form-label">Hora</label>
+                                    <input type="time" class="form-control" id="HoraSalida" name="HoraSalida" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary mt-2">Grabar</button>
+                            <button type="button" class="btn btn-primary mt-2"
+                                onclick="window.location.href='/novedades'">Cancelar</button>
+                        </div>
+                    </form>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

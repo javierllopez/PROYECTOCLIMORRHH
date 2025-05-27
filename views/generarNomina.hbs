@@ -1,0 +1,127 @@
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-sm-10">
+        <div class="row">
+            <h1 class="text-center">Nómina Valorizada</h1>
+        </div>
+        <div class="row">
+            <div class="container">
+                <div class="card mb-2">
+                    <div class="card-header">
+                        <h2 class="text-center">Generar Nómina</h2>
+                    </div>
+                    <form action="/nominaValorizada/generarNomina" method="POST" class="form-group">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <label for="VigenteDesde" class="form-label">Desde: </label>
+                                </div>
+                                <div class="col-4">
+                                    <input type="date" class="form-control" id="VigenteDesde" name="VigenteDesde"
+                                        required>
+                                </div>
+                                <div class="col-auto">
+                                    <label for="VigenteHasta" class="form-label">Hasta: </label>
+                                </div>
+                                <div class="col-4">
+                                    <input type="date" class="form-control" id="VigenteHasta" name="VigenteHasta"
+                                        required>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="class col-6">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="opcionNomina"
+                                            id="GeneraSobreNominaAnterior" value="1">
+                                        <label class="form-check-label" for="GeneraSobreNominaAnterior">
+                                            Generar nueva nómina aplicando aumento sobre nómina anterior
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="class col-6">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="opcionNomina"
+                                            id="NominaNueva" value="2" checked>
+
+                                        <label class="form-check-label" for="NominaNueva">
+                                            Generar nueva nómina en blanco
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="row m-2 justify-content-between" id="seccion">
+                                    <div class="col-6">
+                                        <label for="Aumento" class="form-label">Porcentaje de aumento: </label>
+                                        <input type="number" class="form-control" id="Aumento" name="Aumento" min="0" step="0.000001">
+                                    </div>
+                                    <div class="class col-6">
+                                        <label for="IdNominaBase" class="form-label">Aplicar aumento sobre nómina
+                                        </label>
+                                        <select class="form-select" id="IdNominaBase" name="IdNominaBase">
+                                            {{#each nominavalorese}}
+
+                                            <option value="{{this.Id}}">Vigente entre {{FechaCorta this.VigenteDesde}} y
+                                                {{FechaCorta this.VigenteHasta}}</option>
+                                            {{/each}}
+
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary mt-2" id="submitBtn">Generar</button>
+                            <div id="spinner" class="spinner-border text-primary mt-2" role="status" style="display: none;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <button type="button" class="btn btn-primary mt-2"
+                                onclick="window.location.href='/nominaValorizada'">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const op1 = document.getElementById('GeneraSobreNominaAnterior');
+        const op2 = document.getElementById('NominaNueva');
+        const seccion = document.getElementById('seccion');
+
+        seccion.style.display = 'none';
+
+        function mostrarSeccion() {
+            if (op1.checked) {
+                seccion.style.display = 'block';
+            } else {
+                seccion.style.display = 'none';
+            }
+        }
+
+        op1.addEventListener('change', mostrarSeccion);
+        op2.addEventListener('change', mostrarSeccion);
+    })
+
+</script>
+
+<script>
+    const paquete = {{{ json Paquete }}};
+    if (paquete) {
+        const desde = document.getElementById('VigenteDesde');
+        const hasta = document.getElementById('VigenteHasta');
+        const aumento = document.getElementById('Aumento');
+        const idNominaBase = document.getElementById('IdNominaBase');
+
+        desde.value = paquete.VigenteDesde;
+        hasta.value = paquete.VigenteHasta;
+        aumento.value = paquete.Aumento;
+        idNominaBase.value = paquete.IdNominaBase;
+    }
+</script>
+<script>
+    document.querySelector('form').addEventListener('submit', function () {
+        document.getElementById('submitBtn').style.display = 'none';
+        document.getElementById('spinner').style.display = 'inline-block';
+    });
+</script>

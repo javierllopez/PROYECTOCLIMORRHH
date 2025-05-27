@@ -1,0 +1,86 @@
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-sm-10">
+        <div class="row">
+            <div class="h1 text-center">Valores vigentes {{Vigencia}}</div>
+        </div>
+        <div class="row">
+            <div class="container">
+                <form action="/nominaValorizada" method="POST" class="form-group">
+                    <input type="hidden" name="Id" value="{{Id}}">
+                    <input type="hidden" name="idNomina" value="{{idNomina}}">
+                    <input type="hidden" name="idNominaValoresE" value="{{idNominaValoresE}}">
+                    <input type="hidden" name="HsMensuales" value="{{HsMensuales}}">
+                    <input type="hidden" name="HsGuardiasDiurnas" value="{{HsGuardiasDiurnas}}">
+                    <input type="hidden" name="HsGuardiasNocturnas" value="{{HsGuardiasNocturnas}}">
+                    <div class="card mb-2">
+                        <div class="card-header">
+                            <div class="h2 text-center">{{Descripcion}}</div>
+                        </div>
+                        <div class="card-body">
+                            {{#if bSueldoBasico}}
+                            <div class="row my-2">
+                                <div class="col-8">
+                                    <label for="sueldoBasico" class="form-label">Sueldo Básico</label>
+                                </div>
+                                <div class="col-4">
+                                    <input type="number" class="form-control" id="sueldoBasico" name="sueldoBasico"
+                                        value="{{sueldoBasico}}">
+                                </div>
+                            </div>
+                            {{/if}}
+                            {{#if bGuardiasDiurnas}}
+                            <div class="row my-2">
+                                <div class="col-8">
+                                    <label for="guardiaDiurna" class="form-label">Valor guardia diurna</label>
+                                </div>
+                                <div class="col-4">
+                                    <input type="number" class="form-control" id="guardiaDiurna" name="guardiaDiurna"
+                                        value="{{ValorGuardiaDiurna}}">
+                                </div>
+                            </div>
+                            {{/if}}
+                            {{#if bGuardiasNocturnas}}
+                            <div class="row my-2">
+                                <div class="col-8">
+                                    <label for="guardiaNocturna" class="form-label">Valor guardia nocturna</label>
+                                </div>
+                                <div class="col-4">
+                                    <input type="number" class="form-control" id="guariaNocturna" name="guardiaNocturna"
+                                        value="{{ValorGuardiaNocturna}}">
+                                </div>
+                            </div>
+                            {{/if}}
+                            {{#if bGuardiasPasivas}}
+                            <div class="row my-2">
+                                <div class="col-8">
+                                    <label for="guardiaPasiva" class="form-label">Valor guardia pasiva</label>
+                                </div>
+                                <div class="col-4">
+                                    <input type="number" class="form-control" id="guardiaPasiva" name="guardiaPasiva"
+                                        value="{{ValorGuardiaPasiva}}">
+                                </div>
+                            </div>
+                            {{/if}}
+                            {{#if bAdicionalMensual}}
+                            <div class="row my-2">
+                                <div class="col-8">
+                                    <label for="adicionalMensual" class="form-label">Valor adicional Mensual</label>
+                                </div>
+                                <div class="col-4">
+                                    <input type="number" class="form-control" id="adicionalMensual" name="adicionalMensual"
+                                        value="{{ValorAdicional}}">
+                                </div>
+                            </div>
+                            {{/if}}
+                        </div>
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary mt-2">Grabar</button>
+                            <button type="button" class="btn btn-primary mt-2"
+                                onclick="window.location.href='/nominaValorizada'">Cancelar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

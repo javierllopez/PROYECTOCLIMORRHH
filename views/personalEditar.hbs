@@ -1,0 +1,206 @@
+<div class="container m-2">
+    <div class="card">
+        <form action={{#if personal}}"/personal/editar"{{else}}"/personal/agregar"{{/if}} method="POST">
+            {{#if personal}} <input type="hidden" name="Id" value="{{personal.Id}}">  {{/if}}
+            <!-- 1. Agregar campo oculto para IdNominaSeleccionada -->
+            <input type="hidden" id="idNominaSeleccionada" name="idNominaSeleccionada" value="">
+            <input type="hidden" name="IdUsuario" value="{{personal.idUsuario}}">
+            <div class="card-header">
+                <h1>Editar Datos del Personal</h1>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-2">
+                        <div class="form-group">
+                            <label for="legajo">Legajo:</label>
+                            <input type="number" class="form-control" id="legajo" name="legajo" required value={{#if personal}} {{personal.Legajo}} {{else}}"{{nuevoLegajo}}{{/if}}"
+                                title="Debe ingresar un número de legajo válido">
+                        </div>
+                    </div>
+                    <div class="col-5">
+                        <div class="form-group">
+                            <label for="apellido">Apellido:</label>
+                            <input type="text" class="form-control" id="apellido" name="apellido" required {{#if
+                                personal}} value="{{personal.Apellido}}" {{/if}}>
+                        </div>
+                    </div>
+                    <div class="col-5">
+                        <div class="form-group">
+                            <label for="nombres">Nombres:</label>
+                            <input type="text" class="form-control" id="nombres" name="nombres" required {{#if
+                                personal}} value="{{personal.Nombres}}" {{/if}}>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-3">
+                        <div class="form-group">
+                            <label for="fechaNacimiento">Fecha de Nacimiento:</label>
+                            <input type="date" class="form-control" id="fechaNacimiento" name="fechaNacimiento" required
+                                {{#if personal}} value="{{FechaIso personal.FechaNacimiento}}" {{/if}}
+                                onchange="validateAge()">
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="form-group">
+                            <label for="fechaIngreso">Fecha de Ingreso:</label>
+                            <input type="date" class="form-control" id="fechaIngreso" name="fechaIngreso" {{#if personal}} value="{{FechaIso personal.FechaIngreso}}" {{/if}} required>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="form-group">
+                            <label for="cuil">CUIL:</label>
+                            <input type="text" class="form-control" id="cuil" name="CUIL" pattern="\d{11}"
+                                title="El CUIL debe tener 11 dígitos" {{#if personal}} value="{{personal.CUIL}}" {{/if}}
+                                required>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="form-group">
+                            <label for="dni">DNI:</label>
+                            <input type="text" class="form-control" id="dni" name="DNI" pattern="\d{8}" {{#if personal
+                                }} value="{{personal.DNI}}" {{/if}} required>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-4">
+                        <div class="form-group">
+                            <label for="idSector">Sector:</label>
+                            <select class="form-select" id="idSector" name="idSector" required>
+                                <option value="">Seleccione un sector</option>
+                                {{#each sectores}}
+                                <option value="{{this.Id}}" {{#ifeq @root.personal.IdSector this.Id}}selected {{/ifeq}}>
+                                    {{this.Descripcion}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-group">
+                            <label for="idCategoria">Categoría:</label>
+                            <select class="form-select" id="idCategoria" name="idCategoria" required onchange="alertarCategoriaSinNomina()">
+                                <option value="">Seleccione una categoría</option>
+                                {{#each categorias}}
+                                <option value="{{this.Id}}" data-nomina="{{this.IdNomina}}" {{#ifeq @root.personal.IdCategoria this.Id}} selected {{/ifeq}}>{{this.Descripcion}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-group">
+                            <label for="idTurno">Turno:</label>
+                            <select class="form-select" id="idTurno" name="idTurno" required>
+                                <option value="">Seleccione un turno</option>
+                                {{#each turnos}}
+                                <option value="{{this.Id}}"  {{#ifeq @root.personal.IdTurno this.Id}} selected {{/ifeq}}>{{this.Descripcion}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="correoElectronico">Correo Electrónico:</label>
+                            <input type="email" class="form-control" id="correoElectronico" name="correoElectronico" {{#if personal}} value="{{personal.CorreoElectronico}}" {{/if}}
+                                required>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="nivel">Nivel de acceso:</label>
+                            <select class="form-select" id="nivel" name="nivel" required>
+                                <option value="">Seleccione nivel de acceso asignado</option>
+                                <option value="3" {{#ifeq @root.personal.nivel 3 }} selected {{/ifeq}}>Usuario</option>
+                                <option value="2" {{#ifeq @root.personal.nivel 2 }} selected {{/ifeq}}>Supervisor</option>
+                                <option value="1" {{#ifeq @root.personal.nivel 1 }} selected {{/ifeq}}>Administrador</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <button type="submit" class="btn btn-primary" id="btnGrabar">Grabar</button>
+                <button type="button" class="btn btn-primary"
+                    onclick="window.location.href='/personal'">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Modal Bootstrap para selección de nómina -->
+<div class="modal fade" id="modalNomina" tabindex="-1" aria-labelledby="modalNominaLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalNominaLabel">Seleccione una nómina</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="comboNomina">Nómina:</label>
+          <select class="form-select" id="comboNomina">
+            <option value="">Seleccione una nómina</option>
+            {{#each nominas}}
+              <option value="{{this.Id}}">{{this.Descripcion}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmarNomina">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+    function validateAge() {
+        const fechaNacimiento = document.getElementById('fechaNacimiento').value;
+        const birthDate = new Date(fechaNacimiento);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        const monthDifference = today.getMonth() - birthDate.getMonth();
+
+        if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+
+        if (age < 18) {
+            alert('El empleado debe ser mayor de 18 años.');
+            document.getElementById('fechaNacimiento').value = '';
+        }
+    }
+    function alertarCategoriaSinNomina() {
+        const select = document.getElementById('idCategoria');
+        const selectedOption = select.options[select.selectedIndex];
+        const idNomina = selectedOption.getAttribute('data-nomina');
+        if (!idNomina) {
+            alert('La categoría seleccionada no tiene una nómina asociada.' + idNomina);
+        }
+    }
+    document.getElementById('btnGrabar').addEventListener('click', function(event) {
+        const selectCategoria = document.getElementById('idCategoria');
+        const selectedOption = selectCategoria.options[selectCategoria.selectedIndex];
+        const idNomina = selectedOption.getAttribute('data-nomina');
+        if (!idNomina) {
+            event.preventDefault();
+            const modal = new bootstrap.Modal(document.getElementById('modalNomina'));
+            modal.show();
+        }
+    });
+
+    document.getElementById('btnConfirmarNomina').addEventListener('click', function() {
+        const combo = document.getElementById('comboNomina');
+        const idNominaSeleccionada = combo.value;
+        if (!idNominaSeleccionada) {
+            alert('Debe seleccionar una nómina.');
+            return;
+        }
+        document.getElementById('idNominaSeleccionada').value = idNominaSeleccionada;
+        // Cerrar modal y enviar formulario
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalNomina'));
+        modal.hide();
+        document.querySelector('form').submit();
+    });
+</script>

@@ -1,0 +1,157 @@
+<div class="d-flex w-auto">
+    <div class="row flex-fill m-2">
+        <div class="col">
+            <div class="row p-2">
+                <div class="container">
+                    <div class="card vh-100">
+                        <div class="card-header">
+                            <ul class="nav nav-tabs card-header-tabs" id="navTab" role="tablist">
+                                <li class="nav-link {{#ifeq tab 1}} active {{/ifeq}}" id="navHome-tab"
+                                    data-bs-toggle="tab" data-bs-target="#navItems" type="button" role="tab"
+                                    aria-controls="navHome" aria-selected="false">Items
+                                </li>
+                                <li class="nav-link {{#ifeq tab 2}} active {{/ifeq}}" id="navProfile-tab"
+                                    data-bs-toggle="tab" data-bs-target="#navNominaValorizada" type="button" role="tab"
+                                    aria-controls="navProfile" aria-selected="true">Nómina
+                                    Valorizada
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="card-body">
+                            <div class="tab-content" id="nav-tabContent">
+                                <div class="tab-pane fade {{#ifeq tab 1}} show active {{/ifeq}}" id="navItems"
+                                    role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">
+                                    <div class="d-flex flex-row align-items-center">
+                                        <div class="col-10 mx-auto">
+                                            <div class="h2">Items de Nómina
+                                            </div>
+                                        </div>
+                                        <div class="col-2 text-end">
+                                            <a type="button" class="btn btn-primary rounded-circle text-end"
+                                                href="/nomina/editar">
+                                                <i class="bi-plus h5"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <table class="mt-2 table table-bordered table-striped">
+                                        <thead>
+                                            {{{encabezadoHTMLNomina}}}
+                                        </thead>
+
+                                        <tbody>
+                                            {{#each tablaNomina}}
+                                            <tr>
+                                                <td>{{this.Id}}</td>
+                                                <td>{{this.Descripcion}}</td>
+                                                <td>{{#if this.InformaValorSueldoBasico}}Sí{{else}}No{{/if}}
+                                                </td>
+                                                <td>{{#if this.HaceGuardiasDiurnas}}Sí{{else}}No{{/if}}</td>
+                                                <td>{{#if this.HaceGuardiasNocturnas}}Sí{{else}}No{{/if}}</td>
+                                                <td>{{#if this.HaceGuardiasPasivas}}Sí{{else}}No{{/if}}</td>
+                                                <td>{{#if this.TieneAdicionalMensual}}Sí{{else}}No{{/if}}</td>
+                                                <td class="text-center">
+                                                    {{#if @root.permiteEditarNomina}}
+                                                    <a type="button" class="btn btn-primary rounded-circle"
+                                                        href="/nomina/editar/{{this.Id}}">
+                                                        <i class="bi-pencil-fill"></i></a>
+                                                    {{/if}}
+                                                    {{#if @root.permiteBorrarNomina}}
+                                                    <a type="button" class="btn btn-danger rounded-circle"
+                                                        href="/nomina/borrar/{{this.id}}"> <i class="bi-trash-fill"></i>
+                                                    </a>
+                                                    {{/if}}
+                                                </td>
+                                            </tr>
+                                            {{/each}}
+                                        </tbody>
+                                    </table>
+                                    {{{paginadorNomina}}}
+                                </div>
+                                <div class="tab-pane fade {{#ifeq tab 2}} show active {{/ifeq}}"
+                                    id="navNominaValorizada" role="tabpanel" aria-labelledby="nav-profile-tab"
+                                    tabindex="0">
+                                    <div class="d-flex flex-row align-items-center justify-content-between">
+                                        <div class="d-flex flex-column">
+                                            <div class="h2">Nómina Valorizada</div>
+                                        </div>
+                                        <div class="d-flex flex-col">
+                                            <select class="form-select form-select-lg m-2"
+                                                aria-label="Large select example" id="periodoNomina">
+
+                                                {{#each tablaNominaValorese}}
+
+                                                <option {{#ifeq this.Id @root.idNomina}} selected
+                                                    {{/ifeq}}value="{{this.Id}}">
+                                                    Entre {{FechaCorta
+                                                    this.VigenteDesde}}
+                                                    y
+                                                    {{FechaCorta
+                                                    this.VigenteHasta}}
+                                                </option>
+                                                {{/each}}
+                                            </select>
+                                        </div>
+                                        <div class="d-flex justify-content-end">
+                                            <a type="button" class="btn btn-primary rounded-circle text-end"
+                                                href="/nomina/generarNomina">
+                                                <i class="bi-coin h5"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <table class="mt-2 table table-bordered table-striped">
+                                        <thead>
+                                            {{{encabezadoHTMLNominaValoresr}}}
+                                        </thead>
+
+                                        <tbody>
+                                            {{#each tablaNominaValoresr}}
+                                            <tr>
+                                                <td>{{this.Id}}</td>
+                                                <td>{{this.Descripcion}}</td>
+                                                <td class="text-center">{{formatoMoneda this.ValorHora50}}</td>
+                                                <td class="text-center">{{formatoMoneda this.ValorHora100}}</td>
+                                                <td class="text-center">{{formatoMoneda
+                                                    this.ValorGuardiaDiurna}}
+                                                </td>
+                                                <td class="text-center">{{formatoMoneda
+                                                    this.ValorGuardiaNocturna}}
+                                                </td>
+                                                <td class="text-center">{{formatoMoneda
+                                                    this.ValorGuardiaPasiva}}
+                                                </td>
+                                                <td class="text-center">
+                                                    {{#if @root.permiteEditarNominaValoresr}}
+                                                    <a type="button" class="btn btn-primary rounded-circle"
+                                                        href="/nomina/nominaValorizada/{{this.Id}}">
+                                                        <i class="bi-pencil-fill"></i> </a>
+                                                    {{/if}}
+                                                    {{#if @root.permiteBorrarNominaValoresr}}
+                                                    <a type="button" class="btn btn-danger rounded-circle"
+                                                        href="/nomina/borrar/{{this.id}}"> <i class="bi-trash-fill"></i>
+                                                    </a>
+                                                    {{/if}}
+                                                </td>
+                                            </tr>
+                                            {{/each}}
+                                        </tbody>
+                                    </table>
+                                    {{{paginadorNominaValoresr}}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{{funcionesNomina}}}
+{{{funcionesNominaValoresr}}}
+
+<script>
+    document.getElementById('periodoNomina').addEventListener('change', function () {
+        const selectedValue = this.value;
+        window.location.href = `/nomina/2/${selectedValue}`;
+    });
+</script>
