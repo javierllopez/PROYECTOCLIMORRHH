@@ -1,0 +1,225 @@
+{{! Vista para agregar novedad a un empleado específico }}
+<div class="row justify-content-center mt-2">
+    <div class="col-12 col-lg-10">
+        <div class="card shadow-sm border-0">
+            <form action="/novedadesPorPersonal/Agregar" method="POST" class="form-group">
+                <input type="hidden" name="IdPersonal" value="{{personal.Id}}">
+                <input type="hidden" id="TipoNovedad" name="TipoNovedad" value="">
+                <div
+                    class="card-header d-flex align-items-center justify-content-between bg-primary text-white rounded-top-3">
+                    <h4 class="mb-0 flex-grow-1">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Agregar novedad para <span class="fw-bold">{{personal.ApellidoYNombre}}</span>
+                    </h4>
+                    <a href="/novedadesPorPersonal?IdPersonal={{personal.Id}}" class="btn btn-outline-light btn-sm ms-2"
+                        title="Volver">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                </div>
+                <div class="card-body pb-2">
+                    <div class="row g-3">
+                        <div class="col-md-6 col-12">
+                            <label for="Sector" class="form-label fw-semibold"><i class="bi bi-diagram-3"></i>
+                                Sector</label>
+                            <select class="form-select form-select-sm" id="Sector" name="Sector" required>
+                                <option value="" selected disabled>Seleccione un sector</option>
+                                {{#each sectores}}
+                                <option value="{{this.Id}}">{{this.Descripcion}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                        <div class="col-md-6 col-12">
+                            <label for="Nomina" class="form-label fw-semibold"><i class="bi bi-list-check"></i> Nómina a
+                                aplicar</label>
+                            <select class="form-select form-select-sm" id="Nomina" name="Nomina" required>
+                                <option value="" selected disabled>Seleccione ítem de nómina</option>
+                                {{#each nomina}}
+                                <option value="{{this.Id}}" data-horas="{{this.InformaValorSueldoBasico}}"
+                                    data-guardias="{{this.HaceGuardiasDiurnas}}">{{this.Descripcion}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                    </div>
+                    <div id="Horas" style="display: none;">
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-4">
+                                <label for="FechaHoras" class="form-label fw-semibold"><i
+                                        class="bi bi-calendar-event"></i> Fecha</label>
+                                <input type="date" class="form-control form-control-sm" id="FechaHoras"
+                                    name="FechaHoras">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="HoraInicio" class="form-label fw-semibold"><i class="bi bi-clock"></i> Hora
+                                    inicio</label>
+                                <input type="time" class="form-control form-control-sm" id="HoraInicio"
+                                    name="HoraInicio">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="HoraFin" class="form-label fw-semibold"><i class="bi bi-clock-history"></i>
+                                    Hora fin</label>
+                                <input type="time" class="form-control form-control-sm" id="HoraFin" name="HoraFin">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="Guardias" style="display: none;">
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-4">
+                                <label for="FechaGuardia" class="form-label fw-semibold"><i
+                                        class="bi bi-calendar-event"></i> Fecha de guardia</label>
+                                <input type="date" class="form-control form-control-sm" id="FechaGuardia"
+                                    name="FechaGuardia">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="GuardiaRealizada" class="form-label fw-semibold"><i
+                                        class="bi bi-shield-check"></i> Guardia realizada</label>
+                                <select class="form-select form-select-sm" id="GuardiaRealizada"
+                                    name="GuardiaRealizada">
+                                    <option value="" selected disabled>Seleccione una opción</option>
+                                    {{#each guardias}}
+                                    <option value="{{this.Id}}">{{this.Descripcion}} de {{Hora this.Inicio}} a {{Hora
+                                        this.Fin}}</option>
+                                    {{/each}}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="TipoGuardia" class="form-label fw-semibold"><i class="bi bi-ui-checks"></i>
+                                    Tipo de guardia</label>
+                                <select class="form-select form-select-sm" id="TipoGuardia" name="TipoGuardia"
+                                    onchange="manejarTipoGuardia(this)">
+                                    <option value="" selected disabled>Seleccione una opción</option>
+                                    <option value="1">Completa</option>
+                                    <option value="2">Parcial</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="GuardiaParcial" style="display: none">
+                            <div class="row g-3 mt-2">
+                                <div class="col-md-6">
+                                    <label for="InicioGuardiaParcial" class="form-label fw-semibold"><i
+                                            class="bi bi-hourglass-split"></i> Inicio</label>
+                                    <input type="time" class="form-control form-control-sm" id="InicioGuardiaParcial"
+                                        name="InicioGuardiaParcial">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="FinGuardiaParcial" class="form-label fw-semibold"><i
+                                            class="bi bi-hourglass-bottom"></i> Fin</label>
+                                    <input type="time" class="form-control form-control-sm" id="FinGuardiaParcial"
+                                        name="FinGuardiaParcial">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Motivo Extra como último renglón -->
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-4">
+                            <label for="MotivoExtra" class="form-label fw-semibold"><i class="bi bi-exclamation-circle"></i> Motivo Extra</label>
+                            <select class="form-select form-select-sm" id="MotivoExtra" name="MotivoExtra" required>
+                                <option value="" selected disabled>Seleccione un motivo extra</option>
+                                {{#each motivos}}
+                                <option value="{{this.Id}}" data-Reemplazo="{{this.InformaReemplazo}}" data-Observaciones="{{this.DescripcionObligatoria}}">{{this.Descripcion}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                        <div class="col-md-4" id="ReemplazoExtra" style="display: none;">
+                            <label for="IdEmpleadoReemplazoExtra" class="form-label fw-semibold"><i class="bi bi-arrow-repeat"></i> Reemplaza a</label>
+                            <select class="form-select form-select-sm" id="IdEmpleadoReemplazoExtra" name="IdEmpleadoReemplazoExtra">
+                                <option value="" selected disabled>Seleccione un empleado</option>
+                                {{#each personalLista}}
+                                <option value="{{this.Id}}">{{this.ApellidoYNombre}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                        <div class="col-md-4" id="ObservacionesExtra" style="display: none;">
+                            <label for="DescripcionObligatoriaExtra" class="form-label fw-semibold"><i class="bi bi-chat-left-text"></i> Observaciones</label>
+                            <input type="text" class="form-control form-control-sm" id="DescripcionObligatoriaExtra" name="DescripcionObligatoriaExtra" placeholder="Ingrese observaciones">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light py-2 rounded-bottom-3">
+                    <div class="row">
+                        <div class="col text-end">
+                            <button type="reset" class="btn btn-outline-secondary btn-sm me-2 px-3"><i
+                                    class="bi bi-x-circle"></i> Limpiar</button>
+                            <button type="submit" class="btn btn-success btn-sm px-3 fw-bold shadow-sm"><i
+                                    class="bi bi-check-circle me-1"></i> Grabar</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('MotivoExtra').addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const reemplazo = selectedOption.getAttribute('data-Reemplazo');
+            const descripcion = selectedOption.getAttribute('data-Observaciones');
+            document.getElementById('ReemplazoExtra').style.display = reemplazo == '1' ? 'block' : 'none';
+            if (document.getElementById('ReemplazoExtra').style.display !== 'none') {
+                document.getElementById('IdEmpleadoReemplazoExtra').required = true;
+            } else {
+                document.getElementById('IdEmpleadoReemplazoExtra').required = false;
+            }
+            document.getElementById('ObservacionesExtra').style.display = descripcion == '1' ? 'block' : 'none';
+            if (document.getElementById('ObservacionesExtra').style.display !== 'none') {
+                document.getElementById('DescripcionObligatoriaExtra').required = true;
+            } else {
+                document.getElementById('DescripcionObligatoriaExtra').required = false;
+            }
+        });
+        document.getElementById('Nomina').addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const horas = selectedOption.getAttribute('data-horas') === '1';
+            const guardias = selectedOption.getAttribute('data-guardias') === '1';
+            // Mostrar u ocultar secciones
+            const horasSection = document.getElementById('Horas');
+            const guardiasSection = document.getElementById('Guardias');
+            horasSection.style.display = horas ? 'block' : 'none';
+            guardiasSection.style.display = guardias ? 'block' : 'none';
+            // Configurar campos requeridos para "Horas"
+            document.getElementById('FechaHoras').required = horas;
+            document.getElementById('HoraInicio').required = horas;
+            document.getElementById('HoraFin').required = horas;
+            // Configurar campos requeridos para "Guardias"
+            document.getElementById('FechaGuardia').required = guardias;
+            document.getElementById('GuardiaRealizada').required = guardias;
+            document.getElementById('TipoGuardia').required = guardias;
+            // Establecer el tipo de novedad
+            document.getElementById('TipoNovedad').value = horas ? 'Horas' : guardias ? 'Guardias' : '';
+
+        });
+        document.getElementById('TipoGuardia').addEventListener('change', function () {
+            const value = this.value;
+            const isVisible = value == '2'; // Parcial
+            document.getElementById('GuardiaParcial').style.display = isVisible ? 'block' : 'none';
+            document.getElementById('InicioGuardiaParcial').required = isVisible;
+            document.getElementById('FinGuardiaParcial').required = isVisible;
+        });
+        document.querySelector('button[type="reset"]').addEventListener('click', function () {
+            // Ocultar secciones ocultas por defecto
+            document.getElementById('Horas').style.display = 'none';
+            document.getElementById('Guardias').style.display = 'none';
+            document.getElementById('ReemplazoExtra').style.display = 'none';
+            document.getElementById('ObservacionesExtra').style.display = 'none';
+            document.getElementById('GuardiaParcial').style.display = 'none';
+            // Quitar required de los campos condicionales
+            document.getElementById('FechaHoras').required = false;
+            document.getElementById('HoraInicio').required = false;
+            document.getElementById('HoraFin').required = false;
+            document.getElementById('FechaGuardia').required = false;
+            document.getElementById('GuardiaRealizada').required = false;
+            document.getElementById('TipoGuardia').required = false;
+            document.getElementById('IdEmpleadoReemplazoExtra').required = false;
+            document.getElementById('DescripcionObligatoriaExtra').required = false;
+            document.getElementById('InicioGuardiaParcial').required = false;
+            document.getElementById('FinGuardiaParcial').required = false;
+        });
+    });
+    function manejarTipoGuardia(select) {
+        const selectedOption = select.options[select.selectedIndex];
+        const value = selectedOption.value;
+        document.getElementById('GuardiaParcial').style.display = value == '2' ? 'block' : 'none';
+    }
+</script>
+{{! NOTA: Para íconos Bootstrap, asegúrate de tener Bootstrap Icons incluidos en tu layout }}

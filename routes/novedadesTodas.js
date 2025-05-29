@@ -334,6 +334,7 @@ router.post('/Agregar', logueado, async (req, res) => {
         //-------------------------------------------------------------------------------------------------
         if (TipoNovedad == 'Horas') {
             const extraerHs50 = TotalHoras50(_Inicio, _Fin);
+            console.log('Inicio:', _Inicio, 'Fin:', _Fin, 'Minutos:', extraerHs50[0], 'Horas:', extraerHs50[1]);
             _MinutosAl50 = extraerHs50[0] !== undefined ? extraerHs50[0] : 0;
             _Hs50 = extraerHs50[1] !== undefined ? extraerHs50[1] : '';
             const [extraerHs100] = TotalHoras100(_Inicio, _Fin);
