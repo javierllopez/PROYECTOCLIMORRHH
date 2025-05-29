@@ -155,8 +155,9 @@ router.post('/Agregar', logueado, async (req, res) => {
     const { IdEmpleado,
         Sector,
         Nomina,
-        Entrada,
-        Salida,
+        FechaHoras,
+        HoraInicio,
+        HoraFin,
         FechaGuardia,
         GuardiaRealizada,
         TipoGuardia,
@@ -217,9 +218,19 @@ router.post('/Agregar', logueado, async (req, res) => {
         let guardias = [];
         //-------------Defino las variables de la fecha y hora de acuerdo al tipo de novedad-----------------
         if (TipoNovedad == 'Horas') {
-            _Inicio = new Date(Entrada);
-            _Fin = new Date(Salida);
-            //-------------Si es una guardia, defino la fecha y hora de acuerdo al tipo de guardia-------------------
+            // Unir fecha y hora para crear Date de entrada y salida en hora local
+            let [year, month, day] = FechaHoras.split('-').map(Number);
+            let [hInicio, mInicio] = HoraInicio.split(':').map(Number);
+            let [hFin, mFin] = HoraFin.split(':').map(Number);
+            // Crear fechas en hora local (no UTC)
+            let entrada = new Date(year, month - 1, day, hInicio, mInicio, 0, 0);
+            let salida = new Date(year, month - 1, day, hFin, mFin, 0, 0);
+            // Si la hora de fin es menor o igual a la de inicio, sumar un día a la fecha de salida
+            if (hFin < hInicio || (hFin === hInicio && mFin <= mInicio)) {
+                salida.setDate(salida.getDate() + 1);
+            }
+            _Inicio = entrada;
+            _Fin = salida;
         } else if (TipoNovedad == 'Guardias') {
             [guardias] = await pool.query(sqlGuardias, [GuardiaRealizada]);
             if (guardias.length === 0) {

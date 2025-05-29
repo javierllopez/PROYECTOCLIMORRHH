@@ -1,36 +1,41 @@
-
+{{! Mejoras de UX/UI y Bootstrap para carga ágil de novedades }}
 <div class="row justify-content-center mt-2">
-    <div class="col col-10">
-        <div class="card">
+    <div class="col-12 col-lg-10">
+        <div class="card shadow-sm border-0">
             <form action="/novedadesTodas/Agregar" method="POST" class="form-group">
                 <input type="hidden" id="TipoNovedad" name="TipoNovedad" value="">
-                <div class="card-header">
-                    <h2 class="text-center">Agregar novedad</h2>
+                <div class="card-header d-flex align-items-center justify-content-between bg-primary text-white rounded-top-3">
+                    <h4 class="mb-0 flex-grow-1"><i class="bi bi-plus-circle me-2"></i>Agregar novedad</h4>
+                    <a href="/novedadesTodas" class="btn btn-outline-light btn-sm ms-2"><i class="bi bi-arrow-right"></i></a>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-sm-10 col-lg-4">
-                            <label for="IdEmpleado" class="form-label">Empleado</label>
-                            <select class="form-select" id="IdEmpleado" name="IdEmpleado" required>
+                <div class="card-body pb-2">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="IdEmpleado" class="form-label fw-semibold"><i class="bi bi-person-badge"></i>
+                                Empleado</label>
+                            <select class="form-select form-select-sm" id="IdEmpleado" name="IdEmpleado" required
+                                autofocus>
                                 <option value="" selected disabled>Seleccione un empleado</option>
                                 {{#each personal}}
                                 <option value="{{this.Id}}">{{this.ApellidoYNombre}}</option>
                                 {{/each}}
                             </select>
                         </div>
-                        <div class="col-lg-4 col-sm-10">
-                            <label for="Sector" class="form-label">Sector</label>
-                            <select class="form-select" id="Sector" name="Sector" required>
+                        <div class="col-md-4">
+                            <label for="Sector" class="form-label fw-semibold"><i class="bi bi-diagram-3"></i>
+                                Sector</label>
+                            <select class="form-select form-select-sm" id="Sector" name="Sector" required>
                                 <option value="" selected disabled>Seleccione un sector</option>
                                 {{#each sectores}}
                                 <option value="{{this.Id}}">{{this.Descripcion}}</option>
                                 {{/each}}
                             </select>
                         </div>
-                        <div class="col-lg-4 col-sm-10">
-                            <label for="Nomina" class="form-label">Nomina a aplicar</label>
-                            <select class="form-select" id="Nomina" name="Nomina" required>
-                                <option value="" selected disabled>Seleccione ítem de nómina a aplicar</option>
+                        <div class="col-md-4">
+                            <label for="Nomina" class="form-label fw-semibold"><i class="bi bi-list-check"></i> Nómina a
+                                aplicar</label>
+                            <select class="form-select form-select-sm" id="Nomina" name="Nomina" required>
+                                <option value="" selected disabled>Seleccione ítem de nómina</option>
                                 {{#each nomina}}
                                 <option value="{{this.Id}}" data-horas="{{this.InformaValorSueldoBasico}}"
                                     data-guardias="{{this.HaceGuardiasDiurnas}}">{{this.Descripcion}}</option>
@@ -38,10 +43,11 @@
                             </select>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col mt-2">
-                            <label for="MotivoExtra" class="form-label">Motivo Extra</label>
-                            <select class="form-select" id="MotivoExtra" name="MotivoExtra" required>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-4">
+                            <label for="MotivoExtra" class="form-label fw-semibold"><i
+                                    class="bi bi-exclamation-circle"></i> Motivo Extra</label>
+                            <select class="form-select form-select-sm" id="MotivoExtra" name="MotivoExtra" required>
                                 <option value="" selected disabled>Seleccione un motivo extra</option>
                                 {{#each motivos}}
                                 <option value="{{this.Id}}" data-Reemplazo="{{this.InformaReemplazo}}"
@@ -49,52 +55,64 @@
                                 {{/each}}
                             </select>
                         </div>
-                        <div class="col mt-2" id="ReemplazoExtra" style="display: none;">
-                            <label for="IdEmpleadoReemplazoExtra" class="form-label">Reemplaza a:</label>
-                            <select class="form-select" id="IdEmpleadoReemplazoExtra" name="IdEmpleadoReemplazoExtra">
+                        <div class="col-md-4" id="ReemplazoExtra" style="display: none;">
+                            <label for="IdEmpleadoReemplazoExtra" class="form-label fw-semibold"><i
+                                    class="bi bi-arrow-repeat"></i> Reemplaza a</label>
+                            <select class="form-select form-select-sm" id="IdEmpleadoReemplazoExtra"
+                                name="IdEmpleadoReemplazoExtra">
                                 <option value="" selected disabled>Seleccione un empleado</option>
                                 {{#each personal}}
                                 <option value="{{this.Id}}">{{this.ApellidoYNombre}}</option>
                                 {{/each}}
                             </select>
                         </div>
-                        <div class="col mt-2" id="ObservacionesExtra" style="display: none;">
-                            <label for="DescripcionObligatoriaExtra" class="form-label">Observaciones</label>
-                            <input type="text" class="form-control" id="DescripcionObligatoriaExtra"
-                                name="DescripcionObligatoriaExtra">
+                        <div class="col-md-4" id="ObservacionesExtra" style="display: none;">
+                            <label for="DescripcionObligatoriaExtra" class="form-label fw-semibold"><i
+                                    class="bi bi-chat-left-text"></i> Observaciones</label>
+                            <input type="text" class="form-control form-control-sm" id="DescripcionObligatoriaExtra"
+                                name="DescripcionObligatoriaExtra" placeholder="Ingrese observaciones">
                         </div>
                     </div>
                     <div id="Horas" style="display: none;">
-                        <div class="row">
-                            <div class="col-12 col-lg-4">
-                                <label for="Entrada" class="form-label">Inicio</label>
-                                <input type="datetime-local" class="form-control" id="Entrada" name="Entrada">
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-4">
+                                <label for="FechaHoras" class="form-label fw-semibold"><i class="bi bi-calendar-event"></i> Fecha</label>
+                                <input type="date" class="form-control form-control-sm" id="FechaHoras" name="FechaHoras">
                             </div>
-                            <div class="col-12 col-lg-4">
-                                <label for="Salida" class="form-label">Fin</label>
-                                <input type="datetime-local" class="form-control" id="Salida" name="Salida">
+                            <div class="col-md-4">
+                                <label for="HoraInicio" class="form-label fw-semibold"><i class="bi bi-clock"></i> Hora inicio</label>
+                                <input type="time" class="form-control form-control-sm" id="HoraInicio" name="HoraInicio">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="HoraFin" class="form-label fw-semibold"><i class="bi bi-clock-history"></i> Hora fin</label>
+                                <input type="time" class="form-control form-control-sm" id="HoraFin" name="HoraFin">
                             </div>
                         </div>
                     </div>
                     <div id="Guardias" style="display: none;">
-                        <div class="row">
-                            <div class="col-sm-12 col-lg-4">
-                                <label for="FechaGuardia" class="form-label">Fecha de guardia</label>
-                                <input type="date" class="form-control" id="FechaGuardia" name="FechaGuardia">
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-4">
+                                <label for="FechaGuardia" class="form-label fw-semibold"><i
+                                        class="bi bi-calendar-event"></i> Fecha de guardia</label>
+                                <input type="date" class="form-control form-control-sm" id="FechaGuardia"
+                                    name="FechaGuardia">
                             </div>
-                            <div class="col-sm-12 col-lg-4">
-                                <label for="GuardiaRealizada" class="form-label">Guardia realizada</label>
-                                <select class="form-select" id="GuardiaRealizada" name="GuardiaRealizada">
+                            <div class="col-md-4">
+                                <label for="GuardiaRealizada" class="form-label fw-semibold"><i
+                                        class="bi bi-shield-check"></i> Guardia realizada</label>
+                                <select class="form-select form-select-sm" id="GuardiaRealizada"
+                                    name="GuardiaRealizada">
                                     <option value="" selected disabled>Seleccione una opción</option>
                                     {{#each guardias}}
-                                    <option value="{{this.Id}}">{{this.Descripcion}} de {{Hora this.Inicio}} a
-                                        {{Hora this.Fin}}</option>
+                                    <option value="{{this.Id}}">{{this.Descripcion}} de {{Hora this.Inicio}} a {{Hora
+                                        this.Fin}}</option>
                                     {{/each}}
                                 </select>
                             </div>
-                            <div class="col-sm-12 col-lg-4">
-                                <label for="TipoGuardia" class="form-label">Tipo de guardia</label>
-                                <select class="form-select" id="TipoGuardia" name="TipoGuardia"
+                            <div class="col-md-4">
+                                <label for="TipoGuardia" class="form-label fw-semibold"><i class="bi bi-ui-checks"></i>
+                                    Tipo de guardia</label>
+                                <select class="form-select form-select-sm" id="TipoGuardia" name="TipoGuardia"
                                     onchange="manejarTipoGuardia(this)">
                                     <option value="" selected disabled>Seleccione una opción</option>
                                     <option value="1">Completa</option>
@@ -103,26 +121,28 @@
                             </div>
                         </div>
                         <div id="GuardiaParcial" style="display: none">
-                            <div class="row">
-                                <div class="col">
-                                    <label for="InicioGuardiaParcial" class="form-label">Inicio</label>
-                                    <input type="time" class="form-control" id="InicioGuardiaParcial"
+                            <div class="row g-3 mt-2">
+                                <div class="col-md-6">
+                                    <label for="InicioGuardiaParcial" class="form-label fw-semibold"><i
+                                            class="bi bi-hourglass-split"></i> Inicio</label>
+                                    <input type="time" class="form-control form-control-sm" id="InicioGuardiaParcial"
                                         name="InicioGuardiaParcial">
                                 </div>
-                                <div class="col">
-                                    <label for="FinGuardiaParcial" class="form-label">Fin</label>
-                                    <input type="time" class="form-control" id="FinGuardiaParcial"
+                                <div class="col-md-6">
+                                    <label for="FinGuardiaParcial" class="form-label fw-semibold"><i
+                                            class="bi bi-hourglass-bottom"></i> Fin</label>
+                                    <input type="time" class="form-control form-control-sm" id="FinGuardiaParcial"
                                         name="FinGuardiaParcial">
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="card-footer">
+                <div class="card-footer bg-light py-2 rounded-bottom-3">
                     <div class="row">
-                        <div class="col text-center">
-                            <a href="/novedadesTodas" class="btn btn-secondary">Volver</a>
-                            <button type="submit" class="btn btn-primary">Agregar</button>
+                        <div class="col text-end">
+                            <button type="reset" class="btn btn-outline-secondary btn-sm me-2 px-3"><i class="bi bi-x-circle"></i> Limpiar</button>
+                            <button type="submit" class="btn btn-success btn-sm px-3 fw-bold shadow-sm"><i class="bi bi-check-circle me-1"></i> Grabar</button>
                         </div>
                     </div>
                 </div>
@@ -132,25 +152,20 @@
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-
         document.getElementById('MotivoExtra').addEventListener('change', function () {
-
             const selectedOption = this.options[this.selectedIndex];
             const reemplazo = selectedOption.getAttribute('data-Reemplazo');
             const descripcion = selectedOption.getAttribute('data-Observaciones');
-
             document.getElementById('ReemplazoExtra').style.display = reemplazo == '1' ? 'block' : 'none';
             if (document.getElementById('ReemplazoExtra').style.display !== 'none') {
                 document.getElementById('IdEmpleadoReemplazoExtra').required = true;
-            }
-            else {
+            } else {
                 document.getElementById('IdEmpleadoReemplazoExtra').required = false;
             }
             document.getElementById('ObservacionesExtra').style.display = descripcion == '1' ? 'block' : 'none';
             if (document.getElementById('ObservacionesExtra').style.display !== 'none') {
                 document.getElementById('DescripcionObligatoriaExtra').required = true;
-            }
-            else {
+            } else {
                 document.getElementById('DescripcionObligatoriaExtra').required = false;
             }
         });
@@ -158,22 +173,19 @@
             const selectedOption = this.options[this.selectedIndex];
             const horas = selectedOption.getAttribute('data-horas') === '1';
             const guardias = selectedOption.getAttribute('data-guardias') === '1';
-
             // Mostrar u ocultar secciones
             const horasSection = document.getElementById('Horas');
             const guardiasSection = document.getElementById('Guardias');
             horasSection.style.display = horas ? 'block' : 'none';
             guardiasSection.style.display = guardias ? 'block' : 'none';
-
             // Configurar campos requeridos para "Horas"
-            document.getElementById('Entrada').required = horas;
-            document.getElementById('Salida').required = horas;
-
+            document.getElementById('FechaHoras').required = horas;
+            document.getElementById('HoraInicio').required = horas;
+            document.getElementById('HoraFin').required = horas;
             // Configurar campos requeridos para "Guardias"
             document.getElementById('FechaGuardia').required = guardias;
             document.getElementById('GuardiaRealizada').required = guardias;
             document.getElementById('TipoGuardia').required = guardias;
-
             // Establecer el tipo de novedad
             document.getElementById('TipoNovedad').value = horas ? 'Horas' : guardias ? 'Guardias' : '';
         });
@@ -185,13 +197,10 @@
             document.getElementById('FinGuardiaParcial').required = isVisible;
         });
     });
-
     function manejarTipoGuardia(select) {
         const selectedOption = select.options[select.selectedIndex];
         const value = selectedOption.value;
-
         document.getElementById('GuardiaParcial').style.display = value == '2' ? 'block' : 'none';
-
     }
-
 </script>
+{{! NOTA: Para íconos Bootstrap, asegúrate de tener Bootstrap Icons incluidos en tu layout }}

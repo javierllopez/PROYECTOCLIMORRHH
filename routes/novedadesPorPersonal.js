@@ -170,5 +170,27 @@ router.post('/Borrar', logueado, async (req, res) => {
         return res.redirect(`/novedadesPorPersonal?IdPersonal=${IdPersonal}`);
     }
 });
-
+router.get('/Agregar', logueado, async (req, res) => {
+    const { IdPersonal } = req.query;
+    if (!IdPersonal) {
+        enviarMensaje(req, res, 'Error', 'Debe seleccionar un empleado para agregar una novedad', 'error');
+        return res.redirect('/novedadesPorPersonalSeleccionar');
+    }
+    const sqlSectores = 'SELECT * FROM sectores ORDER BY Descripcion ASC';
+    const sqlNomina = 'SELECT * FROM nomina ORDER BY Descripcion ASC';
+    const sqlMotivos = 'SELECT * FROM motivos ORDER BY Descripcion ASC';
+    const sqlGuardias = 'SELECT * FROM guardias ORDER BY Descripcion ASC';
+    try {
+        const [sectores] = await pool.query(sqlSectores);
+        const [nomina] = await pool.query(sqlNomina);
+        const [motivos] = await pool.query(sqlMotivos);
+        const [guardias] = await pool.query(sqlGuardias);
+        return render(req, res, 'novedadesAgregar', { personal, sectores, nomina, motivos, guardias });
+    }
+    catch (error) {
+        console.log(error);
+        enviarMensaje(req, res, 'Error', error.message, 'error');
+        return res.redirect('/novedadesTodas');
+    }
+});
 module.exports = router;
