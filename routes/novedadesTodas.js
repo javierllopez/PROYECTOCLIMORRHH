@@ -2,7 +2,7 @@ const express = require('express');
 const { pool } = require('../conexion');
 const { render, enviarMensaje } = require('../Middleware/render');
 const { logueado } = require('../Middleware/validarUsuario');
-const { TotalHoras50, TotalHoras100, FechaASqlFecha, FechaHTMLaFecha,FechaSqlAFecha, ExtraerHora, FechaYHora } = require('../lib/libreria');
+const { TotalHoras50, TotalHoras100, FechaASqlFecha, FechaHTMLaFecha, FechaSqlAFecha, ExtraerHora, FechaYHora } = require('../lib/libreria');
 const router = express.Router();
 const nivelAceptado = [1, 2, 3] //Esta ruta sólo permite usuarios nivel 1 (Administrador)
 
@@ -116,7 +116,7 @@ router.post('/NO', logueado, async (req, res) => {
         enviarMensaje(req, res, 'Error', error.message, 'error');
         return res.redirect('/novedadesTodas');
     }
-}); 
+});
 router.get('/Agregar', logueado, async (req, res) => {
     const sqlPersonal = "SELECT * FROM personal WHERE FechaBaja IS NULL ORDER BY ApellidoYNombre ASC";
     const sqlSectores = 'SELECT * FROM sectores ORDER BY Descripcion ASC';
@@ -242,7 +242,7 @@ router.post('/Agregar', logueado, async (req, res) => {
                 _Inicio = new Date(FechaHTMLaFecha(FechaGuardia).toDateString() + ' ' + ExtraerHora(guardias[0].Inicio));
                 _Fin = new Date(FechaHTMLaFecha(FechaGuardia).toDateString() + ' ' + ExtraerHora(guardias[0].Fin));
 
- 
+
                 if (_Inicio > _Fin) _Fin.setDate(_Fin.getDate() + 1);
 
             } else if (TipoGuardia == 2) {
@@ -362,7 +362,7 @@ router.post('/Agregar', logueado, async (req, res) => {
             } else {
                 // Si es una guardia parcial saco la hora de entrada y salida de los campos del formulario
                 if (TipoGuardia == 2) {
-                    _CoeficienteGuardia = (((_Fin - _Inicio) / 60000)) / (guardias[0].Fin - guardias[0].Inicio) * guardias[0].Cantidad;
+                    _CoeficienteGuardia = (_Fin - _Inicio) / (guardias[0].Fin - guardias[0].Inicio) * guardias[0].Cantidad;
                     if (guardias[0].Tipo == 1) {
                         _Monto = _CoeficienteGuardia * nominaValores[0].ValorGuardiaDiurna;
                         _GuardiasDiurnas = _CoeficienteGuardia;

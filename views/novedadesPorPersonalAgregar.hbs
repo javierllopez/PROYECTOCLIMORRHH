@@ -24,7 +24,7 @@
                             <select class="form-select form-select-sm" id="Sector" name="Sector" required>
                                 <option value="" selected disabled>Seleccione un sector</option>
                                 {{#each sectores}}
-                                <option value="{{this.Id}}">{{this.Descripcion}}</option>
+                                <option value="{{this.Id}}" {{#ifeq this.Id @root.personal.IdSector}} selected {{/ifeq}}>{{this.Descripcion}}</option>
                                 {{/each}}
                             </select>
                         </div>
@@ -76,7 +76,7 @@
                                     name="GuardiaRealizada">
                                     <option value="" selected disabled>Seleccione una opción</option>
                                     {{#each guardias}}
-                                    <option value="{{this.Id}}">{{this.Descripcion}} de {{Hora this.Inicio}} a {{Hora
+                                    <option value="{{this.Id}}">{{this.Descripcion}} de {{HoraLocal this.Inicio}} a {{HoraLocal
                                         this.Fin}}</option>
                                     {{/each}}
                                 </select>

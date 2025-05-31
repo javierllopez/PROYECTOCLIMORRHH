@@ -20,8 +20,8 @@
                 <tr>
                     <td class="text-center">{{this.Id}}</td>
                     <td>{{this.Descripcion}}</td>
-                    <td class="text-center">{{Hora this.Inicio}}</td>
-                    <td class="text-center">{{Hora this.Fin}}</td>
+                    <td class="text-center">{{HoraLocal this.Inicio}}</td>
+                    <td class="text-center">{{HoraLocal this.Fin}}</td>
                     <td class="d-none d-lg-table-cell">{{#ifeq this.Tipo 1}}Diurna{{/ifeq}}{{#ifeq this.Tipo 2}}Nocturna{{/ifeq}}</td>
                     <td class="text-center">
                         {{#if @root.permiteEditar}}

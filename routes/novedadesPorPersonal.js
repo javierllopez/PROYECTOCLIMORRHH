@@ -185,10 +185,42 @@ router.get('/Agregar', logueado, async (req, res) => {
         enviarMensaje(req, res, 'Error', 'Debe seleccionar un empleado para agregar una novedad', 'error');
         return res.redirect('/novedadesPorPersonalSeleccionar');
     }
-    const sqlPersonal = `SELECT Id, ApellidoYNombre FROM personal WHERE Id = ?`;
+    const sqlPersonal = `SELECT Id, ApellidoYNombre, IdSector FROM personal WHERE Id = ?`;
     const sqlPersonalLista = `SELECT Id, ApellidoYNombre FROM personal ORDER BY ApellidoYNombre`;
     const sqlSectores = 'SELECT * FROM sectores ORDER BY Descripcion ASC';
-    const sqlNomina = 'SELECT * FROM nomina ORDER BY Descripcion ASC';
+    const sqlNominaHabilitadaCategoria = `SELECT nominahabilitada.Id, 
+                                                nominahabilitada.IdCategoria, 
+                                                nominahabilitada.IdNomina, 
+                                                nominahabilitada.IdEmpleado,
+                                                nomina.Descripcion, 
+                                                nomina.InformaValorSueldoBasico,
+                                                nomina.HorasMensuales,
+                                                nomina.HaceGuardiasDiurnas,
+                                                nomina.HorasGuardiaDiurna,
+                                                nomina.HaceGuardiasNocturnas,
+                                                nomina.HorasGuardiaNocturna,
+                                                nomina.HaceGuardiasPasivas,
+                                                nomina.TieneAdicionalMensual
+                                                FROM nominahabilitada INNER JOIN nomina ON nominahabilitada.IdNomina = nomina.Id 
+                                                WHERE nominahabilitada.IdCategoria = ? 
+                                                ORDER BY nomina.Descripcion ASC`;
+        const sqlNominaHabilitaEmpleado = `SELECT nominahabilitada.Id, 
+                                                nominahabilitada.IdCategoria, 
+                                                nominahabilitada.IdNomina, 
+                                                nominahabilitada.IdEmpleado,
+                                                nomina.Descripcion, 
+                                                nomina.InformaValorSueldoBasico,
+                                                nomina.HorasMensuales,
+                                                nomina.HaceGuardiasDiurnas,
+                                                nomina.HorasGuardiaDiurna,
+                                                nomina.HaceGuardiasNocturnas,
+                                                nomina.HorasGuardiaNocturna,
+                                                nomina.HaceGuardiasPasivas,
+                                                nomina.TieneAdicionalMensual
+                                                FROM nominahabilitada INNER JOIN nomina ON nominahabilitada.IdNomina = nomina.Id 
+                                                WHERE nominahabilitada.IdEmpleado = ? 
+                                                ORDER BY nomina.Descripcion ASC`;
+
     const sqlMotivos = 'SELECT * FROM motivos ORDER BY Descripcion ASC';
     const sqlGuardias = 'SELECT * FROM guardias ORDER BY Descripcion ASC';
     try {
@@ -199,7 +231,16 @@ router.get('/Agregar', logueado, async (req, res) => {
         }
         const [personalLista] = await pool.query(sqlPersonalLista);
         const [sectores] = await pool.query(sqlSectores);
-        const [nomina] = await pool.query(sqlNomina);
+        const [nominaCategoria] = await pool.query(sqlNominaHabilitadaCategoria, [personal[0].IdCategoria]);
+        const [nominaEmpleado] = await pool.query(sqlNominaHabilitaEmpleado, [personal[0].Id]);
+        let nomina = [];
+        if (nominaCategoria.length > 0) {
+            nomina = nominaCategoria;
+        } else if (nominaEmpleado.length > 0) {
+            nomina = nominaEmpleado;
+        } else {
+            throw new Error('No se encontraron nóminas habilitadas para el empleado seleccionado');
+        }
         const [motivos] = await pool.query(sqlMotivos);
         const [guardias] = await pool.query(sqlGuardias);
         return render(req, res, 'novedadesPorPersonalAgregar', { personal: personal[0], personalLista: personalLista, sectores, nomina, motivos, guardias });
@@ -307,21 +348,26 @@ router.post('/Agregar', logueado, async (req, res) => {
             }
             if (TipoGuardia == 1) {
                 _IdParcial = 1;     //Guardia completa
-                let inicio = new Date(Date.UTC(...FechaHTMLaFecha(FechaGuardia).toISOString().slice(0,10).split('-').map(Number), ...ExtraerHora(guardias[0].Inicio).split(':').map(Number)));
-                let fin = new Date(Date.UTC(...FechaHTMLaFecha(FechaGuardia).toISOString().slice(0,10).split('-').map(Number), ...ExtraerHora(guardias[0].Fin).split(':').map(Number)));
-                if (inicio > fin) fin.setUTCDate(fin.getUTCDate() + 1);
-                _Inicio = toMySQLDatetimeUTC(inicio);
-                _Fin = toMySQLDatetimeUTC(fin);
+                let [anio, mes, dia] = FechaGuardia.split('-').map(Number);
+                let [hIni, mIni] = ExtraerHora(guardias[0].Inicio).split(':').map(Number);
+                let [hFin, mFin] = ExtraerHora(guardias[0].Fin).split(':').map(Number);
+                // Crear fechas en UTC
+                // Si la hora de fin es menor o igual a la de inicio, sumar un día a la fecha de fin
+                let entrada = new Date(Date.UTC(anio, mes - 1, dia, hIni, mIni, 0, 0));
+                let salida = new Date(Date.UTC(anio, mes - 1, dia, hFin, mFin, 0, 0));
+                if (entrada > salida) salida.setUTCDate(salida.getUTCDate() + 1);
+                _Inicio = new Date(toMySQLDatetimeUTC(entrada));
+                _Fin = new Date(toMySQLDatetimeUTC(salida));
             } else if (TipoGuardia == 2) {
                 _IdParcial = 2;     //Guardia parcial
-                let [anio, mes, dia] = FechaHTMLaFecha(FechaGuardia).toISOString().slice(0,10).split('-').map(Number);
+                let [anio, mes, dia] = FechaGuardia.split('-').map(Number);
                 let [hIni, mIni] = InicioGuardiaParcial.split(':').map(Number);
                 let [hFin, mFin] = FinGuardiaParcial.split(':').map(Number);
                 let inicio = new Date(Date.UTC(anio, mes-1, dia, hIni, mIni, 0, 0));
                 let fin = new Date(Date.UTC(anio, mes-1, dia, hFin, mFin, 0, 0));
                 if (inicio > fin) fin.setUTCDate(fin.getUTCDate() + 1);
-                _Inicio = toMySQLDatetimeUTC(inicio);
-                _Fin = toMySQLDatetimeUTC(fin);
+                _Inicio = new Date(toMySQLDatetimeUTC(inicio));
+                _Fin = new Date(toMySQLDatetimeUTC(fin));
             } else {
                 throw new Error('Tipo de guardia no válido');
             }
@@ -431,7 +477,11 @@ router.post('/Agregar', logueado, async (req, res) => {
             } else {
                 // Si es una guardia parcial saco la hora de entrada y salida de los campos del formulario
                 if (TipoGuardia == 2) {
-                    _CoeficienteGuardia = (((_Fin - _Inicio) / 60000)) / (guardias[0].Fin - guardias[0].Inicio) * guardias[0].Cantidad;
+                    _CoeficienteGuardia = (_Fin - _Inicio) / (guardias[0].Fin - guardias[0].Inicio) * guardias[0].Cantidad;
+                    console.log(_Fin - _Inicio);
+                    console.log('Inicio Guardia:', guardias[0].Inicio, 'Fin Guardia:', guardias[0].Fin);
+                    console.log('Diferencia:',guardias[0].Fin - guardias[0].Inicio);
+                    console.log('Coeficiente Guardia:', _CoeficienteGuardia);
                     if (guardias[0].Tipo == 1) {
                         _Monto = _CoeficienteGuardia * nominaValores[0].ValorGuardiaDiurna;
                         _GuardiasDiurnas = _CoeficienteGuardia;
