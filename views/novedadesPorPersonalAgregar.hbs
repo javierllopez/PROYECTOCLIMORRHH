@@ -34,7 +34,7 @@
                             <select class="form-select form-select-sm" id="Nomina" name="Nomina" required>
                                 <option value="" selected disabled>Seleccione ítem de nómina</option>
                                 {{#each nomina}}
-                                <option value="{{this.Id}}" data-horas="{{this.InformaValorSueldoBasico}}"
+                                <option value="{{this.IdNomina}}" data-horas="{{this.InformaValorSueldoBasico}}"
                                     data-guardias="{{this.HaceGuardiasDiurnas}}">{{this.Descripcion}}</option>
                                 {{/each}}
                             </select>

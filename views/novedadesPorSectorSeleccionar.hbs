@@ -1,0 +1,27 @@
+<div class="row justify-content-center mt-2">
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm border-0">
+      <form action="/novedadesPorSector" method="GET" class="form-group">
+        <div class="card-header bg-primary text-white rounded-top-3">
+          <h4 class="mb-0"><i class="bi bi-building"></i> Seleccionar sector</h4>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label for="IdSector" class="form-label fw-semibold">Sector</label>
+            <select class="form-select" id="IdSector" name="IdSector" required>
+              <option value="" selected disabled>Seleccione un sector</option>
+              {{#each sectores}}
+                <option value="{{this.Id}}">{{this.Descripcion}}</option>
+              {{/each}}
+            </select>
+          </div>
+        </div>
+        <div class="card-footer bg-light py-2 rounded-bottom-3 text-end">
+          <button type="submit" class="btn btn-success btn-sm px-3 fw-bold shadow-sm">
+            <i class="bi bi-search"></i> Ver novedades
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

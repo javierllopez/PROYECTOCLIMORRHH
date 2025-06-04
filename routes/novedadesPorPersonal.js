@@ -185,7 +185,7 @@ router.get('/Agregar', logueado, async (req, res) => {
         enviarMensaje(req, res, 'Error', 'Debe seleccionar un empleado para agregar una novedad', 'error');
         return res.redirect('/novedadesPorPersonalSeleccionar');
     }
-    const sqlPersonal = `SELECT Id, ApellidoYNombre, IdSector FROM personal WHERE Id = ?`;
+    const sqlPersonal = `SELECT Id, ApellidoYNombre, IdSector, IdCategoria FROM personal WHERE Id = ?`;
     const sqlPersonalLista = `SELECT Id, ApellidoYNombre FROM personal ORDER BY ApellidoYNombre`;
     const sqlSectores = 'SELECT * FROM sectores ORDER BY Descripcion ASC';
     const sqlNominaHabilitadaCategoria = `SELECT nominahabilitada.Id, 
@@ -233,6 +233,9 @@ router.get('/Agregar', logueado, async (req, res) => {
         const [sectores] = await pool.query(sqlSectores);
         const [nominaCategoria] = await pool.query(sqlNominaHabilitadaCategoria, [personal[0].IdCategoria]);
         const [nominaEmpleado] = await pool.query(sqlNominaHabilitaEmpleado, [personal[0].Id]);
+        console.log('Empleado seleccionado:', personal[0].ApellidoYNombre, personal[0].IdCategoria);
+        console.log('Nómina habilitada por categoría:', nominaCategoria);
+        console.log('Nómina habilitada por empleado:', nominaEmpleado);
         let nomina = [];
         if (nominaCategoria.length > 0) {
             nomina = nominaCategoria;
@@ -334,8 +337,8 @@ router.post('/Agregar', logueado, async (req, res) => {
                 const pad = n => n < 10 ? '0' + n : n;
                 return date.getUTCFullYear() + '-' + pad(date.getUTCMonth() + 1) + '-' + pad(date.getUTCDate()) + ' ' + pad(date.getUTCHours()) + ':' + pad(date.getUTCMinutes()) + ':' + pad(date.getUTCSeconds());
             }
-            _Inicio = toMySQLDatetimeUTC(entrada);
-            _Fin = toMySQLDatetimeUTC(salida);
+            _Inicio = new Date(toMySQLDatetimeUTC(entrada));
+            _Fin = new Date(toMySQLDatetimeUTC(salida));
         } else if (TipoNovedad == 'Guardias') {
             [guardias] = await pool.query(sqlGuardias, [GuardiaRealizada]);
             if (guardias.length === 0) {
@@ -404,7 +407,9 @@ router.post('/Agregar', logueado, async (req, res) => {
             throw new Error('Empleado no encontrado');
         }
         _IdEmpleado = personal[0].Id;
-        const [nominaValores] = await pool.query(sqlNomina, [Nomina, FechaASqlFecha(_Inicio), FechaASqlFecha(_Inicio)]);
+        _IdNomina = parseInt(Nomina);
+        const [nominaValores] = await pool.query(sqlNomina, [_IdNomina, FechaASqlFecha(_Inicio), FechaASqlFecha(_Inicio)]);
+        console.log('Nomina:', Nomina);
         if (nominaValores.length === 0) {
             throw new Error('No se encontraron valores de nómina para la fecha seleccionada');
         }
@@ -464,6 +469,7 @@ router.post('/Agregar', logueado, async (req, res) => {
         if (TipoNovedad == 'Guardias') {
             // Si es una guardia completa saco la hora de entrada y salida de la tabla de guardias
             if (TipoGuardia == 1) {
+                console.log('Guardia completa', nominaValores[0]);
                 _CoeficienteGuardia = guardias[0].Cantidad;
                 if (guardias[0].Tipo == 1) {
                     _Monto = _CoeficienteGuardia * nominaValores[0].ValorGuardiaDiurna;

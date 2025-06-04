@@ -1,0 +1,257 @@
+<div class="row justify-content-center mt-2 position-relative">
+  <div class="col-12 col-lg-10">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-primary text-white rounded-top-3 position-relative d-flex align-items-center" style="min-height: 56px;">
+        <h4 class="mb-0"><i class="bi bi-building"></i> Novedades de asistencia - Sector: <span class="fw-bold">{{sector.Descripcion}}</span></h4>
+        <a href="/novedadesPorSector/Agregar?IdSector={{sector.Id}}"
+           class="btn btn-primary rounded-circle align-items-center justify-content-center position-absolute end-0 me-2"
+           title="Agregar novedad">
+          <i class="bi bi-plus-circle h4 m-0 text-white"></i>
+        </a>
+      </div>
+      <div class="card-body">
+        <table class="table table-bordered table-striped table-responsive">
+          <thead>
+            <tr>
+                    <th class="text-center">Sector</th>
+                    <th class="text-center">Detalle</th>
+                    <th class="text-center">Monto</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each novedades}}
+                <tr>
+                    <td class="align-middle">{{this.ApellidoYNombre}}</td>
+                    <td class="align-middle">
+                        Fecha: {{FechaDiaSem this.FechaLocal}} de {{Hora this.InicioLocal}} a {{Hora this.FinLocal}}
+                        <br>
+                        {{#ifmay this.MinutosAl50 0}}
+                        Hs. al 50%: {{this.Hs50}}
+                        {{/ifmay}}
+                        {{#ifmay this.MinutosAl100 0}}
+                        Hs. al 100%: {{this.Hs100}}
+                        {{/ifmay}}
+                        {{#ifmay this.MinutosGD 0}}
+                        {{this.GuardiasDiurnas}} guardia{{#ifmay this.GuardiasDiurnas 1}}s{{/ifmay}}
+                        diurna{{/ifmay}}
+                        {{#ifmay this.MinutosGN 0}}
+                        {{this.GuardiasNocturnas}} guardia{{#ifmay this.GuardiasNocturnas 1}}s{{/ifmay}}
+                        nocturna{{/ifmay}}
+                        <br>
+                        Motivo: {{this.Motivo}}{{#if this.Reemplazo}} - Reemplazo: {{this.Reemplazo}}{{/if}}
+                        {{#if this.Observaciones}}
+                        <br>
+                        Observaciones: {{this.Observaciones}}
+                        {{/if}}
+                        {{#ifeq this.IdEstado 4}}
+                        <br>
+                        <strong>{{this.ObservacionesEstado}}</strong>
+                        {{/ifeq}}
+                    </td>
+                    <td class="align-middle text-center">{{formatoMoneda this.Monto}}</td>
+                    <td class="align-middle text-center"> {{#ifeq this.IdEstado 1}}<img src="/img/estado1.png" alt="Ingresado"
+                            title="Ingresado" width="50" height="10"> {{/ifeq}}
+                        {{#ifeq this.IdEstado 2}}<img src="/img/estado2.png" alt="Rechazado Supervisor"
+                            title="Rechazado Supervisor" width="50" height="10"> {{/ifeq}}
+                        {{#ifeq this.IdEstado 3}}<img src="/img/estado3.png" alt="Aprobado Supervisor"
+                            title="Aprobado Supervisor" width="50" height="10"> {{/ifeq}}
+                        {{#ifeq this.IdEstado 4}}<img src="/img/estado4.png" alt="Rechazado Recursos Humanos"
+                            title="Rechazado Recursos Humanos" width="50" height="10"> {{/ifeq}}
+                        {{#ifeq this.IdEstado 5}}<img src="/img/estado5.png" alt="Liquidado" title="Liquidado"
+                            width="50" height="10"> {{/ifeq}}</td>
+                    <td class="text-center align-middle">
+                        {{#ifeq this.IdEstado 3}}
+                        <!-- Button trigger modal -->
+                        <button type="button" class="btn btn-primary rounded-circle" data-bs-toggle="modal"
+                            data-bs-target="#confirmModal{{this.Id}}">
+                            <i class="bi-hand-thumbs-up"></i>
+                        </button>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="confirmModal{{this.Id}}" tabindex="-1"
+                            aria-labelledby="confirmModalLabel{{this.Id}}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="confirmModalLabel{{this.Id}}">
+                                            Confirmar novedad de {{this.ApellidoYNombre}}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <strong>¿Confirma la aprobación de la siguiente novedad?</strong>
+                                        <br>
+                                        Fecha: {{FechaDiaSem this.Fecha}}, de {{Hora this.Inicio}} a {{Hora
+                                        this.Fin}}
+                                        <br>
+                                        {{#ifmay this.MinutosAl50 0}}
+                                        Hs. al 50%: {{this.Hs50}}
+                                        {{/ifmay}}
+                                        {{#ifmay this.MinutosAl100 0}}
+                                        Hs. al 100%: {{this.Hs100}}
+                                        {{/ifmay}}
+                                        {{#ifmay this.MinutosGD 0}}
+                                        {{this.GuardiasDiurnas}} guardia{{#ifmay this.GuardiasDiurnas 1}}s{{/ifmay}}
+                                        diurna{{/ifmay}}
+                                        {{#ifmay this.MinutosGN 0}}
+                                        {{this.GuardiasNocturnas}} guardia{{#ifmay this.GuardiasNocturnas
+                                        1}}s{{/ifmay}} nocturna{{/ifmay}}
+                                        <br>
+                                        Motivo: {{this.Motivo}}{{#if this.Reemplazo}} - Reemplazo:
+                                        {{this.Reemplazo}}{{/if}}
+                                        {{#if this.Observaciones}}
+                                        <br>
+                                        Observaciones: {{this.Observaciones}}
+                                        {{/if}}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Cancelar</button>
+                                        <form action="/novedadesPorSector/OK" method="POST" style="display:inline;">
+                                            <input type="hidden" name="Id" value="{{this.Id}}">
+                                            <input type="hidden" name="IdSector" value="{{@root.sector.Id}}">
+                                            <button type="submit" class="btn btn-primary">Confirmar</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Button trigger modal -->
+                        <button type="button" class="btn btn-danger rounded-circle" data-bs-toggle="modal"
+                            data-bs-target="#rejectModal{{this.Id}}">
+                            <i class="bi-hand-thumbs-down"></i>
+                        </button>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="rejectModal{{this.Id}}" tabindex="-2"
+                            aria-labelledby="rejectModalLabel{{this.Id}}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="rejectModalLabel{{this.Id}}">
+                                            Rechazar novedad de {{this.ApellidoYNombre}}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <strong>¿Confirma el rechazo de la siguiente novedad?</strong>
+                                        <br>
+                                        Fecha: {{FechaDiaSem this.Fecha}}, de {{Hora this.Inicio}} a {{Hora
+                                        this.Fin}}
+                                        <br>
+                                        {{#ifmay this.MinutosAl50 0}}
+                                        Hs. al 50%: {{this.Hs50}}
+                                        {{/ifmay}}
+                                        {{#ifmay this.MinutosAl100 0}}
+                                        Hs. al 100%: {{this.Hs100}}
+                                        {{/ifmay}}
+                                        {{#ifmay this.MinutosGD 0}}
+                                        {{this.GuardiasDiurnas}} guardia{{#ifmay this.GuardiasDiurnas 1}}s{{/ifmay}}
+                                        diurna{{/ifmay}}
+                                        {{#ifmay this.MinutosGN 0}}
+                                        {{this.GuardiasNocturnas}} guardia{{#ifmay this.GuardiasNocturnas
+                                        1}}s{{/ifmay}} nocturna{{/ifmay}}
+                                        <br>
+                                        Motivo: {{this.Motivo}}{{#if this.Reemplazo}} - Reemplazo:
+                                        {{this.Reemplazo}}{{/if}}
+                                        {{#if this.Observaciones}}
+                                        <br>
+                                        Observaciones: {{this.Observaciones}}
+                                        {{/if}}
+                                        <hr>
+                                        <form action="/novedadesPorSector/NO" method="POST" style="display:inline;"
+                                            id="formRechazar{{this.Id}}">
+                                            <input type="hidden" name="Id" value="{{this.Id}}">
+                                            <input type="hidden" name="IdPersonal" value="{{@root.personal.Id}}">
+                                            <input type="hidden" name="IdSector" value="{{@root.sector.Id}}">
+                                            <label for="ObservacionesEstado">Detallar el motivo del rechazo</label>
+                                            <textarea class="form-control" id="ObservacionesEstado"
+                                                name="ObservacionesEstado" required></textarea>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="button" class="btn btn-danger"
+                                            onclick="document.getElementById('formRechazar{{this.Id}}').submit();">
+                                            Rechazar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{/ifeq}}
+                        {{#ifeq this.IdEstado 4}}
+                        <form action="/novedadesPorSector/deshacer" method="POST" style="display:inline;">
+                            <input type="hidden" name="Id" value="{{this.Id}}">
+                            <input type="hidden" name="IdPersonal" value="{{@root.personal.Id}}">
+                            <input type="hidden" name="IdSector" value="{{@root.sector.Id}}">
+                            <button type="submit" class="btn btn-primary rounded-circle">
+                                <i class="bi-arrow-counterclockwise"></i>
+                            </button>
+                        </form>
+                        {{/ifeq}}
+                        {{#ifeq this.IdEstado 5}}
+                        <form action="/novedadesPorSector/deshacer" method="POST" style="display:inline;">
+                            <input type="hidden" name="Id" value="{{this.Id}}">
+                            <input type="hidden" name="IdPersonal" value="{{@root.personal.Id}}">
+                            <input type="hidden" name="IdSector" value="{{@root.sector.Id}}">
+                            <button type="submit" class="btn btn-primary rounded-circle">
+                                <i class="bi-arrow-counterclockwise"></i>
+                            </button>
+                        </form>
+                        {{/ifeq}}
+                        {{#ifeq this.CreadoPorAdmin 1}}
+                        <!-- Button trigger modal -->
+                        <button type="button" class="btn btn-danger rounded-circle" data-bs-toggle="modal"
+                        
+                            data-bs-target="#deleteModal{{this.Id}}">
+                            <i class="bi-trash"></i>
+                        </button>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="deleteModal{{this.Id}}" tabindex="-1"
+                            aria-labelledby="deleteModalLabel{{this.Id}}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="deleteModalLabel{{this.Id}}">
+                                            Confirmar eliminación</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <strong>¿Está seguro de que desea eliminar esta novedad?</strong>
+                                        <br>
+                                        Esta acción no se puede deshacer.
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Cancelar</button>
+                                        <form action="/novedadesPorSector/Borrar" method="POST" style="display:inline;">
+                                            <input type="hidden" name="Id" value="{{this.Id}}">
+                                            <input type="hidden" name="IdPersonal" value="{{@root.personal.Id}}">
+                                            <input type="hidden" name="IdSector" value="{{@root.sector.Id}}">
+                                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{/ifeq}}
+                    </td>
+                </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer bg-light py-2 rounded-bottom-3 d-flex justify-content-end align-items-center">
+        <a href="/novedadesPorSector/Seleccionar" class="btn btn-outline-secondary btn-sm px-3">
+          <i class="bi bi-arrow-left"></i> Volver
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

@@ -89,3 +89,22 @@
   .page-overlay.active {
     display: block;
   }
+
+  /* Efecto hover para el botón de agregar novedad en novedadesPorSector */
+.btn-agregar-novedad {
+  background-color: var(--bs-primary) !important;
+  border: none;
+  transition: box-shadow 0.2s, background 0.2s;
+  color: #fff !important;
+}
+.btn-agregar-novedad:hover, .btn-agregar-novedad:focus {
+  background-color: #fff !important;
+  box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25);
+  outline: none;
+  text-decoration: none;
+  filter: brightness(1.15);
+  cursor: pointer;
+  color: #0b5ed7 !important;
+}
+
+/* Eliminar background-color inline del botón en la vista para que solo el CSS lo controle */
