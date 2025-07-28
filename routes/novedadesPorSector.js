@@ -118,4 +118,40 @@ router.post('/Borrar', logueado, async (req, res) => {
     }
 });
 
+// Vista para agregar novedad por sector
+router.get('/Agregar', async (req, res) => {
+  const { IdSector } = req.query;
+  if (!IdSector) {
+    return res.redirect('/novedadesPorSector/Seleccionar');
+  }
+  try {
+    // Obtener datos del sector
+    const [sector] = await pool.query('SELECT Id, Descripcion FROM sectores WHERE Id = ?', [IdSector]);
+    if (sector.length === 0) {
+      enviarMensaje(req, res, 'Error', 'El sector seleccionado no existe', 'error');
+      return res.redirect('/novedadesPorSector/Seleccionar');
+    }
+    // Obtener empleados del sector
+    // Obtener empleados activos del sector cuyo campo fechabaja está vacío
+    const [empleados] = await pool.query(
+      'SELECT Id, ApellidoYNombre FROM personal WHERE IdSector = ? AND (fechabaja IS NULL) ORDER BY ApellidoYNombre',
+      [IdSector]
+    );
+    // Obtener nóminas habilitadas
+    const [nominas] = await pool.query('SELECT Id, Descripcion, HorasMensuales, HaceGuardiasDiurnas FROM nomina ORDER BY Descripcion');
+    // Obtener motivos
+    const [motivos] = await pool.query('SELECT Id, Descripcion, InformaReemplazo, DesripcionObligatoria FROM motivos ORDER BY Descripcion');
+    return render(req, res, 'novedadesPorSectorAgregar', {
+      sector: sector[0],
+      empleados,
+      nominas,
+      motivos
+    });
+  } catch (error) {
+    console.error(error);
+    enviarMensaje(req, res, 'Atención', 'Error al cargar el formulario de alta', 'error');
+    return res.redirect(`/novedadesPorSector?IdSector=${IdSector}`);
+  }
+});
+
 module.exports = router;
