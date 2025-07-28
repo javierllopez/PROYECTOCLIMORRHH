@@ -1,0 +1,162 @@
+{{! Vista para agregar novedades por sector }}
+<div class="container-fluid">
+  <div class="row justify-content-center mt-3">
+    <div class="col-12 col-lg-8">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white rounded-top-3">
+          <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Agregar novedad por sector</h4>
+        </div>
+        <form action="/novedadesPorSector/Agregar" method="POST" autocomplete="off">
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-md-6 mb-3 mb-md-0">
+                <label for="IdPersonal" class="form-label"><i class="bi bi-person"></i> Empleado</label>
+                <select class="form-select" id="IdPersonal" name="IdPersonal" required>
+                  <option value="">Seleccione un empleado...</option>
+                  {{#each empleados}}
+                  <option value="{{this.Id}}">{{this.ApellidoYNombre}}</option>
+                  {{/each}}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="IdNomina" class="form-label"><i class="bi bi-list-ul"></i> Nómina</label>
+                <select class="form-select" id="IdNomina" name="IdNomina" required>
+                  <option value="">Seleccione una nómina...</option>
+                  {{#each nominas}}
+                  <option value="{{this.Id}}" data-horasmensuales="{{this.HorasMensuales}}"
+                    data-haceguardiasdiurnas="{{this.HaceGuardiasDiurnas}}">{{this.Descripcion}}</option>
+                  {{/each}}
+                </select>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6 mb-3 mb-md-0">
+                <label for="Motivo" class="form-label"><i class="bi bi-flag"></i> Motivo</label>
+                <select class="form-select" id="Motivo" name="Motivo" required>
+                  <option value="">Seleccione un motivo...</option>
+                  {{#each motivos}}
+                  <option value="{{this.Id}}" data-informareemplazo="{{this.InformaReemplazo}}"
+                    data-descripcionobligatoria="{{this.DescripcionObligatoria}}">{{this.Descripcion}}</option>
+                  {{/each}}
+                </select>
+              </div>
+              <div class="col-md-6" id="InformaReemplazo" style="display: none;">
+                <label for="Reemplazo" class="form-label"><i class="bi bi-person-arrows"></i> Reemplazo
+                  (opcional)</label>
+                <input type="text" class="form-control" id="Reemplazo" name="Reemplazo" maxlength="100">
+              </div>
+              <div class="col-md-6 mb-3 mb-md-0" id="InformaObservaciones" style="display: none;">
+                <label for="Observaciones" class="form-label"><i class="bi bi-chat-left-text"></i> Observaciones</label>
+                <textarea class="form-control" id="Observaciones" name="Observaciones" rows="2"
+                  maxlength="255"></textarea>
+              </div>
+            </div>
+            <div id="informaHoras" name="informaHoras" style="display: none;">
+              <div class="row mb-3">
+                <div class="col-md-4 mb-3 mb-md-0">
+                  <label for="Fecha" class="form-label"><i class="bi bi-calendar-event"></i> Fecha</label>
+                  <input type="date" class="form-control" id="Fecha" name="Fecha" required>
+                </div>
+                <div class="col-md-4 mb-3 mb-md-0">
+                  <label for="Inicio" class="form-label"><i class="bi bi-clock"></i> Hora inicio</label>
+                  <input type="time" class="form-control" id="Inicio" name="Inicio" required>
+                </div>
+                <div class="col-md-4">
+                  <label for="Fin" class="form-label"><i class="bi bi-clock-history"></i> Hora fin</label>
+                  <input type="time" class="form-control" id="Fin" name="Fin" required>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3 mb-3 mb-md-0">
+                  <label for="Hs50" class="form-label"><i class="bi bi-percent"></i> Horas al 50%</label>
+                  <input type="number" class="form-control" id="Hs50" name="Hs50" min="0" step="0.01">
+                </div>
+                <div class="col-md-3">
+                  <label for="Hs100" class="form-label"><i class="bi bi-percent"></i> Horas al 100%</label>
+                  <input type="number" class="form-control" id="Hs100" name="Hs100" min="0" step="0.01">
+                </div>
+              </div>
+            </div>
+            <div class="row mb-3" id="informaGuardias" name="informaGuardias" style="display: none;">
+              <div class="col-md-6 mb-3 mb-md-0">
+                <label for="GuardiasDiurnas" class="form-label"><i class="bi bi-brightness-high"></i> Guardias
+                  diurnas</label>
+                <input type="number" class="form-control" id="GuardiasDiurnas" name="GuardiasDiurnas" min="0" step="1">
+              </div>
+              <div class="col-md-6">
+                <label for="GuardiasNocturnas" class="form-label"><i class="bi bi-moon"></i> Guardias nocturnas</label>
+                <input type="number" class="form-control" id="GuardiasNocturnas" name="GuardiasNocturnas" min="0"
+                  step="1">
+              </div>
+            </div>
+          </div>
+          <div class="card-footer bg-light py-2 rounded-bottom-3 d-flex justify-content-end align-items-center gap-2">
+            <a href="/novedadesPorSector?IdSector={{sector.Id}}"
+              class="btn btn-outline-secondary btn-sm px-4 d-flex align-items-center"
+              style="height: 40px; font-size: 1rem;">
+              <i class="bi bi-arrow-left me-2"></i> Volver
+            </a>
+            <button type="submit" class="btn btn-success btn-sm px-4 d-flex align-items-center"
+              style="height: 40px; font-size: 1rem;">
+              <i class="bi bi-check-circle me-2"></i> Guardar novedad
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const motivoSelect = document.getElementById('Motivo');
+    const informaReemplazoDiv = document.getElementById('InformaReemplazo');
+    const informaObservacionesDiv = document.getElementById('InformaObservaciones');
+    const nominaSelect = document.getElementById('IdNomina');
+    const informaHorasDiv = document.getElementById('informaHoras');
+    const informaGuardiasDiv = document.getElementById('informaGuardias');
+
+    function actualizarCamposMotivo() {
+      const selectedOption = motivoSelect.options[motivoSelect.selectedIndex];
+      const informaReemplazo = selectedOption.getAttribute('data-informareemplazo');
+      const descripcionObligatoria = selectedOption.getAttribute('data-descripcionobligatoria');
+      // Mostrar/ocultar campo Reemplazo
+      if (informaReemplazo === '1' || informaReemplazo === 'true') {
+        informaReemplazoDiv.style.display = '';
+        document.getElementById('Reemplazo').required = true;
+      } else {
+        informaReemplazoDiv.style.display = 'none';
+        document.getElementById('Reemplazo').required = false;
+      }
+      // Mostrar/ocultar campo Observaciones obligatorias
+      if (descripcionObligatoria === '1' || descripcionObligatoria === 'true') {
+        informaObservacionesDiv.style.display = '';
+        document.getElementById('Observaciones').required = true;
+      } else {
+        informaObservacionesDiv.style.display = 'none';
+        document.getElementById('Observaciones').required = false;
+      }
+    }
+
+    function actualizarCamposNomina() {
+      const selectedOption = nominaSelect.options[nominaSelect.selectedIndex];
+      const horasMensuales = selectedOption.getAttribute('data-horasmensuales');
+      const haceGuardiasDiurnas = selectedOption.getAttribute('data-haceguardiasdiurnas');
+      // Mostrar/ocultar sección de horas y guardias según la nómina seleccionada
+      if (horasMensuales === '1' || horasMensuales === 'true') {
+        informaHorasDiv.style.display = '';
+        informaGuardiasDiv.style.display = 'none';
+      } else if (haceGuardiasDiurnas === '1' || haceGuardiasDiurnas === 'true') {
+        informaHorasDiv.style.display = 'none';
+        informaGuardiasDiv.style.display = '';
+      } else {
+        informaHorasDiv.style.display = 'none';
+        informaGuardiasDiv.style.display = 'none';
+      }
+    }
+
+    motivoSelect.addEventListener('change', actualizarCamposMotivo);
+    nominaSelect.addEventListener('change', actualizarCamposNomina);
+    actualizarCamposMotivo(); // Inicializar al cargar
+    actualizarCamposNomina(); // Inicializar al cargar
+  });
+</script>
