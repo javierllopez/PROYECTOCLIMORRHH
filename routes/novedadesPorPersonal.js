@@ -251,7 +251,7 @@ router.get('/Agregar', logueado, async (req, res) => {
     catch (error) {
         console.log(error);
         enviarMensaje(req, res, 'Error', error.message, 'error');
-        return res.redirect('/novedadesTodas');
+        return res.redirect('/novedadesPorPersonal');
     }
 });
 router.post('/Agregar', logueado, async (req, res) => {

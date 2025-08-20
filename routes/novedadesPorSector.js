@@ -140,7 +140,7 @@ router.get('/Agregar', async (req, res) => {
     // Obtener nóminas habilitadas
     const [nominas] = await pool.query('SELECT Id, Descripcion, HorasMensuales, HaceGuardiasDiurnas FROM nomina ORDER BY Descripcion');
     // Obtener motivos
-    const [motivos] = await pool.query('SELECT Id, Descripcion, InformaReemplazo, DesripcionObligatoria FROM motivos ORDER BY Descripcion');
+    const [motivos] = await pool.query('SELECT Id, Descripcion, InformaReemplazo, DescripcionObligatoria FROM motivos ORDER BY Descripcion');
     return render(req, res, 'novedadesPorSectorAgregar', {
       sector: sector[0],
       empleados,
