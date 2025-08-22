@@ -82,7 +82,7 @@
             <div class="row mb-3" id="informaGuardias" name="informaGuardias" style="display: none;">
               <div class="col-md-4 mb-3 mb-md-0">
                 <label for="fechaGuardia" class="form-label"><i class="bi bi-calendar-event"></i> Fecha guardia</label>
-                <input type="date" class="form-control" id="fechaGuardia" name="fechaGuardia">
+                <input type="date" class="form-control" id="fechaGuardia" name="FechaGuardia">
               </div>
               <div class="col-md-4 mb-3 mb-md-0">
                 <label for="GuardiaRealizada" class="form-label"><i class="bi bi-list-check"></i> Guardia
@@ -96,8 +96,8 @@
                 </select>
               </div>
               <div class="col-md-4">
-                <label for="tipoGuardia" class="form-label"><i class="bi bi-tag"></i> Tipo de guardia</label>
-                <select class="form-select" id="tipoGuardia" name="tipoGuardia">
+                <label for="TipoGuardia" class="form-label"><i class="bi bi-tag"></i> Tipo de guardia</label>
+                <select class="form-select" id="TipoGuardia" name="TipoGuardia">
                   <option value="">Seleccione tipo...</option>
                   <option value="Completa">Completa</option>
                   <option value="Parcial">Parcial</option>
@@ -148,7 +148,13 @@
     const informaGuardiasDiv = document.getElementById('informaGuardias');
     const tipoNovedadInput = document.getElementById('TipoNovedad');
 
-    const tipoGuardiaSelect = document.getElementById('tipoGuardia');
+    // Campos de horas
+    const fechaHorasInput = document.getElementById('Fecha');
+    const inicioInput = document.getElementById('Inicio');
+    const finInput = document.getElementById('Fin');
+
+    // Referencias guardias
+    const tipoGuardiaSelect = document.getElementById('TipoGuardia');
     const rowGuardiaParcial = document.getElementById('rowGuardiaParcial');
     const inicioGuardiaParcial = document.getElementById('InicioGuardiaParcial');
     const finGuardiaParcial = document.getElementById('FinGuardiaParcial');
@@ -190,6 +196,11 @@
       if (tipoNovedadInput) tipoNovedadInput.value = '';
       if (informaHorasDiv) informaHorasDiv.style.display = 'none';
       if (informaGuardiasDiv) informaGuardiasDiv.style.display = 'none';
+      // Limpiar y des-requerir campos de horas
+      if (fechaHorasInput) { fechaHorasInput.required = false; fechaHorasInput.value = ''; }
+      if (inicioInput) { inicioInput.required = false; inicioInput.value = ''; }
+      if (finInput) { finInput.required = false; finInput.value = ''; }
+      // Ocultar parcial y limpiar
       if (rowGuardiaParcial) rowGuardiaParcial.style.display = 'none';
       if (inicioGuardiaParcial) { inicioGuardiaParcial.required = false; inicioGuardiaParcial.value = ''; }
       if (finGuardiaParcial) { finGuardiaParcial.required = false; finGuardiaParcial.value = ''; }
@@ -223,22 +234,37 @@
         if (informaHorasDiv) informaHorasDiv.style.display = 'none';
         if (informaGuardiasDiv) informaGuardiasDiv.style.display = 'none';
         if (tipoNovedadInput) tipoNovedadInput.value = '';
+        if (fechaHorasInput) fechaHorasInput.required = false;
+        if (inicioInput) inicioInput.required = false;
+        if (finInput) finInput.required = false;
         return;
       }
       const horasMensuales = parseInt(selectedOption.getAttribute('data-horasmensuales') || '0', 10);
       const haceGuardiasDiurnas = selectedOption.getAttribute('data-haceguardiasdiurnas');
-      if (!isNaN(horasMensuales) && horasMensuales > 0) {
+      const esHoras = !isNaN(horasMensuales) && horasMensuales > 0;
+
+      if (esHoras) {
         if (informaHorasDiv) informaHorasDiv.style.display = '';
         if (informaGuardiasDiv) informaGuardiasDiv.style.display = 'none';
         if (tipoNovedadInput) tipoNovedadInput.value = 'horas';
+        if (fechaHorasInput) fechaHorasInput.required = true;
+        if (inicioInput) inicioInput.required = true;
+        if (finInput) finInput.required = true;
       } else if (haceGuardiasDiurnas === '1' || haceGuardiasDiurnas === 'true') {
         if (informaHorasDiv) informaHorasDiv.style.display = 'none';
         if (informaGuardiasDiv) informaGuardiasDiv.style.display = '';
         if (tipoNovedadInput) tipoNovedadInput.value = 'guardia';
+        // En guardias los campos de horas no son requeridos
+        if (fechaHorasInput) { fechaHorasInput.required = false; fechaHorasInput.value = ''; }
+        if (inicioInput) { inicioInput.required = false; inicioInput.value = ''; }
+        if (finInput) { finInput.required = false; finInput.value = ''; }
       } else {
         if (informaHorasDiv) informaHorasDiv.style.display = 'none';
         if (informaGuardiasDiv) informaGuardiasDiv.style.display = 'none';
         if (tipoNovedadInput) tipoNovedadInput.value = '';
+        if (fechaHorasInput) { fechaHorasInput.required = false; fechaHorasInput.value = ''; }
+        if (inicioInput) { inicioInput.required = false; inicioInput.value = ''; }
+        if (finInput) { finInput.required = false; finInput.value = ''; }
       }
       actualizarTipoGuardia();
     }

@@ -38,7 +38,7 @@ router.get('/', async (req, res) => {
       return res.redirect('/novedadesPorSector/Seleccionar');
     }
     const [novedades] = await pool.query(`
-      SELECT n.Id, n.Fecha, n.IdEmpleado, p.ApellidoYNombre, n.IdEstado, n.Hs50, n.Hs100, n.GuardiasDiurnas, n.GuardiasNocturnas, n.Monto, n.Inicio, n.Fin, n.ObservacionesEstado, n.MinutosAl50, n.MinutosAl100,n.MinutosGD, n.MinutosGN, n.IdMotivo, m.Descripcion as Motivo, n.Observaciones, p2.ApellidoYNombre as Reemplazo
+      SELECT n.Id, n.Fecha, n.IdEmpleado, p.ApellidoYNombre, n.IdEstado, n.Hs50, n.Hs100, n.GuardiasDiurnas, n.GuardiasNocturnas, n.Monto, n.Inicio, n.Fin, n.ObservacionesEstado, n.MinutosAl50, n.MinutosAl100,n.MinutosGD, n.MinutosGN, n.IdMotivo, m.Descripcion as Motivo, n.Observaciones, n.CreadoPorAdmin, p2.ApellidoYNombre as Reemplazo
       FROM novedadesr n
       INNER JOIN personal p ON n.IdEmpleado = p.Id
       INNER JOIN motivos m ON n.IdMotivo = m.Id
@@ -153,7 +153,7 @@ router.get('/Agregar', async (req, res) => {
       empleados,
       empleadosReemplazo,
       nominas,
-      motivos, 
+      motivos,
       guardias
     });
   } catch (error) {
@@ -175,8 +175,12 @@ router.post('/Agregar', async (req, res) => {
     Fecha,
     Inicio,
     Fin,
-    GuardiasDiurnas,
-    GuardiasNocturnas } = req.body;
+    FechaGuardia,
+    GuardiaRealizada,
+    TipoGuardia,
+    InicioGuardiaParcial,
+    FinGuardiaParcial
+  } = req.body;
 
   const sqlNovedadesE = 'SELECT * FROM novedadese WHERE actual = 1';
   const sqlSectores = 'SELECT * FROM sectores WHERE Id = ?';
@@ -245,7 +249,7 @@ router.post('/Agregar', async (req, res) => {
       }
       _Inicio = new Date(toMySQLDatetimeUTC(entrada));
       _Fin = new Date(toMySQLDatetimeUTC(salida));
-    } else if (TipoNovedad == 'Guardias') {
+    } else if (TipoNovedad == 'guardia') {
       [guardias] = await pool.query(sqlGuardias, [GuardiaRealizada]);
       if (guardias.length === 0) {
         throw new Error('Guardia no encontrada');
@@ -255,7 +259,7 @@ router.post('/Agregar', async (req, res) => {
         const pad = n => n < 10 ? '0' + n : n;
         return date.getUTCFullYear() + '-' + pad(date.getUTCMonth() + 1) + '-' + pad(date.getUTCDate()) + ' ' + pad(date.getUTCHours()) + ':' + pad(date.getUTCMinutes()) + ':' + pad(date.getUTCSeconds());
       }
-      if (TipoGuardia == 1) {
+      if (TipoGuardia == "Completa") {
         _IdParcial = 1;     //Guardia completa
         let [anio, mes, dia] = FechaGuardia.split('-').map(Number);
         let [hIni, mIni] = ExtraerHora(guardias[0].Inicio).split(':').map(Number);
@@ -267,7 +271,7 @@ router.post('/Agregar', async (req, res) => {
         if (entrada > salida) salida.setUTCDate(salida.getUTCDate() + 1);
         _Inicio = new Date(toMySQLDatetimeUTC(entrada));
         _Fin = new Date(toMySQLDatetimeUTC(salida));
-      } else if (TipoGuardia == 2) {
+      } else if (TipoGuardia == "Parcial") {
         _IdParcial = 2;     //Guardia parcial
         let [anio, mes, dia] = FechaGuardia.split('-').map(Number);
         let [hIni, mIni] = InicioGuardiaParcial.split(':').map(Number);
@@ -302,7 +306,7 @@ router.post('/Agregar', async (req, res) => {
     if (ControlFecha.length > 0) {
       throw new Error('El empleado ya tiene una novedad en esa fecha y horario');
     }
-    const [sector] = await pool.query(sqlSectores, [Sector]);
+    const [sector] = await pool.query(sqlSectores, [IdSector]);
     if (sector.length === 0) {
       throw new Error('Sector no encontrado');
     }
@@ -313,29 +317,29 @@ router.post('/Agregar', async (req, res) => {
       throw new Error('Empleado no encontrado');
     }
     _IdEmpleado = personal[0].Id;
-    _IdNomina = parseInt(Nomina);
+    _IdNomina = parseInt(IdNomina);
     const [nominaValores] = await pool.query(sqlNomina, [_IdNomina, FechaASqlFecha(_Inicio), FechaASqlFecha(_Inicio)]);
-    console.log('Nomina:', Nomina);
+    //console.log('Nomina:', _IdNomina);
     if (nominaValores.length === 0) {
       throw new Error('No se encontraron valores de nómina para la fecha seleccionada');
     }
-    const [motivo] = await pool.query(sqlMotivos, [MotivoExtra]);
+    const [motivo] = await pool.query(sqlMotivos, [Motivo]);
     if (motivo.length === 0) {
       throw new Error('Motivo no encontrado');
     }
     _IdMotivo = motivo[0].Id;
     if (motivo[0].InformaReemplazo == 1) {
-      if (IdEmpleadoReemplazoExtra == 0) {
+      if (parseInt(empleadoReemplazo) == 0) {
         throw new Error('El motivo seleccionado requiere un empleado de reemplazo');
       } else {
-        _IdReemplazo = IdEmpleadoReemplazoExtra;
+        _IdReemplazo = parseInt(empleadoReemplazo);
       }
     }
     if (motivo[0].DescripcionObligatoria == 1) {
-      if (DescripcionObligatoriaExtra == '') {
+      if (Observaciones == '') {
         throw new Error('El motivo seleccionado requiere una descripción obligatoria');
       } else {
-        _Observaciones = DescripcionObligatoriaExtra;
+        _Observaciones = Observaciones;
       }
     }
 
@@ -347,18 +351,18 @@ router.post('/Agregar', async (req, res) => {
     _IdCategoria = personal[0].IdCategoria;
     _IdTurno = personal[0].IdTurno;
 
-    const [nomina] = await pool.query(sqlNomina, [Nomina, FechaASqlFecha(_Inicio), FechaASqlFecha(_Inicio)]);
-    if (nomina.length === 0) {
-      throw new Error('No se encontraron valores de nómina para la fecha seleccionada');
-    }
-    if (nomina[0].IdNomina != Nomina) {
-      throw new Error('No se encontraron valores de nómina para la fecha seleccionada');
-    }
-    _IdNomina = nomina[0].IdNomina;
+//    const [nomina] = await pool.query(sqlNomina, [_IdNomina, FechaASqlFecha(_Inicio), FechaASqlFecha(_Inicio)]);
+//    if (nomina.length === 0) {
+//      throw new Error('No se encontraron valores de nómina para la fecha seleccionada');
+//    }
+//    if (nomina[0].IdNomina != _IdNomina) {
+//      throw new Error('No se encontraron valores de nómina para la fecha seleccionada');
+//    }
+//    _IdNomina = nomina[0].IdNomina;
     //-------------------------------------------------------------------------------------------------
     //----------------------------------Si son horas extras--------------------------------------------
     //-------------------------------------------------------------------------------------------------
-    if (TipoNovedad == 'Horas') {
+    if (TipoNovedad == 'horas') {
       const extraerHs50 = TotalHoras50(_Inicio, _Fin);
       console.log('Inicio:', _Inicio, 'Fin:', _Fin, 'Minutos:', extraerHs50[0], 'Horas:', extraerHs50[1]);
       _MinutosAl50 = extraerHs50[0] !== undefined ? extraerHs50[0] : 0;
@@ -366,15 +370,15 @@ router.post('/Agregar', async (req, res) => {
       const [extraerHs100] = TotalHoras100(_Inicio, _Fin);
       _MinutosAl100 = extraerHs100[0] !== undefined ? extraerHs100[0] : 0;
       _Hs100 = extraerHs100[1] !== undefined ? extraerHs100[1] : '';
-      _IdNomina = Nomina;
+//      _IdNomina = Nomina;
       _Monto = (_MinutosAl50 * nominaValores[0].ValorHora50 / 60) + (_MinutosAl100 * nominaValores[0].ValorHora100 / 60);
     }
     //-------------------------------------------------------------------------------------------------
     //----------------------------------Si son guardias------------------------------------------------
     //-------------------------------------------------------------------------------------------------
-    if (TipoNovedad == 'Guardias') {
+    if (TipoNovedad == 'guardia') {
       // Si es una guardia completa saco la hora de entrada y salida de la tabla de guardias
-      if (TipoGuardia == 1) {
+      if (TipoGuardia == "Completa") {
         console.log('Guardia completa', nominaValores[0]);
         _CoeficienteGuardia = guardias[0].Cantidad;
         if (guardias[0].Tipo == 1) {
@@ -388,7 +392,7 @@ router.post('/Agregar', async (req, res) => {
         }
       } else {
         // Si es una guardia parcial saco la hora de entrada y salida de los campos del formulario
-        if (TipoGuardia == 2) {
+        if (TipoGuardia == "Parcial") {
           _CoeficienteGuardia = (_Fin - _Inicio) / (guardias[0].Fin - guardias[0].Inicio) * guardias[0].Cantidad;
           console.log(_Fin - _Inicio);
           console.log('Inicio Guardia:', guardias[0].Inicio, 'Fin Guardia:', guardias[0].Fin);
@@ -439,11 +443,11 @@ router.post('/Agregar', async (req, res) => {
         _Observaciones
       ]);
 
-    return res.redirect('/novedadesPorPersonal?IdPersonal=' + IdPersonal);
+    return res.redirect(`/novedadesPorSector?IdSector=${IdSector}`);
   } catch (error) {
     console.log(error);
     enviarMensaje(req, res, 'Error', error.message, 'error');
-    return res.redirect('/novedadesPorPersonal?IdPersonal=' + IdPersonal);
+    return res.redirect(`/novedadesPorSector?IdSector=${IdSector}`);
   }
 });
 module.exports = router;
