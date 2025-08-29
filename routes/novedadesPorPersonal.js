@@ -2,7 +2,7 @@ const express = require('express');
 const { pool } = require('../conexion');
 const { render, enviarMensaje } = require('../Middleware/render');
 const { logueado } = require('../Middleware/validarUsuario');
-const { TotalHoras50, TotalHoras100, FechaASqlFecha, FechaHTMLaFecha, FechaSqlAFecha, ExtraerHora, FechaYHora } = require('../lib/libreria');
+const { TotalHoras50, TotalHoras100, FechaASqlFecha, FechaHTMLaFecha, FechaSqlAFecha, ExtraerHora, FechaYHora, FechaLocalASqlDate } = require('../lib/libreria');
 const router = express.Router();
 const nivelAceptado = [1, 2, 3] //Esta ruta sólo permite usuarios nivel 1 (Administrador)
 
@@ -40,7 +40,7 @@ router.get('/', async (req, res) => {
 
         const sqlNovedadesR = `
             SELECT novedadesr.Id as IdNovedadesR,
-            novedadesr.Fecha as Fecha,
+            DATE_FORMAT(novedadesr.Fecha, '%Y-%m-%d') as Fecha,
             novedadesr.IdEmpleado as IdEmpleado,
             personal.Id as IdPersonal,
             personal.ApellidoYNombre as ApellidoYNombre,
@@ -91,17 +91,7 @@ router.get('/', async (req, res) => {
             }   
 
             const [novedadesR] = await pool.query(sqlNovedadesR, [novedadesE[0].Id, IdPersonal]);
-
-            // Convertir fechas UTC a local para la vista
-            const novedadesRLocal = novedadesR.map(nov => {
-                return {
-                    ...nov,
-                    FechaLocal: nov.Fecha ? new Date(nov.Fecha + 'Z') : null,
-                    InicioLocal: nov.Inicio ? new Date(nov.Inicio + 'Z') : null,
-                    FinLocal: nov.Fin ? new Date(nov.Fin + 'Z') : null
-                };
-            });
-            return render(req, res, 'novedadesPorPersonal', { personal: personal[0], novedades: novedadesRLocal });
+            return render(req, res, 'novedadesPorPersonal', { personal: personal[0], novedades: novedadesR });
         } catch (error) {
             console.log(error);
             enviarMensaje(req, res, 'Error', error.message, 'error');
@@ -503,12 +493,12 @@ router.post('/Agregar', logueado, async (req, res) => {
         }
 
         //Ejecuto la instrucción SQL para insertar la novedad
-        await pool.query(sqlNovedadesR,
+    await pool.query(sqlNovedadesR,
             [_IdNovedadesE,
                 _Area,
                 _IdSector,
                 _IdEmpleado,
-                FechaASqlFecha(_Inicio),
+        FechaLocalASqlDate(_Inicio),
                 _Hs50,
                 _Hs100,
                 _GuardiasDiurnas,
