@@ -1,7 +1,7 @@
 const express = require('express');
 const {pool} = require('../conexion');
 const {render, enviarMensaje} = require('../Middleware/render');
-const {FechaCorta, ExtraerHora} = require('../lib/libreria.js');
+const { FormatearFecha, ExtraerHora } = require('../lib/libreria.js');
 const {logueado} = require('../Middleware/validarUsuario');
 const router = express.Router();
 const nivelAceptado = [2];
@@ -23,7 +23,7 @@ router.get('/', logueado, async (req, res) => {
             novedadesR.IdEmpleado, 
             personal.Id as IdPersonal, 
             personal.ApellidoYNombre AS Empleado,
-            novedadesR.Fecha,
+            DATE_FORMAT(novedadesR.Fecha, '%Y-%m-%d') AS Fecha,
             novedadesR.Hs50,
             novedadesR.Hs100,
             novedadesR.GuardiasDiurnas,
@@ -65,7 +65,7 @@ router.get('/', logueado, async (req, res) => {
 });
 router.get('/OK/:Id', logueado, async (req, res) => {
     const {Id} = req.params;
-    const sqlNovedad = 'SELECT * FROM novedadesR WHERE Id = ?';
+    const sqlNovedad = "SELECT Id, IdEmpleado, IdNomina, DATE_FORMAT(Fecha, '%Y-%m-%d') AS Fecha, Inicio, Fin, Hs50, Hs100, GuardiasDiurnas, GuardiasNocturnas, IdEstado, ObservacionesEstado, Observaciones FROM novedadesR WHERE Id = ?";
     const sqlPersonalActual = 'SELECT Id, ApellidoYNombre FROM personal WHERE Id = ?';
     const sqlPersonal = 'SELECT Id, ApellidoYNombre FROM personal ORDER BY ApellidoYNombre';
     const sqlMotivos = 'SELECT * FROM motivos';
@@ -88,7 +88,7 @@ router.get('/OK/:Id', logueado, async (req, res) => {
         if (nomina.length === 0) {
             throw new Error('No se encontró la nómina aplicable a la novedad');
         }
-        let detalleNomina = FechaCorta(novedad[0].Fecha) + ' De ' + ExtraerHora(novedad[0].Inicio) + ' a ' + ExtraerHora(novedad[0].Fin) + ' - ' + 'Valor hora aplicado: ' + nomina[0].Descripcion;
+    let detalleNomina = FormatearFecha(novedad[0].Fecha) + ' De ' + ExtraerHora(novedad[0].Inicio) + ' a ' + ExtraerHora(novedad[0].Fin) + ' - ' + 'Valor hora aplicado: ' + nomina[0].Descripcion;
         if (novedad[0].Hs50 !== null && novedad[0].Hs50 !=="00:00"){ detalleNomina += ' - Horas al 50%: ' + novedad[0].Hs50; }
         if (novedad[0].Hs100 !== null && novedad[0].Hs100 !== "00:00"){ detalleNomina += ' - Horas al 100%: ' + novedad[0].Hs100; }
         if (novedad[0].GuardiasDiurnas !== null && novedad[0].GuardiasDiurnas > 0){ detalleNomina += ' - Guardias diurnas: ' + novedad[0].GuardiasDiurnas; }
@@ -105,7 +105,7 @@ router.get('/OK/:Id', logueado, async (req, res) => {
 //Rechazo de la novedad - carga del formulario
 router.get('/NO/:Id', logueado, async (req, res) => {
     const {Id} = req.params;
-    const sqlNovedad = 'SELECT * FROM novedadesR WHERE Id = ?';
+    const sqlNovedad = "SELECT Id, IdEmpleado, IdNomina, DATE_FORMAT(Fecha, '%Y-%m-%d') AS Fecha, Inicio, Fin, Hs50, Hs100, GuardiasDiurnas, GuardiasNocturnas, IdEstado, ObservacionesEstado, Observaciones FROM novedadesR WHERE Id = ?";
     const sqlPersonalActual = 'SELECT Id, ApellidoYNombre FROM personal WHERE Id = ?';
     const sqlNomina = 'SELECT * FROM nomina WHERE Id = ?';
 
@@ -124,7 +124,7 @@ router.get('/NO/:Id', logueado, async (req, res) => {
         if (nomina.length === 0) {
             throw new Error('No se encontró la nómina aplicable a la novedad');
         }
-        let detalleNomina = FechaCorta(novedad[0].Fecha) + ' De ' + ExtraerHora(novedad[0].Inicio) + ' a ' + ExtraerHora(novedad[0].Fin) + ' - ' + 'Valor hora aplicado: ' + nomina[0].Descripcion;
+    let detalleNomina = FormatearFecha(novedad[0].Fecha) + ' De ' + ExtraerHora(novedad[0].Inicio) + ' a ' + ExtraerHora(novedad[0].Fin) + ' - ' + 'Valor hora aplicado: ' + nomina[0].Descripcion;
         if (novedad[0].Hs50 !== null && novedad[0].Hs50 !=="00:00"){ detalleNomina += ' - Horas al 50%: ' + novedad[0].Hs50; }
         if (novedad[0].Hs100 !== null && novedad[0].Hs100 !== "00:00"){ detalleNomina += ' - Horas al 100%: ' + novedad[0].Hs100; }
         if (novedad[0].GuardiasDiurnas !== null && novedad[0].GuardiasDiurnas > 0){ detalleNomina += ' - Guardias diurnas: ' + novedad[0].GuardiasDiurnas; }
