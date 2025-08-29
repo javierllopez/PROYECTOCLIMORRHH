@@ -15,7 +15,7 @@ router.all('*', logueado, (req, res, next) => {
 });
 
 router.get('/', logueado, async (req, res) => {
-    const sqlNovedadesE = 'SELECT * FROM novedadesE WHERE Actual = 1';
+    const sqlNovedadesE = "SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo, Observaciones, Actual, NovedadesHasta FROM novedadesE WHERE Actual = 1";
     const sqlNovedadesR = `
         SELECT 
             novedadesR.Id as IdNovedadesR, 

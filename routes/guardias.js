@@ -3,7 +3,7 @@ const {Tabla} = require('../Clases/Tabla');
 const {pool} = require('../conexion');
 const {render, enviarMensaje} = require('../Middleware/render');
 const {logueado} = require('../Middleware/validarUsuario');
-const {FechaASqlFecha} = require('../lib/libreria');
+const {FechaASqlFecha, fechaHoraLocalAUtc} = require('../lib/libreria');
 const router = express.Router();
 const nivelAceptado = [1] //Esta ruta sólo permite usuarios nivel 1 (Administrador)
 
@@ -123,13 +123,13 @@ router.get('/editar/:Id', logueado, async (req, res) => {
 //Ruta para agregar una nueva categoría
 router.post('/editar', logueado, async (req, res) => {
     const {Descripcion, Tipo, Cantidad, Inicio, Fin, Nomina}= req.body;
-    const Desde = new Date(`1970-01-01T${Inicio}:00`);
+    const Desde = fechaHoraLocalAUtc('1970-01-01', Inicio);
     //Si la hora de fin es menor que la de inicio, se entiende que la guardia termina al día siguiente
     let Hasta;
     if (parseInt(Fin.slice(0,2)) < parseInt(Inicio.slice(0,2))) {
-        Hasta = new Date(`1970-01-02T${Fin}:00`);
+    Hasta = fechaHoraLocalAUtc('1970-01-02', Fin);
     } else {
-        Hasta = new Date(`1970-01-01T${Fin}:00`);
+    Hasta = fechaHoraLocalAUtc('1970-01-01', Fin);
     }
 
     const miNomina = parseInt(Nomina);
@@ -153,14 +153,14 @@ router.post('/editar', logueado, async (req, res) => {
 router.post('/editar/:Id', logueado, async (req, res) => {
     const { Id } = req.params;
     const {Descripcion, Tipo, Cantidad, Inicio, Fin, Nomina}= req.body;
-    const Desde = new Date(`1970-01-01T${Inicio}:00`);
+    const Desde = fechaHoraLocalAUtc('1970-01-01', Inicio);
     let Hasta;
 
     //Si la hora de fin es menor que la de inicio, se entiende que la guardia termina al día siguiente
     if (parseInt(Fin.slice(0,2)) < parseInt(Inicio.slice(0,2))) {
-        Hasta = new Date(`1970-01-02T${Fin}:00`);
+    Hasta = fechaHoraLocalAUtc('1970-01-02', Fin);
     } else {
-        Hasta = new Date(`1970-01-01T${Fin}:00`);
+    Hasta = fechaHoraLocalAUtc('1970-01-01', Fin);
     }    
     const miNomina = parseInt(Nomina);
     const sql = "UPDATE guardias SET Descripcion = ?, Tipo = ?, Cantidad = ?, Inicio = ?, Fin = ?, IdNomina = ? WHERE Id = ?";

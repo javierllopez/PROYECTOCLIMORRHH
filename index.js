@@ -83,6 +83,9 @@ app.use("/autorizarHoras",require('./routes/autorizarHoras'));
 app.use("/novedadesTodas",require('./routes/novedadesTodas'));
 app.use("/novedadesPorPersonal",require('./routes/novedadesPorPersonal'));
 app.use('/novedadesPorSector', require('./routes/novedadesPorSector'));
+app.use('/blanquearClave', require('./routes/blanquearClave'));
+app.use('/password', require('./routes/password'));
+app.use('/liquidacionesProcesar', require('./routes/liquidacionesProcesar'));
 // Inicializo servidor
 app.listen(port, () => {
   console.log(`Aplicación corriendo en el puerto: ${port}`)

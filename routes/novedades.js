@@ -2,7 +2,7 @@ const express = require('express');
 const {pool} = require('../conexion');
 const {render, enviarMensaje} = require('../Middleware/render');
 const {logueado} = require('../Middleware/validarUsuario');
-const {TotalHoras50, TotalHoras100, FechaASqlFecha, FechaSqlAFecha, ExtaerHora, FechaYHora} = require('../lib/libreria');
+const {TotalHoras50, TotalHoras100, FechaASqlFecha, FechaSqlAFecha, ExtraerHora, FechaYHora, fechaHoraLocalAUtc} = require('../lib/libreria');
 const router = express.Router();
 const nivelAceptado = [1,2,3] //Esta ruta sólo permite usuarios nivel 1 (Administrador)
 
@@ -22,7 +22,7 @@ router.get('/', logueado, async (req, res) => {
                                 sectores.Id, 
                                 sectores.Descripcion AS Sector, 
                                 novedadesr.IdEmpleado, 
-                                novedadesr.Fecha AS Fecha, 
+                                DATE_FORMAT(novedadesr.Fecha, '%Y-%m-%d') AS Fecha, 
                                 novedadesr.Hs50 AS Hs50, 
                                 novedadesr.Hs100 AS Hs100, 
                                 novedadesr.GuardiasDiurnas AS GD, 
@@ -186,10 +186,11 @@ router.post('/agregarHoras',logueado, async (req, res) => {
     const sqlSectores = 'SELECT * FROM sectores WHERE Id = ?';
     const sqlNominaValoresR = "SELECT * FROM nominavaloresr WHERE IdNomina = ? AND VigenciaDesde <= ? AND VigenciaHasta >= ?";
     const sqlNovedadesE = 'SELECT * FROM novedadese WHERE Actual = 1';
-    const sqlNovedadesR = 'INSERT INTO novedadesr (IdNovedadesE, Area, IdSector, IdEmpleado, Fecha, Hs50, Hs100, Monto, IdNomina, IdTurno, IdCategoria, IdEstado, IdSupervisor, MinutosAl50, MinutosAl100, Inicio, Fin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)';
-    const sqlControlFecha = "SELECT * FROM novedadesr WHERE IdEmpleado = ? AND ((Inicio <= ? AND Fin >= ?) OR (Inicio <= ? AND Fin >= ?)) AND IdEstado = 1";
-    const FechaDesde = new Date(FechaEntrada + ' ' + HoraEntrada)
-    const FechaHasta = new Date(FechaSalida + ' ' + HoraSalida);
+        const sqlNovedadesR = 'INSERT INTO novedadesr (IdNovedadesE, Area, IdSector, IdEmpleado, Fecha, Hs50, Hs100, Monto, IdNomina, IdTurno, IdCategoria, IdEstado, IdSupervisor, MinutosAl50, MinutosAl100, Inicio, Fin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        const sqlControlFecha = "SELECT 1 FROM novedadesr WHERE IdEmpleado = ? AND IdEstado NOT IN (2,4) AND Id <> ? AND Fin > ? AND Inicio < ? LIMIT 1";
+    // Construye fechas en UTC a partir de fecha/hora locales del formulario
+    const FechaDesde = fechaHoraLocalAUtc(FechaEntrada, HoraEntrada);
+    const FechaHasta = fechaHoraLocalAUtc(FechaSalida, HoraSalida);
     let valorMinutos50 = 0;
     let valorMinutos100 = 0;
     let monto = 0;
@@ -223,36 +224,36 @@ router.post('/agregarHoras',logueado, async (req, res) => {
             area = 2;
         }
         //Controlo que las horas ingresadas no se superpongan con otras cargadas anteriormente
-
-        const [controlFecha] = await pool.query(sqlControlFecha, [personal[0].Id, FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaHasta), FechaASqlFecha(FechaHasta)]);
+    console.log(`Controlando fechas: ${personal[0].Id}, ${FechaASqlFecha(FechaDesde)}, ${FechaASqlFecha(FechaHasta)}`);
+    const [controlFecha] = await pool.query(sqlControlFecha, [personal[0].Id, FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaHasta), FechaASqlFecha(FechaHasta)]);
         if (controlFecha.length > 0) {
             throw new Error('Las horas ingresadas se superponen con otras ingresadas anteriormente'); 
         }
 
         const [sectores] = await pool.query(sqlSectores, [personal[0].IdSector]);
         idSupervisor = sectores[0].IdSupervisor;
-        const [nominaValoresR] = await pool.query(sqlNominaValoresR, [ItemNomina, FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaDesde)]);
+    const [nominaValoresR] = await pool.query(sqlNominaValoresR, [ItemNomina, FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaDesde)]);
         valorMinutos50 = nominaValoresR[0].ValorHora50 / 60 * TotalHoras50(FechaDesde, FechaHasta)[0];
         valorMinutos100 = nominaValoresR[0].ValorHora100 / 60 * TotalHoras100(FechaDesde, FechaHasta)[0];
         monto = valorMinutos50 + valorMinutos100;
-        await pool.query(sqlNovedadesR, [
-                        novedadesE[0].Id, 
-                        area, 
-                        personal[0].IdSector, 
-                        personal[0].Id, 
-                        FechaDesde, 
-                        TotalHoras50(FechaDesde, FechaHasta)[1], 
-                        TotalHoras100(FechaDesde, FechaHasta)[1], 
-                        monto, 
-                        nominaValoresR[0].IdNomina,
-                        personal[0].IdTurno,
-                        personal[0].IdCategoria,
-                        1, 
-                        idSupervisor,
-                        TotalHoras50(FechaDesde, FechaHasta)[0],
-                        TotalHoras100(FechaDesde, FechaHasta)[0],
-                        FechaDesde,
-                        FechaHasta]);
+    await pool.query(sqlNovedadesR, [
+            novedadesE[0].Id, 
+            area, 
+            personal[0].IdSector, 
+            personal[0].Id, 
+            FechaEntrada, 
+            TotalHoras50(FechaDesde, FechaHasta)[1], 
+            TotalHoras100(FechaDesde, FechaHasta)[1], 
+            monto, 
+            nominaValoresR[0].IdNomina,
+            personal[0].IdTurno,
+            personal[0].IdCategoria,
+            1, 
+            idSupervisor,
+            TotalHoras50(FechaDesde, FechaHasta)[0],
+            TotalHoras100(FechaDesde, FechaHasta)[0],
+            FechaASqlFecha(FechaDesde),
+            FechaASqlFecha(FechaHasta)]);
         return res.redirect('/novedades');
     } catch (error) {
         enviarMensaje(req, res, "Error", error.message, 'warning');
@@ -297,10 +298,10 @@ router.post('/EditarHoras/:Id', logueado, async (req, res) => {
     const sqlPersonal = 'SELECT * FROM personal WHERE Id = ?';
     const sqlNominaValoresR = "SELECT * FROM nominavaloresr WHERE IdNomina = ? AND VigenciaDesde <= ? AND VigenciaHasta >= ?";
     const sqlNovedadesE = 'SELECT * FROM novedadese WHERE Actual = 1';
-    const sqlNovedadesR = 'UPDATE novedadesr SET Fecha = ?, Hs50 = ?, Hs100 = ?, Monto = ?, IdNomina = ?, IdEstado = ?, MinutosAl50 = ?, MinutosAl100 = ?, Inicio = ?, Fin = ? WHERE Id = ?';
-    const sqlControlFecha = "SELECT * FROM novedadesr WHERE IdEmpleado = ? AND ((Inicio <= ? AND Fin >= ?) OR (Inicio <= ? AND Fin >= ?))";
-    const FechaDesde = new Date(FechaInicio + ' ' + HoraInicio)
-    const FechaHasta = new Date(FechaFin + ' ' + HoraFin);
+        const sqlNovedadesR = 'UPDATE novedadesr SET Fecha = ?, Hs50 = ?, Hs100 = ?, Monto = ?, IdNomina = ?, IdEstado = ?, MinutosAl50 = ?, MinutosAl100 = ?, Inicio = ?, Fin = ? WHERE Id = ?';
+        const sqlControlFecha = "SELECT * FROM novedadesr WHERE IdEmpleado = ? AND IdEstado NOT IN (2,4) AND Id <> ? AND Fin > ? AND Inicio < ? LIMIT 1";
+    const FechaDesde = fechaHoraLocalAUtc(FechaInicio, HoraInicio);
+    const FechaHasta = fechaHoraLocalAUtc(FechaFin, HoraFin);
     let valorMinutos50 = 0;
     let valorMinutos100 = 0;
     let monto = 0;
@@ -331,7 +332,7 @@ router.post('/EditarHoras/:Id', logueado, async (req, res) => {
 
         //Controlo que las horas ingresadas no se superpongan con otras cargadas anteriormente
 
-        const [controlFecha] = await pool.query(sqlControlFecha, [personal[0].Id, FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaHasta), FechaASqlFecha(FechaHasta)]);
+    const [controlFecha] = await pool.query(sqlControlFecha, [personal[0].Id, FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaHasta)]);
         if (controlFecha.length > 0) {
             throw new Error('Las horas ingresadas se superponen con otras ingresadas anteriormente'); 
         }
@@ -341,8 +342,8 @@ router.post('/EditarHoras/:Id', logueado, async (req, res) => {
         valorMinutos50 = nominaValoresR[0].ValorHora50 / 60 * TotalHoras50(FechaDesde, FechaHasta)[0];
         valorMinutos100 = nominaValoresR[0].ValorHora100 / 60 * TotalHoras100(FechaDesde, FechaHasta)[0];
         monto = valorMinutos50 + valorMinutos100;
-        await pool.query(sqlNovedadesR, [
-                        FechaDesde, 
+    await pool.query(sqlNovedadesR, [
+            FechaInicio, 
                         TotalHoras50(FechaDesde, FechaHasta)[1], 
                         TotalHoras100(FechaDesde, FechaHasta)[1], 
                         monto, 
@@ -350,8 +351,8 @@ router.post('/EditarHoras/:Id', logueado, async (req, res) => {
                         1, 
                         TotalHoras50(FechaDesde, FechaHasta)[0],
                         TotalHoras100(FechaDesde, FechaHasta)[0],
-                        FechaDesde,
-                        FechaHasta,
+            FechaASqlFecha(FechaDesde),
+            FechaASqlFecha(FechaHasta),
                         Id]);
         return res.redirect('/novedades');
     } catch (error) {
@@ -405,7 +406,7 @@ router.post('/agregarGuardias', logueado, async (req, res) => {
     const sqlGuardias = 'SELECT * FROM guardias WHERE Id = ?';
     const sqlNominaActualizada = 'SELECT * FROM nominavaloresr WHERE IdNomina = ? AND VigenciaDesde <= ? AND VigenciaHasta >= ?';
     const sqlNovedadesR = 'INSERT INTO novedadesr (IdNovedadesE, Area, IdSector, IdEmpleado, Fecha, GuardiasDiurnas, GuardiasNocturnas, Monto, IdGuardia, IdParcial, IdNomina, IdTurno, IdCategoria, IdEstado, IdSupervisor, MinutosGD, MinutosGN, Inicio, Fin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)';   
-    const sqlConsultaNovedadesR = 'SELECT * FROM novedadesr WHERE IdEmpleado = ? AND ((Inicio <= ? AND Fin >= ?) OR (Inicio <= ? AND Fin >= ?)) AND IdEstado = 1';
+    const sqlConsultaNovedadesR = 'SELECT 1 FROM novedadesr WHERE IdEmpleado = ? AND IdEstado NOT IN (2,4) AND Fin > ? AND Inicio < ? LIMIT 1';
     let fechaInicio;
     let fechaFin;
     let monto = 0;
@@ -437,17 +438,17 @@ router.post('/agregarGuardias', logueado, async (req, res) => {
             throw new Error('Guardia no encontrada');
         }
         if (TipoGuardia == 1) {
-            fechaInicio = new Date(Fecha + ' ' + ExtaerHora(FechaSqlAFecha(Guardias[0].Inicio)));
+            fechaInicio = fechaHoraLocalAUtc(Fecha, ExtraerHora(FechaSqlAFecha(Guardias[0].Inicio)));
             //Si la fecha de inicio es menor a la fecha de fin, sumo un día
             if (FechaSqlAFecha(Guardias[0].Inicio).getDate() < FechaSqlAFecha(Guardias[0].Fin).getDate()) {
-                fechaFin = new Date(Fecha + ' ' + ExtaerHora(FechaSqlAFecha(Guardias[0].Fin)));
+                fechaFin = fechaHoraLocalAUtc(Fecha, ExtraerHora(FechaSqlAFecha(Guardias[0].Fin)));
                 fechaFin.setDate(fechaFin.getDate() + 1);
             } else {
-                fechaFin = new Date(Fecha + ' ' + ExtaerHora(FechaSqlAFecha(Guardias[0].Fin)));
+                fechaFin = fechaHoraLocalAUtc(Fecha, ExtraerHora(FechaSqlAFecha(Guardias[0].Fin)));
             }
         } else {
-            fechaInicio = new Date(Fecha + ' ' + HoraInicio);
-            fechaFin = new Date(Fecha + ' ' + HoraFin);
+            fechaInicio = fechaHoraLocalAUtc(Fecha, HoraInicio);
+            fechaFin = fechaHoraLocalAUtc(Fecha, HoraFin);
             if (fechaFin < fechaInicio) {
                 fechaFin.setDate(fechaFin.getDate() + 1);
             }
@@ -464,7 +465,7 @@ router.post('/agregarGuardias', logueado, async (req, res) => {
         if (fechaInicio > NovedadesE[0].NovedadesHasta) {
             throw new Error('No se pueden ingresar novedades posteriores al cierre de esta liquidación');
         }
-        const [ConsultaNovedadesR] = await pool.query(sqlConsultaNovedadesR, [Personal[0].Id, FechaASqlFecha(fechaInicio), FechaASqlFecha(fechaInicio), FechaASqlFecha(fechaFin), FechaASqlFecha(fechaFin)]);
+    const [ConsultaNovedadesR] = await pool.query(sqlConsultaNovedadesR, [Personal[0].Id, FechaASqlFecha(fechaInicio), FechaASqlFecha(fechaFin)]);
         if (ConsultaNovedadesR.length > 0) {
             throw new Error('Las horas ingresadas se superponen con otras ingresadas anteriormente');
         }
@@ -485,7 +486,7 @@ router.post('/agregarGuardias', logueado, async (req, res) => {
             Categorias[0].Area == "Administrativa" ? 1 : 2,
             Personal[0].IdSector,
             Personal[0].Id,
-            fechaInicio,
+            Fecha,
             coeficienteGuardiaDiurna,
             coeficienteGuardiaNocturna,
             monto,
@@ -556,7 +557,7 @@ router.post('/EditarGuardia/:Id', logueado, async (req, res) => {
     const sqlGuardias = 'SELECT * FROM guardias WHERE Id = ?';
     const sqlNominaActualizada = 'SELECT * FROM nominavaloresr WHERE IdNomina = ? AND VigenciaDesde <= ? AND VigenciaHasta >= ?';
     const sqlNovedadesR = 'UPDATE novedadesr SET Fecha = ?, GuardiasDiurnas = ?, GuardiasNocturnas = ?, Monto = ?, IdGuardia = ?, IdParcial = ?, IdEstado = ?, MinutosGD = ?, MinutosGN = ?, Inicio = ?, Fin = ? WHERE Id = ?';   
-    const sqlConsultaNovedadesR = 'SELECT * FROM novedadesr WHERE IdEmpleado = ? AND ((Inicio <= ? AND Fin >= ?) OR (Inicio <= ? AND Fin >= ?)) AND Id <> ?';
+    const sqlConsultaNovedadesR = 'SELECT 1 FROM novedadesr WHERE IdEmpleado = ? AND IdEstado NOT IN (2,4) AND Id <> ? AND Fin > ? AND Inicio < ? LIMIT 1';
     let fechaInicio;
     let fechaFin;
     let monto = 0;
@@ -588,17 +589,17 @@ router.post('/EditarGuardia/:Id', logueado, async (req, res) => {
             throw new Error('Guardia no encontrada');
         }
         if (TipoGuardia == 1) {
-            fechaInicio = new Date(Fecha + ' ' + ExtaerHora(FechaSqlAFecha(Guardias[0].Inicio)));
+            fechaInicio = fechaHoraLocalAUtc(Fecha, ExtraerHora(FechaSqlAFecha(Guardias[0].Inicio)));
             //Si la fecha de inicio es menor a la fecha de fin, sumo un día
             if (FechaSqlAFecha(Guardias[0].Inicio).getDate() < FechaSqlAFecha(Guardias[0].Fin).getDate()) {
-                fechaFin = new Date(Fecha + ' ' + ExtaerHora(FechaSqlAFecha(Guardias[0].Fin)));
+                fechaFin = fechaHoraLocalAUtc(Fecha, ExtraerHora(FechaSqlAFecha(Guardias[0].Fin)));
                 fechaFin.setDate(fechaFin.getDate() + 1);
             } else {
-                fechaFin = new Date(Fecha + ' ' + ExtaerHora(FechaSqlAFecha(Guardias[0].Fin)));
+                fechaFin = fechaHoraLocalAUtc(Fecha, ExtraerHora(FechaSqlAFecha(Guardias[0].Fin)));
             }
         } else {
-            fechaInicio = new Date(Fecha + ' ' + HoraInicio);
-            fechaFin = new Date(Fecha + ' ' + HoraFin);
+            fechaInicio = fechaHoraLocalAUtc(Fecha, HoraInicio);
+            fechaFin = fechaHoraLocalAUtc(Fecha, HoraFin);
             if (fechaFin < fechaInicio) {
                 fechaFin.setDate(fechaFin.getDate() + 1);
             }
@@ -612,7 +613,7 @@ router.post('/EditarGuardia/:Id', logueado, async (req, res) => {
         if (fechaInicio > NovedadesE[0].NovedadesHasta) {
             throw new Error('No se pueden ingresar novedades posteriores al cierre de esta liquidación');
         }
-        const [ConsultaNovedadesR] = await pool.query(sqlConsultaNovedadesR, [Personal[0].Id, FechaASqlFecha(fechaInicio), FechaASqlFecha(fechaInicio), FechaASqlFecha(fechaFin), FechaASqlFecha(fechaFin), Id]);
+    const [ConsultaNovedadesR] = await pool.query(sqlConsultaNovedadesR, [Personal[0].Id, Id, FechaASqlFecha(fechaInicio), FechaASqlFecha(fechaFin)]);
         if (ConsultaNovedadesR.length > 0) {
             throw new Error('Las horas ingresadas se superponen con otras ingresadas anteriormente');
         }
@@ -629,7 +630,7 @@ router.post('/EditarGuardia/:Id', logueado, async (req, res) => {
         }
 
         await pool.query(sqlNovedadesR, [
-            fechaInicio,
+            Fecha,
             coeficienteGuardiaDiurna,
             coeficienteGuardiaNocturna,
             monto,

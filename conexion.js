@@ -2,36 +2,52 @@ const mysql = require('mysql2/promise');
 const {database} = require('./claves');
 
 
-const pool = mysql.createPool(database);
-
-
-
-pool.getConnection((err,connection) => {
-    if (err){
-        if(err.code === "PROTOCOL_CONNECTION_LOST") {
-            console.error("Conexion de datos perdida");
-        }
-        if (err.code === "ER_CON_COUNT_ERROR") {
-            console.error("Demasiadas conexiones");
-        }
-        if (err.code === "ERRCONREFUSED"){
-            console.error("La conexión fue rechazada");
-        }
-        if (err.code === "ER_DUP_ENTRY") {
-            console.error("clave primaria duplicada");
-        }
-
-    }
-    if (connection) connection.release();
-        console.log("Conexión a base de datos exitosa");
-    return;
+const pool = mysql.createPool({
+    ...database,
+    timezone: 'Z' // UTC
 });
+
+// Fijar zona horaria UTC por sesión
+pool.on('connection', (conn) => {
+    // conn aquí es la conexión base (callback-style), no la versión promesa
+    conn.query("SET time_zone = '+00:00'", (e) => {
+        if (e) {
+            console.warn('No se pudo fijar time_zone UTC en la sesión:', e.message);
+        }
+    });
+});
+
+// Probar una conexión al iniciar (versión async/await)
+(async () => {
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        await connection.query("SET time_zone = '+00:00'");
+        await connection.query('SELECT 1');
+        console.log('Conexión a base de datos exitosa');
+    } catch (err) {
+        if(err.code === 'PROTOCOL_CONNECTION_LOST') {
+            console.error('Conexión de datos perdida');
+        } else if (err.code === 'ER_CON_COUNT_ERROR') {
+            console.error('Demasiadas conexiones');
+        } else if (err.code === 'ERRCONREFUSED'){
+            console.error('La conexión fue rechazada');
+        } else if (err.code === 'ER_DUP_ENTRY') {
+            console.error('Clave primaria duplicada');
+        } else {
+            console.error('Error de conexión a base de datos:', err.message);
+        }
+    } finally {
+        if (connection) connection.release();
+    }
+})();
 
 const beginTransaction = async () => {
     let connection;
     try {
         connection = await pool.getConnection();
-        await connection.beginTransaction();
+    await connection.query("SET time_zone = '+00:00'");
+    await connection.beginTransaction();
         console.log("Transaction started");
         return connection;
     } catch (err) {

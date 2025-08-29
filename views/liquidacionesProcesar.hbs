@@ -1,0 +1,58 @@
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi-calculator"></i>
+            <h5 class="mb-0">Procesar liquidación</h5>
+          </div>
+          <a href="/" class="btn btn-outline-light btn-sm">
+            <i class="bi-arrow-left"></i> Volver
+          </a>
+        </div>
+        <div class="card-body">
+          {{#if sinActual}}
+            <div class="alert alert-warning" role="alert">
+              No hay una liquidación actual definida en el sistema.
+            </div>
+          {{else}}
+            <div class="mb-3">
+              <label class="form-label fw-bold">Período actual</label>
+              <div>{{Periodo actual.Periodo}}</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Observaciones</label>
+              <div>{{#if actual.Observaciones}}{{actual.Observaciones}}{{else}}—{{/if}}</div>
+              {{#if yaExiste}}
+                <div class="form-text text-warning">Ya existen liquidaciones para este período. Si continuás, se realizará una reliquidación.</div>
+              {{/if}}
+            </div>
+            <form action="/liquidacionesProcesar" method="POST">
+              <!-- En el futuro podemos agregar parámetros del proceso acá -->
+              <div class="alert alert-info d-flex align-items-start" role="alert">
+                <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+                <div class="w-100">
+                  <div class="fw-bold mb-2">Ingresá el número del primer vale</div>
+                  <div class="row g-2 align-items-center">
+                    <div class="col-auto">
+                      <label for="primerVale" class="col-form-label">Primer vale</label>
+                    </div>
+                    <div class="col-auto">
+                      <input type="number" class="form-control" id="primerVale" name="primerVale" required min="1" placeholder="Ej: 1001" value="{{siguienteVale}}">
+                    </div>
+                  </div>
+                  <div class="form-text">Se asignará al primer registro y se incrementará automáticamente en los siguientes.</div>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-success">
+                <i class="bi-play-fill"></i>
+                {{#if yaExiste}}Reliquidar{{else}}Iniciar proceso de liquidación{{/if}}
+              </button>
+            </form>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
