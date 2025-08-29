@@ -1,7 +1,7 @@
 const express = require('express');
 const { pool } = require('../conexion');
 const { render, enviarMensaje } = require('../Middleware/render');
-const { TotalHoras50, TotalHoras100, FechaASqlFecha, FechaHTMLaFecha, FechaSqlAFecha, ExtraerHora, FechaYHora } = require('../lib/libreria');
+const { TotalHoras50, TotalHoras100, FechaASqlFecha, FechaHTMLaFecha, FechaSqlAFecha, ExtraerHora, FechaYHora, FechaLocalASqlDate } = require('../lib/libreria');
 const { logueado } = require('../Middleware/validarUsuario');
 const router = express.Router();
 const nivelAceptado = [1, 2, 3];
@@ -38,7 +38,7 @@ router.get('/', async (req, res) => {
       return res.redirect('/novedadesPorSector/Seleccionar');
     }
     const [novedades] = await pool.query(`
-      SELECT n.Id, n.Fecha, n.IdEmpleado, p.ApellidoYNombre, n.IdEstado, n.Hs50, n.Hs100, n.GuardiasDiurnas, n.GuardiasNocturnas, n.Monto, n.Inicio, n.Fin, n.ObservacionesEstado, n.MinutosAl50, n.MinutosAl100,n.MinutosGD, n.MinutosGN, n.IdMotivo, m.Descripcion as Motivo, n.Observaciones, n.CreadoPorAdmin, p2.ApellidoYNombre as Reemplazo
+      SELECT n.Id, DATE_FORMAT(n.Fecha, '%Y-%m-%d') AS Fecha, n.IdEmpleado, p.ApellidoYNombre, n.IdEstado, n.Hs50, n.Hs100, n.GuardiasDiurnas, n.GuardiasNocturnas, n.Monto, n.Inicio, n.Fin, n.ObservacionesEstado, n.MinutosAl50, n.MinutosAl100,n.MinutosGD, n.MinutosGN, n.IdMotivo, m.Descripcion as Motivo, n.Observaciones, n.CreadoPorAdmin, p2.ApellidoYNombre as Reemplazo
       FROM novedadesr n
       INNER JOIN personal p ON n.IdEmpleado = p.Id
       INNER JOIN motivos m ON n.IdMotivo = m.Id
@@ -46,14 +46,7 @@ router.get('/', async (req, res) => {
       WHERE n.IdSector = ? AND n.IdEstado > 2
       ORDER BY p.ApellidoYNombre, n.Fecha ASC
     `, [IdSector]);
-    // Convertir fechas UTC a local para la vista
-    const novedadesLocal = novedades.map(nov => ({
-      ...nov,
-      FechaLocal: nov.Fecha ? new Date(nov.Fecha + 'Z') : null,
-      InicioLocal: nov.Inicio ? new Date(nov.Inicio + 'Z') : null,
-      FinLocal: nov.Fin ? new Date(nov.Fin + 'Z') : null
-    }));
-    return render(req, res, 'novedadesPorSector', { sector: sector[0], novedades: novedadesLocal });
+    return render(req, res, 'novedadesPorSector', { sector: sector[0], novedades });
   } catch (error) {
     console.error(error);
     enviarMensaje(req, res, 'Error al cargar las novedades', 'danger');
@@ -418,7 +411,7 @@ router.post('/Agregar', async (req, res) => {
         _Area,
         _IdSector,
         _IdEmpleado,
-        FechaASqlFecha(_Inicio),
+  FechaLocalASqlDate(_Inicio),
         _Hs50,
         _Hs100,
         _GuardiasDiurnas,
