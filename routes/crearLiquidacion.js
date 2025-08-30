@@ -15,7 +15,7 @@ router.all('*', logueado, (req, res, next) => {
 });
 
 router.get('/', logueado, async (req, res) => {
-    const sqlLiquidacionE = "SELECT * FROM novedadese WHERE Actual = 1";
+    const sqlLiquidacionE = "SELECT DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo, Observaciones, DATE_FORMAT(NovedadesHasta, '%Y-%m-%d') AS NovedadesHasta FROM novedadese WHERE Actual = 1 LIMIT 1";
     let periodo = '';
     let observaciones = '';
     let NovedadesHasta = '';
@@ -25,10 +25,22 @@ router.get('/', logueado, async (req, res) => {
         if (liquidacionE.length === 0) {
             return render(req, res, 'periodoActual');
         } else {
-            periodo = Periodo(liquidacionE[0].Periodo.getMonth()+1, liquidacionE[0].Periodo.getFullYear());
-            console.log(liquidacionE[0].Periodo.getMonth()+1);
+            // Periodo como 'YYYY-MM-DD' sin construir Date para evitar corrimientos
+            const perStr = liquidacionE[0].Periodo;
+            if (typeof perStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(perStr)) {
+                const [y, m] = perStr.split('-');
+                periodo = Periodo(Number(m), Number(y));
+            } else {
+                periodo = '';
+            }
             observaciones = liquidacionE[0].Observaciones;
-            NovedadesHasta = FechaSqlAFechaCorta(liquidacionE[0].NovedadesHasta);
+            const nh = liquidacionE[0].NovedadesHasta;
+            if (typeof nh === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(nh)) {
+                const [y2, m2, d2] = nh.split('-');
+                NovedadesHasta = `${d2}/${m2}/${y2}`;
+            } else {
+                NovedadesHasta = FechaSqlAFechaCorta(nh);
+            }
             return render(req, res, 'periodoActual', {periodo, observaciones, NovedadesHasta});
         }
     } catch (error) {
