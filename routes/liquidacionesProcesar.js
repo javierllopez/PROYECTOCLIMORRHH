@@ -4,7 +4,7 @@ const { pool } = require('../conexion');
 const { render, confirmar } = require('../Middleware/render');
 const sqlResultado = `
   SELECT 
-  l.Area,
+    l.Area,
     l.Sector,
     s.Descripcion AS SectorNombre,
     l.IdEmpleado,
@@ -16,7 +16,7 @@ const sqlResultado = `
   LEFT JOIN sectores s ON s.Id = l.Sector
   LEFT JOIN personal p ON p.Id = l.IdEmpleado
   WHERE l.IdNovedadesE = ?
-  ORDER BY s.Descripcion, p.ApellidoYNombre
+  ORDER BY FIELD(l.Area,'Administrativa','Operativa'), s.Descripcion, p.ApellidoYNombre
 `;
 
 async function obtenerResultado(actual) {
@@ -131,6 +131,8 @@ async function procesarLiquidacion(actual, primerVale) {
            e.Periodo AS Periodo,
            r.IdSector AS Sector,
            r.IdEmpleado AS IdEmpleado,
+           MIN(s.Descripcion) AS SectorNombre,
+           MIN(p.ApellidoYNombre) AS ApellidoYNombre,
            CONCAT(
              GROUP_CONCAT(DATE_FORMAT(r.Fecha, '%d/%m') ORDER BY r.Fecha SEPARATOR ', '),
              CASE WHEN SUM(COALESCE(r.MinutosAl50,0)) > 0 
@@ -152,10 +154,12 @@ async function procesarLiquidacion(actual, primerVale) {
            CAST(CEIL(SUM(COALESCE(r.Monto, 0)) / 10) * 10 AS DECIMAL(12,2)) AS Monto
          FROM novedadesr r
          INNER JOIN novedadese e ON e.Id = r.IdNovedadesE
+         LEFT JOIN sectores s ON s.Id = r.IdSector
+         LEFT JOIN personal p ON p.Id = r.IdEmpleado
          WHERE e.Id = ? AND r.IdEstado = 5
          GROUP BY e.Id, e.Periodo, r.IdSector, r.IdEmpleado
        ) AS t
-       ORDER BY t.Sector, t.IdEmpleado`,
+       ORDER BY FIELD(t.Area,'Administrativa','Operativa'), t.SectorNombre, t.ApellidoYNombre, t.Sector, t.IdEmpleado`,
       [actual.Id]
     );
 
