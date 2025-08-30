@@ -4,6 +4,7 @@ const { pool } = require('../conexion');
 const { render, confirmar } = require('../Middleware/render');
 const sqlResultado = `
   SELECT 
+  l.Area,
     l.Sector,
     s.Descripcion AS SectorNombre,
     l.IdEmpleado,
@@ -92,9 +93,10 @@ async function procesarLiquidacion(actual, primerVale) {
     await conn.query('SET @rn := ? - 1', [inicioVale]);
     // Insertar agregados desde novedadesr del período actual, solo aceptadas (IdEstado = 5)
     await conn.query(
-      `INSERT INTO liquidaciones (IdNovedadesE, Periodo, Sector, IdEmpleado, Detalle, Monto, Vale)
+      `INSERT INTO liquidaciones (IdNovedadesE, Area, Periodo, Sector, IdEmpleado, Detalle, Monto, Vale)
        SELECT 
          t.IdNovedadesE,
+         t.Area,
          t.Periodo,
          t.Sector,
          t.IdEmpleado,
@@ -104,6 +106,7 @@ async function procesarLiquidacion(actual, primerVale) {
        FROM (
          SELECT 
            e.Id AS IdNovedadesE,
+           MIN(r.Area) AS Area,
            e.Periodo AS Periodo,
            r.IdSector AS Sector,
            r.IdEmpleado AS IdEmpleado,
