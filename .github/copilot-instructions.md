@@ -1,5 +1,10 @@
 # Copilot Instructions for ProyectoClimoRRHH
 
+## Idioma y Comunicación
+- Todas las interacciones, mensajes y respuestas del asistente deben realizarse en español de Argentina (castellano rioplatense).
+- Preferí terminología local y ejemplos en contexto argentino. Evitá anglicismos innecesarios.
+- Mantené un tono profesional y cercano. Podés usar voseo cuando sea natural en la comunicación con el usuario.
+
 ## Estilo de Código
 - Usa nombres de variables y funciones descriptivos y en español.
 - Mantén la indentación consistente (2 espacios para JavaScript/Handlebars).
