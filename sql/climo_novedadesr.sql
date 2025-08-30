@@ -53,6 +53,7 @@ CREATE TABLE `novedadesr` (
   `IdReemplazo` int DEFAULT NULL,
   `Observaciones` text,
   `CreadoPorAdmin` tinyint DEFAULT NULL,
+  `Liquidado` tinyint DEFAULT NULL,
   PRIMARY KEY (`Id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=71 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
