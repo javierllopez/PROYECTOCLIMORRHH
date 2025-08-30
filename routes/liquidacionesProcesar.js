@@ -200,6 +200,21 @@ router.get('/', logueado, async (req, res) => {
   return render(req, res, 'liquidacionesProcesar', modelo);
 });
 
+// GET: consulta de la liquidación actual (solo visualizar resultados)
+router.get('/resultado', logueado, async (req, res) => {
+  const modelo = await cargarModelo();
+  if (modelo.sinActual) {
+    return render(req, res, 'liquidacionesProcesar', { ...modelo, Mensaje: { title: 'Atención', text: 'No hay período actual para consultar.', icon: 'warning' } });
+  }
+  try {
+    const datos = await obtenerResultado(modelo.actual);
+    return render(req, res, 'liquidacionesResultado', datos);
+  } catch (err) {
+    console.error('Error al obtener resultados de liquidación actual:', err);
+    return render(req, res, 'liquidacionesProcesar', { ...modelo, Mensaje: { title: 'Error', text: 'No fue posible obtener la liquidación actual.', icon: 'error' } });
+  }
+});
+
 // POST: procesa liquidación agrupando por Sector y Legajo y acumulando Monto
 router.post('/', logueado, async (req, res) => {
   const modelo = await cargarModelo();
