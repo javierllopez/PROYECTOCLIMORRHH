@@ -46,7 +46,8 @@ async function obtenerResultado(actual) {
 
 async function cargarModelo() {
   try {
-    const [rows] = await pool.query('SELECT Id, Periodo, Observaciones FROM novedadese WHERE Actual = 1 LIMIT 1');
+  // Traer Periodo como string 'YYYY-MM-DD' para evitar corrimiento por huso horario
+  const [rows] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo, Observaciones FROM novedadese WHERE Actual = 1 LIMIT 1");
     if (!rows || rows.length === 0) {
       return { sinActual: true };
     }
@@ -87,6 +88,8 @@ async function procesarLiquidacion(actual, primerVale) {
       throw new Error('Debés indicar un número válido de primer vale (mayor a 0).');
     }
 
+    // Preparar contador de vales (compatible con MySQL < 8, sin window functions)
+    await conn.query('SET @rn := ? - 1', [inicioVale]);
     // Insertar agregados desde novedadesr del período actual, solo aceptadas (IdEstado = 5)
     await conn.query(
       `INSERT INTO liquidaciones (IdNovedadesE, Periodo, Sector, IdEmpleado, Detalle, Monto, Vale)
@@ -94,10 +97,10 @@ async function procesarLiquidacion(actual, primerVale) {
          t.IdNovedadesE,
          t.Periodo,
          t.Sector,
-          t.IdEmpleado,
+         t.IdEmpleado,
          t.Detalle,
          t.Monto,
-         (? + ROW_NUMBER() OVER (ORDER BY t.Sector, t.IdEmpleado) - 1) AS Vale
+         (@rn := @rn + 1) AS Vale
        FROM (
          SELECT 
            e.Id AS IdNovedadesE,
@@ -127,8 +130,9 @@ async function procesarLiquidacion(actual, primerVale) {
          INNER JOIN novedadese e ON e.Id = r.IdNovedadesE
          WHERE e.Id = ? AND r.IdEstado = 5
          GROUP BY e.Id, e.Periodo, r.IdSector, r.IdEmpleado
-       ) AS t`,
-      [inicioVale, actual.Id]
+       ) AS t
+       ORDER BY t.Sector, t.IdEmpleado`,
+      [actual.Id]
     );
 
     await conn.commit();
@@ -187,10 +191,11 @@ router.post('/', logueado, async (req, res) => {
       req,
       res,
       `Existen ${pendientes} novedades con estado pendiente (IdEstado < 5). ¿Deseás continuar con la liquidación igualmente?`,
-  `/liquidacionesProcesar?accion=liquidar&forzar=1${req.body.primerVale ? `&primerVale=${encodeURIComponent(req.body.primerVale)}` : ''}`,
+      `/liquidacionesProcesar?accion=liquidar&forzar=1${req.body.primerVale ? `&primerVale=${encodeURIComponent(req.body.primerVale)}` : ''}`,
       '/liquidacionesProcesar'
     );
-    return res.redirect('/liquidacionesProcesar');
+    // Render inmediato para mostrar el diálogo de confirmación sin perder el primerVale
+    return render(req, res, 'liquidacionesProcesar', modelo);
   }
 
   try {

@@ -73,7 +73,8 @@
         cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
-            window.location.href = '{{Confirmar.Ok}}';
+            // Usamos JSON.stringify via helper para evitar que Handlebars escape & como &amp;
+            window.location.href = {{{json Confirmar.Ok}}};
         }
     });    
 </script>
