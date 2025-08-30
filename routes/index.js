@@ -13,17 +13,16 @@ router.get('/', logueado, async (req, res) => {
             const [rows] = await pool.query("SELECT COUNT(*) as total FROM personal WHERE FechaBaja IS NULL");
             dashboard.usuariosActivos = rows[0].total;
             // Período de liquidación actual y observaciones
-            const [periodoRows] = await pool.query("SELECT Periodo, Observaciones FROM novedadese WHERE Actual = 1 LIMIT 1");
+            const [periodoRows] = await pool.query("SELECT DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo, Observaciones FROM novedadese WHERE Actual = 1 LIMIT 1");
             if (periodoRows.length > 0) {
                 // Formatear periodo: campo DATE de MySQL
-                let periodo = periodoRows[0].Periodo;
+                let periodo = periodoRows[0].Periodo; // 'YYYY-MM-DD'
                 let periodoFormateado = '';
-                if (periodo) {
-                    const fecha = new Date(periodo);
+                if (typeof periodo === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(periodo)) {
+                    const [y, m] = periodo.split('-');
                     const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-                    const mesNombre = meses[fecha.getMonth()];
-                    const year = fecha.getFullYear();
-                    periodoFormateado = mesNombre + ' de ' + year;
+                    const mesNombre = meses[Number(m) - 1];
+                    periodoFormateado = mesNombre + ' de ' + y;
                 } else {
                     periodoFormateado = 'No definido';
                 }
