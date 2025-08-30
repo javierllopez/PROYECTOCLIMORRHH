@@ -21,28 +21,49 @@ const sqlResultado = `
 
 async function obtenerResultado(actual) {
   const [rows] = await pool.query(sqlResultado, [actual.Id]);
-  // Agrupar en memoria por sector y calcular subtotales
-  const grupos = [];
-  const map = new Map();
+  // Agrupar en memoria por Área y dentro de cada área por sector; calcular subtotales y totales
+  const areas = [];
+  const areasMap = new Map();
+  const totalesPorArea = [];
   let totalGeneral = 0;
+
   for (const r of rows) {
-    const key = r.Sector || 0;
-    if (!map.has(key)) {
-      map.set(key, { sectorId: key, sectorNombre: r.SectorNombre || 'Sin sector', items: [], subtotal: 0 });
-      grupos.push(map.get(key));
+    const areaKey = r.Area || 'Sin área';
+    if (!areasMap.has(areaKey)) {
+      const areaObj = { area: areaKey, grupos: [], subtotalArea: 0 };
+      areaObj._sectoresMap = new Map(); // interno para acumular por sector
+      areasMap.set(areaKey, areaObj);
+      areas.push(areaObj);
     }
-    const g = map.get(key);
+    const areaObj = areasMap.get(areaKey);
+
+    const sectorKey = r.Sector || 0;
+    if (!areaObj._sectoresMap.has(sectorKey)) {
+      const sectorObj = { sectorId: sectorKey, sectorNombre: r.SectorNombre || 'Sin sector', items: [], subtotal: 0 };
+      areaObj._sectoresMap.set(sectorKey, sectorObj);
+      areaObj.grupos.push(sectorObj);
+    }
+    const g = areaObj._sectoresMap.get(sectorKey);
+    const montoNum = Number(r.Monto) || 0;
     g.items.push({
       idEmpleado: r.IdEmpleado,
       apellidoYNombre: r.ApellidoYNombre || '-',
       detalle: r.Detalle || '',
-      monto: Number(r.Monto) || 0,
+      monto: montoNum,
       vale: r.Vale
     });
-    g.subtotal += Number(r.Monto) || 0;
-    totalGeneral += Number(r.Monto) || 0;
+    g.subtotal += montoNum;
+    areaObj.subtotalArea += montoNum;
+    totalGeneral += montoNum;
   }
-  return { actual, grupos, totalGeneral };
+
+  // Armar totales por área y limpiar mapas internos
+  for (const a of areas) {
+    totalesPorArea.push({ area: a.area, total: a.subtotalArea });
+    delete a._sectoresMap;
+  }
+
+  return { actual, areas, totalesPorArea, totalGeneral };
 }
 
 async function cargarModelo() {
