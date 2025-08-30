@@ -215,6 +215,72 @@ router.get('/resultado', logueado, async (req, res) => {
   }
 });
 
+// GET: confirmar cierre de la liquidación actual
+router.get('/cerrar', logueado, async (req, res) => {
+  const modelo = await cargarModelo();
+  if (modelo.sinActual) {
+    return render(req, res, 'liquidacionesProcesar', { ...modelo, Mensaje: { title: 'Atención', text: 'No hay período actual para cerrar.', icon: 'warning' } });
+  }
+  const { actual } = modelo;
+  confirmar(
+    req,
+    res,
+    `Vas a cerrar la liquidación del período ${actual.Periodo}. Se archivarán datos y no se podrá modificar. ¿Confirmás?`,
+    `/liquidacionesProcesar/cerrar/confirmar`,
+    '/liquidacionesProcesar'
+  );
+  return render(req, res, 'liquidacionesProcesar', modelo);
+});
+
+// GET: ejecutar cierre confirmado
+router.get('/cerrar/confirmar', logueado, async (req, res) => {
+  const modelo = await cargarModelo();
+  if (modelo.sinActual) {
+    return render(req, res, 'liquidacionesProcesar', { ...modelo, Mensaje: { title: 'Atención', text: 'No hay período actual para cerrar.', icon: 'warning' } });
+  }
+  const { actual } = modelo;
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    // Reafirmar Periodo como string
+    const perStr = actual.Periodo;
+    // 1) Pasar liquidaciones a histórico
+    await conn.query(
+      `INSERT INTO liquidaciones_historico (IdNovedadesE, Area, Periodo, Sector, IdEmpleado, Detalle, Monto, Vale)
+       SELECT IdNovedadesE, Area, Periodo, Sector, IdEmpleado, Detalle, Monto, Vale
+       FROM liquidaciones WHERE IdNovedadesE = ?`,
+      [actual.Id]
+    );
+    // 2) Marcar novedadesr del período como liquidadas y volcar a histórico opcional
+    try {
+      await conn.query(`UPDATE novedadesr SET Liquidado = 1 WHERE IdNovedadesE = ?`, [actual.Id]);
+    } catch {}
+    // Si existiera tabla novedadesr_historico, insertar copia
+    try {
+      await conn.query(
+        `INSERT INTO novedadesr_historico (IdNovedadesE, Area, IdSector, IdEmpleado, Fecha, Hs50, Hs100, GuardiasDiurnas, GuardiasNocturnas, GuardiasPasivas, Monto, IdGuardia, IdParcial, IdNomina, IdTurno, IdCategoria, IdEstado, ObservacionesEstado, IdSupervisor, MinutosAl50, MinutosAl100, MinutosGD, MinutosGN, Inicio, Fin, IdMotivo, IdReemplazo, Observaciones, CreadoPorAdmin)
+         SELECT IdNovedadesE, Area, IdSector, IdEmpleado, Fecha, Hs50, Hs100, GuardiasDiurnas, GuardiasNocturnas, GuardiasPasivas, Monto, IdGuardia, IdParcial, IdNomina, IdTurno, IdCategoria, IdEstado, ObservacionesEstado, IdSupervisor, MinutosAl50, MinutosAl100, MinutosGD, MinutosGN, Inicio, Fin, IdMotivo, IdReemplazo, Observaciones, CreadoPorAdmin
+         FROM novedadesr WHERE IdNovedadesE = ?`,
+        [actual.Id]
+      );
+    } catch {}
+    // 3) Eliminar liquidaciones de trabajo del período actual
+    await conn.query(`DELETE FROM liquidaciones WHERE IdNovedadesE = ?`, [actual.Id]);
+    // 4) Marcar el período como no-Actual en novedadese
+    await conn.query(`UPDATE novedadese SET Actual = 0 WHERE Id = ?`, [actual.Id]);
+
+    await conn.commit();
+    // Mostrar resultados en modo consulta ya archivados
+    return render(req, res, 'liquidacionesProcesar', { Mensaje: { title: 'Listo', text: `Liquidación del período ${perStr} cerrada correctamente.`, icon: 'success' } });
+  } catch (err) {
+    try { await conn.rollback(); } catch {}
+    console.error('Error al cerrar liquidación:', err);
+    return render(req, res, 'liquidacionesProcesar', { Mensaje: { title: 'Error', text: 'No fue posible cerrar la liquidación.', icon: 'error' } });
+  } finally {
+    conn.release();
+  }
+});
+
 // POST: procesa liquidación agrupando por Sector y Legajo y acumulando Monto
 router.post('/', logueado, async (req, res) => {
   const modelo = await cargarModelo();
