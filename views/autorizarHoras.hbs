@@ -60,9 +60,15 @@
                                 title="Aprobado Supervisor" width="50" height="10"> {{/ifeq}}
                             {{#ifeq this.IdEstado 4}}<img src="/img/estado4.png" alt="Rechazado Recursos Humanos"
                                 title="Rechazado Recursos Humanos" width="50" height="10"> {{/ifeq}}
-                            {{#ifeq this.IdEstado 5}}<img src="/img/estado5.png" alt="Liquidado" title="Liquidado"
-                                width="50" height="10"> {{/ifeq}}</td>
+                            {{#ifeq this.IdEstado 5}}<img src="/img/estado5.png" alt="Aprobado RRHH" title="Aprobado RRHH"
+                                width="50" height="10"> {{/ifeq}}
+                            {{#ifeq this.IdEstado 6}}<img src="/img/estado6.png" alt="Liquidado" title="Liquidado"
+                                width="50" height="10"> {{/ifeq}}
+                        </td>
                         <td class="text-center align-middle">
+                            {{#ifeq this.IdEstado 6}}
+                            {{! Sin acciones para estado 6 }}
+                            {{else}}
                             {{#ifeq this.IdEstado 1}}
                             <a type="button" class="btn btn-primary rounded-circle"
                                 href="/autorizarHoras/OK/{{this.IdNovedadesR}}">
@@ -80,6 +86,7 @@
                             <a type="button" class="btn btn-primary rounded-circle"
                                 href="/autorizarHoras/deshacer/{{this.IdNovedadesR}}">
                                 <i class="bi-arrow-counterclockwise"></i> </a>
+                            {{/ifeq}}
                             {{/ifeq}}
                         </td>
                     </tr>

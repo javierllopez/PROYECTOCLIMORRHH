@@ -182,6 +182,12 @@ router.post('/OK/:Id', logueado, async (req, res) => {
 });
 router.get('/deshacer/:Id', logueado, async (req, res) => {
     const {Id} = req.params;
+    // Bloquear si está liquidado
+    const [rows] = await pool.query('SELECT IdEstado FROM novedadesR WHERE Id = ?', [Id]);
+    if (rows.length && rows[0].IdEstado === 6) {
+        enviarMensaje(req, res, 'Atención', 'No se puede deshacer una novedad liquidada.', 'warning');
+        return res.redirect('/autorizarHoras');
+    }
     const sqlNovedad = 'UPDATE novedadesR SET IdEstado = 1, IdMotivo = NULL, IdReemplazo = NULL, ObservacionesEstado = NULL WHERE Id = ?';
 
     try {

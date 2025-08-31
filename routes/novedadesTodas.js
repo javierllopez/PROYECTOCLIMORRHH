@@ -91,6 +91,12 @@ router.post('/OK', logueado, async (req, res) => {
 });
 router.post('/deshacer', logueado, async (req, res) => {
     const { Id } = req.body;
+    // Bloquear si está liquidado
+    const [rows] = await pool.query('SELECT IdEstado FROM novedadesr WHERE Id = ?', [Id]);
+    if (rows.length && rows[0].IdEstado === 6) {
+        enviarMensaje(req, res, 'Atención', 'No se puede deshacer una novedad liquidada.', 'warning');
+        return res.redirect('/novedadesTodas');
+    }
     const sql = 'UPDATE novedadesr SET IdEstado = 3 WHERE Id = ?';
     try {
         await pool.query(sql, [Id]);
@@ -139,6 +145,12 @@ router.get('/Agregar', logueado, async (req, res) => {
 });
 router.post('/Borrar', logueado, async (req, res) => {
     const { Id } = req.body;
+    // Bloquear si está liquidado
+    const [rows] = await pool.query('SELECT IdEstado FROM novedadesr WHERE Id = ?', [Id]);
+    if (rows.length && rows[0].IdEstado === 6) {
+        enviarMensaje(req, res, 'Atención', 'No se puede borrar una novedad liquidada.', 'warning');
+        return res.redirect('/novedadesTodas');
+    }
     const sql = 'DELETE FROM novedadesr WHERE Id = ?';
     try {
         await pool.query(sql, [Id]);
