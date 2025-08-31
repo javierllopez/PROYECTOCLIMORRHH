@@ -156,10 +156,16 @@ async function procesarLiquidacion(actual, primerVale) {
          INNER JOIN novedadese e ON e.Id = r.IdNovedadesE
          LEFT JOIN sectores s ON s.Id = r.IdSector
          LEFT JOIN personal p ON p.Id = r.IdEmpleado
-         WHERE e.Id = ? AND r.IdEstado = 5
+         WHERE e.Id = ? AND r.IdEstado IN (5, 6)
          GROUP BY e.Id, e.Periodo, r.IdSector, r.IdEmpleado
        ) AS t
        ORDER BY FIELD(t.Area,'Administrativa','Operativa'), t.SectorNombre, t.ApellidoYNombre, t.Sector, t.IdEmpleado`,
+      [actual.Id]
+    );
+
+    // Marcar como liquidadas (IdEstado = 6) las novedades aceptadas (5) del período actual
+    await conn.query(
+      'UPDATE novedadesr SET IdEstado = 6 WHERE IdNovedadesE = ? AND IdEstado = 5',
       [actual.Id]
     );
 
