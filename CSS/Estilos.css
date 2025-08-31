@@ -108,3 +108,15 @@
 }
 
 /* Eliminar background-color inline del botón en la vista para que solo el CSS lo controle */
+
+/* Botones icon-only perfectamente circulares */
+.btn-circular {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50% !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
