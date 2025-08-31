@@ -66,7 +66,11 @@
                             title="Rechazado Recursos Humanos" width="50" height="10"> {{/ifeq}}
                         {{#ifeq this.IdEstado 5}}<img src="/img/estado5.png" alt="Aprobado RRHH" title="Aprobado RRHH"
                             width="50" height="10"> {{/ifeq}}
-                        {{#ifeq this.IdEstado 6}}<img src="/img/estado6.png" alt="Liquidado" title="Liquidado" width="50" height="10"> {{/ifeq}}
+                        {{#ifeq this.IdEstado 6}}
+                        <div class="w-100 text-center">
+                            <i class="bi bi-check-circle-fill text-success fs-4" aria-label="Liquidado" title="Liquidado"></i>
+                        </div>
+                        {{/ifeq}}
                     </td>
                     <td class="text-center align-middle">
                         {{#ifeq this.IdEstado 6}}

@@ -199,7 +199,7 @@
                     {{#ifeq @root.columnas.GuardiasNocturnas true}}<td class="text-center">{{this.GN}}</td>{{/ifeq}}
                     {{#ifeq @root.columnas.GuardiasPasivas true}}<td class="text-center">{{this.GP}}</td>{{/ifeq}}
                     <td class="text-end">{{formatoMoneda this.Monto}}</td>
-                    <td>
+                                        <td>
                         {{#ifeq this.Estado 1}}<img src="/img/estado1.png" alt="Ingresado" title="Ingresado" width="50"
                             height="10"> {{/ifeq}}
                         {{#ifeq this.Estado 2}}<img src="/img/estado2.png" alt="Rechazado Supervisor"
@@ -208,8 +208,13 @@
                             title="Aprobado Supervisor" width="50" height="10"> {{/ifeq}}
                         {{#ifeq this.Estado 4}}<img src="/img/estado4.png" alt="Rechazado Recursos Humanos"
                             title="Rechazado Recursos Humanos" width="50" height="10"> {{/ifeq}}
-                        {{#ifeq this.Estado 5}}<img src="/img/estado5.png" alt="Liquidado" title="Liquidado" width="50"
-                            height="10"> {{/ifeq}}
+                                                {{#ifeq this.Estado 5}}<img src="/img/estado5.png" alt="Aprobado RRHH" title="Aprobado RRHH" width="50"
+                                                        height="10"> {{/ifeq}}
+                                                {{#ifeq this.Estado 6}}
+                                                <div class="w-100 text-center">
+                                                    <i class="bi bi-check-circle-fill text-success fs-4" aria-label="Liquidado" title="Liquidado"></i>
+                                                </div>
+                                                {{/ifeq}}
                     </td>
                     <td class="text-center">
                         {{#ifmen this.Estado 3}}
@@ -311,7 +316,7 @@
                         {{#ifeq this.Estado 4}}<br>
                         <strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
                     </td>
-                    <td class="text-center">
+                                        <td class="text-center">
                         {{#ifeq this.Estado 1}}<img src="/img/estado1.png" alt="Ingresado" title="Ingresado" width="40"
                             height="15"> {{/ifeq}}
                         {{#ifeq this.Estado 2}}<img src="/img/estado2.png" alt="Rechazado Supervisor"
@@ -320,8 +325,13 @@
                             title="Aprobado Supervisor" width="40" height="15"> {{/ifeq}}
                         {{#ifeq this.Estado 4}}<img src="/img/estado4.png" alt="Rechazado Recursos Humanos"
                             title="Rechazado Recursos Humanos" width="40" height="15"> {{/ifeq}}
-                        {{#ifeq this.Estado 5}}<img src="/img/estado5.png" alt="Liquidado" title="Liquidado" width="40"
-                            height="15"> {{/ifeq}}
+                                                {{#ifeq this.Estado 5}}<img src="/img/estado5.png" alt="Aprobado RRHH" title="Aprobado RRHH" width="40"
+                                                        height="15"> {{/ifeq}}
+                                                {{#ifeq this.Estado 6}}
+                                                <div class="w-100 text-center">
+                                                    <i class="bi bi-check-circle-fill text-success fs-4" aria-label="Liquidado" title="Liquidado"></i>
+                                                </div>
+                                                {{/ifeq}}
                     </td>
                     <td class="text-center">
                         {{#ifmen this.Estado 3}}
