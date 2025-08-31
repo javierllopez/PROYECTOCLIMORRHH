@@ -2,8 +2,18 @@
   <div class="row">
     <div class="col-12">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">Liquidación - {{Periodo actual.Periodo}}</h4>
-        <a href="/" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Volver</a>
+        <div class="d-flex align-items-center gap-2">
+          <a href="/" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Volver</a>
+          <h4 class="mb-0">Liquidación - {{Periodo actual.Periodo}}</h4>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <a href="/liquidacionesResultado/export/pdf" class="btn btn-outline-primary rounded-circle d-inline-flex align-items-center justify-content-center p-2" title="Exportar PDF" aria-label="Exportar PDF">
+            <i class="bi bi-filetype-pdf fs-5"></i>
+          </a>
+          <a href="/liquidacionesResultado/export/excel" class="btn btn-outline-success rounded-circle d-inline-flex align-items-center justify-content-center p-2" title="Exportar Excel" aria-label="Exportar Excel">
+            <i class="bi bi-filetype-xlsx fs-5"></i>
+          </a>
+        </div>
       </div>
       {{#if areas.length}}
         <!-- Pestañas por Área + Totales -->
