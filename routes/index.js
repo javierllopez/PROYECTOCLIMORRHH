@@ -34,8 +34,8 @@ router.get('/', logueado, async (req, res) => {
             }
             // Gráfico de torta: minutos trabajados agrupados por estado para el período actual
             let graficoTorta = {
-                labels: ['Cargadas', 'Rechazadas por supervisor', 'Aceptadas por supervisor', 'Rechazadas por RRHH', 'Ok'],
-                data: [0, 0, 0, 0, 0]
+                labels: ['Cargadas', 'Rechazadas por supervisor', 'Aceptadas por supervisor', 'Rechazadas por RRHH', 'Aprobadas RRHH', 'Liquidadas'],
+                data: [0, 0, 0, 0, 0, 0]
             };
             let graficoTortaSectores = { labels: [], data: [] };
             if (periodoRows.length > 0) {
@@ -52,7 +52,7 @@ router.get('/', logueado, async (req, res) => {
                         GROUP BY IdEstado
                     `, [idPeriodo]);
                     minutosRows.forEach(row => {
-                        if (row.IdEstado >= 1 && row.IdEstado <= 5) {
+                        if (row.IdEstado >= 1 && row.IdEstado <= 6) {
                             graficoTorta.data[row.IdEstado - 1] = Number(row.totalMinutos) || 0;
                         }
                     });
