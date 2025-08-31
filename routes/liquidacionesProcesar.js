@@ -1,4 +1,7 @@
 const router = require('express').Router();
+const PDFDocument = require('pdfkit');
+require('pdfkit-table');
+const archiver = require('archiver');
 const { logueado } = require('../Middleware/validarUsuario');
 const { pool } = require('../conexion');
 const { render, confirmar } = require('../Middleware/render');
@@ -182,6 +185,107 @@ async function procesarLiquidacion(actual, primerVale) {
   }
 }
 
+// Helpers de formato para exportación
+function padVale(val) {
+  const n = Number(val);
+  if (!Number.isFinite(n)) return '';
+  return String(n).padStart(5, '0');
+}
+
+function formatoMonedaARS(valor) {
+  const n = Number(valor) || 0;
+  try {
+    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+  } catch {
+    // Fallback simple
+    return `$ ${n.toFixed(2)}`;
+  }
+}
+
+function formatearPeriodoLargo(periodoYYYYMMDD) {
+  // Construir Date en UTC para evitar corrimientos
+  const [y, m, d] = String(periodoYYYYMMDD || '').split('-').map((x) => parseInt(x, 10));
+  if (!y || !m || !d) return String(periodoYYYYMMDD || '');
+  const fecha = new Date(Date.UTC(y, m - 1, d));
+  try {
+    return fecha.toLocaleDateString('es-AR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  } catch {
+    // Fallback MySQL-like: MM/YYYY
+    return `${String(m).padStart(2, '0')}/${y}`;
+  }
+}
+
+/**
+ * Genera un PDF de liquidación para un Área y lo devuelve como stream (doc) ya iniciado.
+ * El caller debe hacer doc.end() al finalizar.
+ */
+function generarPdfArea({ periodoStr, area, grupos, subtotalArea }) {
+  const doc = new PDFDocument({ size: 'A4', margin: 36 });
+
+  // Título
+  doc.fontSize(14).text(`Liquidación ${periodoStr} - Área ${area}`, { align: 'left' });
+  doc.moveDown(0.5);
+
+  // Por cada sector, armar tabla de items y subtotal
+  for (const sector of grupos) {
+    doc.moveDown(0.5);
+    doc.fontSize(11).text(`Sector: ${sector.sectorNombre}`);
+
+    const headers = [
+      { label: 'Empleado', property: 'empleado', width: 180 },
+      { label: 'Detalle', property: 'detalle', width: 220 },
+      { label: 'Monto', property: 'monto', width: 80, renderer: (v) => v, align: 'right' },
+      { label: 'Vale', property: 'vale', width: 60, align: 'right' }
+    ];
+
+    const rows = sector.items.map((it) => ({
+      empleado: it.apellidoYNombre || '-',
+      detalle: it.detalle || '',
+      monto: formatoMonedaARS(it.monto),
+      vale: padVale(it.vale)
+    }));
+
+    doc.moveDown(0.25);
+    doc.table(
+      {
+        headers: headers,
+        rows: rows
+      },
+      {
+        prepareHeader: () => doc.fontSize(9),
+        prepareRow: (row, i) => doc.fontSize(9),
+        columnSpacing: 4,
+        columnsSize: headers.map((h) => h.width)
+      }
+    );
+
+    // Subtotal de sector
+    doc.moveDown(0.2);
+    doc.fontSize(10).text(`Subtotal sector: ${formatoMonedaARS(sector.subtotal)}`, { align: 'right' });
+  }
+
+  // Total de área
+  doc.moveDown(0.6);
+  doc.fontSize(12).text(`Total Área ${area}: ${formatoMonedaARS(subtotalArea)}`, { align: 'right' });
+
+  return doc;
+}
+
+// Genera y devuelve un Buffer con el contenido PDF de un área
+function generarPdfBufferArea({ periodoStr, area, grupos, subtotalArea }) {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = generarPdfArea({ periodoStr, area, grupos, subtotalArea });
+      const chunks = [];
+      doc.on('data', (c) => chunks.push(c));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+      doc.end();
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
 // GET: muestra datos del período actual y botón para iniciar la liquidación
 router.get('/', logueado, async (req, res) => {
   const modelo = await cargarModelo();
@@ -218,6 +322,53 @@ router.get('/resultado', logueado, async (req, res) => {
   } catch (err) {
     console.error('Error al obtener resultados de liquidación actual:', err);
     return render(req, res, 'liquidacionesProcesar', { ...modelo, Mensaje: { title: 'Error', text: 'No fue posible obtener la liquidación actual.', icon: 'error' } });
+  }
+});
+
+// GET: exportar PDFs por Área de la liquidación actual
+router.get('/resultado/export/pdf', logueado, async (req, res) => {
+  const modelo = await cargarModelo();
+  if (modelo.sinActual) {
+    return render(req, res, 'liquidacionesProcesar', { ...modelo, Mensaje: { title: 'Atención', text: 'No hay período actual para exportar.', icon: 'warning' } });
+  }
+  try {
+    const datos = await obtenerResultado(modelo.actual);
+    const periodoLargo = formatearPeriodoLargo(modelo.actual.Periodo); // ej: agosto de 2025
+
+    if (!datos.areas || datos.areas.length === 0) {
+      return render(req, res, 'liquidacionesResultado', { ...datos, Mensaje: { title: 'Atención', text: 'No hay datos para exportar.', icon: 'warning' } });
+    }
+
+    // Si hay una sola área, descargar PDF directo. Si hay varias, comprimir en ZIP.
+    if (datos.areas.length === 1) {
+      const a = datos.areas[0];
+      const nombre = `Liquidación ${periodoLargo} Area ${a.area}.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre)}"`);
+      const buffer = await generarPdfBufferArea({ periodoStr: periodoLargo, area: a.area, grupos: a.grupos, subtotalArea: a.subtotalArea });
+      res.end(buffer);
+      return;
+    }
+
+    // Varias áreas => ZIP
+    res.setHeader('Content-Type', 'application/zip');
+    const nombreZip = `Liquidación ${periodoLargo}.zip`;
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombreZip)}"`);
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.on('error', (err) => { throw err; });
+    archive.pipe(res);
+
+    for (const a of datos.areas) {
+      const buffer = await generarPdfBufferArea({ periodoStr: periodoLargo, area: a.area, grupos: a.grupos, subtotalArea: a.subtotalArea });
+      const fileName = `Liquidación ${periodoLargo} Area ${a.area}.pdf`;
+      archive.append(buffer, { name: fileName });
+    }
+    await archive.finalize();
+
+  } catch (err) {
+    console.error('Error al exportar PDF:', err);
+    const datos = { Mensaje: { title: 'Error', text: 'No fue posible exportar el PDF.', icon: 'error' } };
+    return render(req, res, 'liquidacionesProcesar', datos);
   }
 });
 
