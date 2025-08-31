@@ -222,40 +222,38 @@ function formatearPeriodoLargo(periodoYYYYMMDD) {
 function generarPdfArea({ periodoStr, area, grupos, subtotalArea }) {
   const doc = new PDFDocument({ size: 'A4', margin: 36 });
 
-  // Título
-  doc.fontSize(14).text(`Liquidación ${periodoStr} - Área ${area}`, { align: 'left' });
+  // Título (negrita y +2pt)
+  doc.font('Helvetica-Bold').fontSize(16).text(`Liquidación ${periodoStr} - Área ${area}`, { align: 'left' });
   doc.moveDown(0.5);
 
   // Por cada sector, armar tabla de items y subtotal
   for (const sector of grupos) {
     doc.moveDown(0.5);
-    doc.fontSize(11).text(`Sector: ${sector.sectorNombre}`);
+    doc.font('Helvetica').fontSize(11).text(`Sector: ${sector.sectorNombre}`);
 
-    const headers = [
-      { label: 'Empleado', property: 'empleado', width: 180 },
-      { label: 'Detalle', property: 'detalle', width: 220 },
-      { label: 'Monto', property: 'monto', width: 80, renderer: (v) => v, align: 'right' },
-      { label: 'Vale', property: 'vale', width: 60, align: 'right' }
-    ];
-
-    const rows = sector.items.map((it) => ({
-      empleado: it.apellidoYNombre || '-',
-      detalle: it.detalle || '',
-      monto: formatoMonedaARS(it.monto),
-      vale: padVale(it.vale)
-    }));
+    const headers = ['Empleado', 'Detalle', 'Monto', 'Vale'];
+    const rows = (sector.items || []).map((it) => [
+      it.apellidoYNombre || '-',
+      it.detalle || '',
+      formatoMonedaARS(it.monto),
+      padVale(it.vale)
+    ]);
 
     doc.moveDown(0.25);
     doc.table(
       {
-        headers: headers,
-        rows: rows
+        headers,
+        rows
       },
       {
-        prepareHeader: () => doc.fontSize(9),
-        prepareRow: (row, i) => doc.fontSize(9),
+        prepareHeader: () => doc.font('Helvetica-Bold').fontSize(9),
+        prepareRow: () => doc.font('Helvetica').fontSize(9),
         columnSpacing: 4,
-        columnsSize: headers.map((h) => h.width)
+        columnsSize: [180, 220, 80, 60],
+        divider: {
+          horizontal: { disabled: false, width: 1, opacity: 1 },
+          vertical: { disabled: false, width: 1, opacity: 1 }
+        }
       }
     );
 
@@ -339,31 +337,37 @@ router.get('/resultado/export/pdf', logueado, async (req, res) => {
       return render(req, res, 'liquidacionesResultado', { ...datos, Mensaje: { title: 'Atención', text: 'No hay datos para exportar.', icon: 'warning' } });
     }
 
-    // Si hay una sola área, descargar PDF directo. Si hay varias, comprimir en ZIP.
+    // Si viene ?area=... exportar solo esa área
+    const areaQuery = (req.query.area || '').toString();
+    if (areaQuery) {
+      const areaSel = datos.areas.find((a) => String(a.area).toLowerCase() === areaQuery.toLowerCase());
+      if (!areaSel) {
+        return render(req, res, 'liquidacionesResultado', { ...datos, Mensaje: { title: 'Atención', text: 'El área solicitada no existe en la liquidación actual.', icon: 'warning' } });
+      }
+      const nombre = `Liquidación ${periodoLargo} Area ${areaSel.area}.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre)}"`);
+      const buffer = await generarPdfBufferArea({ periodoStr: periodoLargo, area: areaSel.area, grupos: areaSel.grupos, subtotalArea: areaSel.subtotalArea });
+      return res.end(buffer);
+    }
+
+    // Si hay una sola área, descargar PDF directo. Si hay varias, mostrar opciones (dos links) para descargar cada PDF.
     if (datos.areas.length === 1) {
       const a = datos.areas[0];
       const nombre = `Liquidación ${periodoLargo} Area ${a.area}.pdf`;
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre)}"`);
       const buffer = await generarPdfBufferArea({ periodoStr: periodoLargo, area: a.area, grupos: a.grupos, subtotalArea: a.subtotalArea });
-      res.end(buffer);
-      return;
+      return res.end(buffer);
     }
 
-    // Varias áreas => ZIP
-    res.setHeader('Content-Type', 'application/zip');
-    const nombreZip = `Liquidación ${periodoLargo}.zip`;
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombreZip)}"`);
-    const archive = archiver('zip', { zlib: { level: 9 } });
-    archive.on('error', (err) => { throw err; });
-    archive.pipe(res);
-
-    for (const a of datos.areas) {
-      const buffer = await generarPdfBufferArea({ periodoStr: periodoLargo, area: a.area, grupos: a.grupos, subtotalArea: a.subtotalArea });
-      const fileName = `Liquidación ${periodoLargo} Area ${a.area}.pdf`;
-      archive.append(buffer, { name: fileName });
-    }
-    await archive.finalize();
+    // Varias áreas => renderizar una vista con los links de descarga individuales
+    const opciones = datos.areas.map((a) => ({
+      area: a.area,
+      url: `/liquidacionesProcesar/resultado/export/pdf?area=${encodeURIComponent(a.area)}`,
+      nombreArchivo: `Liquidación ${periodoLargo} Area ${a.area}.pdf`
+    }));
+    return render(req, res, 'liquidacionesExportarPDF', { periodo: periodoLargo, opciones });
 
   } catch (err) {
     console.error('Error al exportar PDF:', err);
