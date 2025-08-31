@@ -2,6 +2,7 @@ const express = require('express');
 const { Tabla } = require('../Clases/Tabla');
 const { pool } = require('../conexion');
 const {render, enviarMensaje } = require('../Middleware/render');
+const { confirmar } = require('../Middleware/render');
 const { logueado } = require('../Middleware/validarUsuario');
 const { FechaSqlAFechaCorta, FechaASqlFecha, FechaSqlAFecha} = require('../lib/libreria');
 const router = express.Router();
@@ -114,11 +115,21 @@ router.get('/', logueado, async (req, res) => {
         } else {
             idNomina = parseInt(nominavaloresr.tag);
         }
-        const sqlNominaValoresr = nominavaloresr.getSQL();
+                const sqlNominaValoresr = nominavaloresr.getSQL();
         const encabezadoHTMLNominaValoresr = nominavaloresr.getEncabezado();
         const paginadorNominaValoresr = await nominavaloresr.getPaginador();
         const funcionesNominaValoresr = nominavaloresr.getFunciones();
         const [tablaNominaValoresr] = await pool.query(sqlNominaValoresr);
+
+                // Detectar si hay ítems de nómina sin correlativo en nominavaloresr para el período seleccionado
+                const [faltantesRows] = await pool.query(`
+                        SELECT COUNT(*) AS faltantes
+                        FROM nomina n
+                        LEFT JOIN nominavaloresr r
+                            ON r.IdNomina = n.Id AND r.IdNominaValoresE = ?
+                        WHERE r.Id IS NULL
+                `, [idNomina]);
+                const hayFaltantes = (faltantesRows && faltantesRows[0] && Number(faltantesRows[0].faltantes) > 0);
 
         return render(req, res, 'nominaValorizada', {
             encabezadoHTMLNominaValoresr: encabezadoHTMLNominaValoresr,
@@ -128,7 +139,8 @@ router.get('/', logueado, async (req, res) => {
             permiteBorrarNominaValoresr: nominavaloresr.borrable,
             permiteEditarNominaValoresr: nominavaloresr.editable,
             tablaNominaValorese: tablaNominaValorese,
-            idNomina: idNomina
+                    idNomina: idNomina,
+                    hayFaltantes
         });
     }
     catch (err) {
@@ -137,6 +149,97 @@ router.get('/', logueado, async (req, res) => {
     }
 
 
+});
+
+// Vista para agregar manualmente un registro faltante
+router.get('/agregar/:idNominaValoresE', logueado, async (req, res) => {
+    const { idNominaValoresE } = req.params;
+    try {
+        // Traer combo de ítems de nomina que no tienen correlativo en nominavaloresr para este período
+        const [faltantes] = await pool.query(`
+            SELECT n.Id, n.Descripcion
+            FROM nomina n
+            LEFT JOIN nominavaloresr r
+              ON r.IdNomina = n.Id AND r.IdNominaValoresE = ?
+            WHERE r.Id IS NULL
+            ORDER BY n.Descripcion
+        `, [idNominaValoresE]);
+        // Traer vigencia para mostrar info contextual
+        const [vig] = await pool.query('SELECT VigenteDesde, VigenteHasta FROM nominavalorese WHERE Id = ?', [idNominaValoresE]);
+        const vigencia = vig && vig[0] ? vig[0] : null;
+        return render(req, res, 'nominaAgregarManual', { idNominaValoresE, faltantes, vigencia });
+    } catch (err) {
+        enviarMensaje(req, res, 'Nómina valorizada', err.message, 'danger');
+        return res.redirect('/nominaValorizada');
+    }
+});
+
+// POST para guardar el registro manual
+router.post('/agregar', logueado, async (req, res) => {
+    const { idNominaValoresE, idNomina, sueldoBasico, guardiaDiurna, guardiaNocturna, guardiaPasiva } = req.body;
+    try {
+        // Validaciones mínimas
+        const idNominaNum = Number(idNomina);
+        const idE = Number(idNominaValoresE);
+        if (!Number.isFinite(idNominaNum) || !Number.isFinite(idE)) {
+            throw new Error('Datos inválidos.');
+        }
+        // Traer vigencia y datos de nomina para derivar horas/hora
+        const [[ev]] = await pool.query('SELECT VigenteDesde, VigenteHasta FROM nominavalorese WHERE Id = ?', [idE]);
+        const [[n]] = await pool.query('SELECT HorasMensuales, HorasGuardiaDiurna, HorasGuardiaNocturna FROM nomina WHERE Id = ?', [idNominaNum]);
+        const hsMensuales = Number(n?.HorasMensuales) || 0;
+        const hsGD = Number(n?.HorasGuardiaDiurna) || 0;
+        const hsGN = Number(n?.HorasGuardiaNocturna) || 0;
+        const sb = Number(sueldoBasico) || 0;
+        const gd = Number(guardiaDiurna) || 0;
+        const gn = Number(guardiaNocturna) || 0;
+        const gp = Number(guardiaPasiva) || 0;
+        const valorHoraSimple = sb > 0 && hsMensuales > 0 ? sb / hsMensuales : 0;
+        const valorHora50 = valorHoraSimple > 0 ? valorHoraSimple * 1.5 : 0;
+        const valorHora100 = valorHoraSimple > 0 ? valorHoraSimple * 2 : 0;
+        const valorHoraGD = gd > 0 && hsGD > 0 ? gd / hsGD : 0;
+        const valorHoraGN = gn > 0 && hsGN > 0 ? gn / hsGN : 0;
+
+        const sqlIns = `INSERT INTO nominavaloresr (
+            IdNomina, IdNominaValoresE, ValorSueldoBasico, HorasMensuales, ValorHoraSimple, ValorHora50, ValorHora100,
+            ValorGuardiaDiurna, HsGuardiaDiurna, ValorHoraGuardiaDiurna, ValorGuardiaNocturna, HsGuardiaNocturna,
+            ValorHoraGuardiaNocturna, ValorGuardiaPasiva, ValorAdicional, VigenciaDesde, VigenciaHasta
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`;
+
+        await pool.query(sqlIns, [
+            idNominaNum, idE, sb, hsMensuales, valorHoraSimple, valorHora50, valorHora100,
+            gd, hsGD, valorHoraGD, gn, hsGN, valorHoraGN, gp, ev.VigenteDesde, ev.VigenteHasta
+        ]);
+        enviarMensaje(req, res, 'Nómina valorizada', 'Ítem agregado correctamente.', 'success');
+    } catch (err) {
+        console.error('Error agregando ítem manual de nominavaloresr:', err);
+        enviarMensaje(req, res, 'Nómina valorizada', err.message, 'danger');
+    }
+    return res.redirect('/nominaValorizada');
+});
+
+// API: devuelve flags de configuración del ítem de nómina seleccionado
+router.get('/nomina/:id', logueado, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [rows] = await pool.query(
+            'SELECT InformaValorSueldoBasico, HaceGuardiasDiurnas, HaceGuardiasNocturnas, HaceGuardiasPasivas FROM nomina WHERE Id = ? LIMIT 1',
+            [id]
+        );
+        if (!rows || rows.length === 0) {
+            return res.status(404).json({ error: 'Ítem no encontrado' });
+        }
+        const r = rows[0];
+        return res.json({
+            InformaValorSueldoBasico: !!Number(r.InformaValorSueldoBasico),
+            HaceGuardiasDiurnas: !!Number(r.HaceGuardiasDiurnas),
+            HaceGuardiasNocturnas: !!Number(r.HaceGuardiasNocturnas),
+            HaceGuardiasPasivas: !!Number(r.HaceGuardiasPasivas)
+        });
+    } catch (err) {
+        console.error('Error consultando ítem nómina:', err);
+        return res.status(500).json({ error: 'Error de servidor' });
+    }
 });
 
 // Rutas para editar nominavaloresr

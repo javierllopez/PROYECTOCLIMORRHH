@@ -18,9 +18,20 @@
         </select>
     </div>
     <div class="col flex-column text-end">
-        <a type="button" class="btn btn-primary rounded-circle text-end" href="/nomina/generarNomina">
-            <i class="bi-coin h3"></i>
-        </a>
+        <div class="btn-group" role="group" aria-label="Acciones nómina">
+            <a type="button" class="btn btn-primary rounded-circle text-end" href="/nomina/generarNomina" title="Generar nueva nómina">
+                <i class="bi-coin h3"></i>
+            </a>
+            {{#if hayFaltantes}}
+            <a type="button" class="btn btn-success rounded-circle ms-2 text-end" href="/nominaValorizada/agregar/{{idNomina}}" title="Agregar registros manuales faltantes">
+                <i class="bi-plus-circle h3"></i>
+            </a>
+            {{else}}
+            <button type="button" class="btn btn-success rounded-circle ms-2 text-end" title="No hay ítems faltantes" disabled>
+                <i class="bi-plus-circle h3"></i>
+            </button>
+            {{/if}}
+        </div>
     </div>
 </div>
 <table class="mt-2 table table-bordered table-striped">

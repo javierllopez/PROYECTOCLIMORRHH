@@ -1,0 +1,147 @@
+<div class="container mt-3">
+  <div class="row justify-content-center">
+  <div class="col-12 col-md-6 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-0">Agregar ítem faltante</h5>
+            {{#if vigencia}}
+              <small class="text-white-50">Período: {{FechaCorta vigencia.VigenteDesde}} a {{FechaCorta vigencia.VigenteHasta}}</small>
+            {{/if}}
+          </div>
+          <a href="/nominaValorizada" class="btn btn-light btn-sm">Volver</a>
+        </div>
+        <div class="card-body">
+      <form method="post" action="/nominaValorizada/agregar">
+        <input type="hidden" name="idNominaValoresE" value="{{idNominaValoresE}}" />
+
+        <div class="mb-3">
+          <label for="idNomina" class="form-label">Ítem de nómina</label>
+          <select class="form-select" id="idNomina" name="idNomina" required>
+            <option value="" selected disabled>Seleccioná un ítem</option>
+            {{#each faltantes}}
+              <option value="{{this.Id}}">{{this.Descripcion}}</option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-12 d-none" id="wrapSueldoBasico">
+            <label for="sueldoBasico" class="form-label">Sueldo básico</label>
+            <input type="number" step="0.01" min="0" class="form-control" id="sueldoBasico" name="sueldoBasico" placeholder="0" />
+          </div>
+          <div class="col-md-12 d-none" id="wrapGD">
+            <label for="guardiaDiurna" class="form-label">Valor guardia diurna</label>
+            <input type="number" step="0.01" min="0" class="form-control" id="guardiaDiurna" name="guardiaDiurna" placeholder="0" />
+          </div>
+          <div class="col-md-12 d-none" id="wrapGN">
+            <label for="guardiaNocturna" class="form-label">Valor guardia nocturna</label>
+            <input type="number" step="0.01" min="0" class="form-control" id="guardiaNocturna" name="guardiaNocturna" placeholder="0" />
+          </div>
+          <div class="col-md-12 d-none" id="wrapGP">
+            <label for="guardiaPasiva" class="form-label">Valor guardia pasiva</label>
+            <input type="number" step="0.01" min="0" class="form-control" id="guardiaPasiva" name="guardiaPasiva" placeholder="0" />
+          </div>
+        </div>
+
+        <div class="mt-4 d-flex justify-content-end">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi-plus-circle me-1"></i> Agregar ítem
+          </button>
+        </div>
+      </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const selNomina = document.getElementById('idNomina');
+  const wrapSueldo = document.getElementById('wrapSueldoBasico');
+  const wrapGD = document.getElementById('wrapGD');
+  const wrapGN = document.getElementById('wrapGN');
+  const wrapGP = document.getElementById('wrapGP');
+  const inputSueldo = document.getElementById('sueldoBasico');
+  const inputGD = document.getElementById('guardiaDiurna');
+  const inputGN = document.getElementById('guardiaNocturna');
+  const inputGP = document.getElementById('guardiaPasiva');
+
+  async function actualizarVisibilidadCampos() {
+    const id = selNomina.value;
+    if (!id) {
+      // Ocultar y limpiar todos si no hay selección
+      [
+        [wrapSueldo, inputSueldo],
+        [wrapGD, inputGD],
+        [wrapGN, inputGN],
+        [wrapGP, inputGP],
+      ].forEach(([wrap, input]) => {
+        wrap.classList.add('d-none');
+  if (input) { input.value = ''; input.disabled = true; input.required = false; }
+      });
+      return;
+    }
+    try {
+      const resp = await fetch(`/nominaValorizada/nomina/${encodeURIComponent(id)}`);
+      if (!resp.ok) throw new Error('Error consultando flags');
+      const flags = await resp.json();
+      // Mostrar/ocultar según flags; limpiar y deshabilitar los ocultos
+      if (flags.InformaValorSueldoBasico) {
+        wrapSueldo.classList.remove('d-none');
+  inputSueldo.disabled = false;
+  inputSueldo.required = true;
+      } else {
+        wrapSueldo.classList.add('d-none');
+        inputSueldo.value = '';
+  inputSueldo.disabled = true;
+  inputSueldo.required = false;
+      }
+      if (flags.HaceGuardiasDiurnas) {
+        wrapGD.classList.remove('d-none');
+  inputGD.disabled = false;
+  inputGD.required = true;
+      } else {
+        wrapGD.classList.add('d-none');
+        inputGD.value = '';
+  inputGD.disabled = true;
+  inputGD.required = false;
+      }
+      if (flags.HaceGuardiasNocturnas) {
+        wrapGN.classList.remove('d-none');
+  inputGN.disabled = false;
+  inputGN.required = true;
+      } else {
+        wrapGN.classList.add('d-none');
+        inputGN.value = '';
+  inputGN.disabled = true;
+  inputGN.required = false;
+      }
+      if (flags.HaceGuardiasPasivas) {
+        wrapGP.classList.remove('d-none');
+  inputGP.disabled = false;
+  inputGP.required = true;
+      } else {
+        wrapGP.classList.add('d-none');
+        inputGP.value = '';
+  inputGP.disabled = true;
+  inputGP.required = false;
+      }
+    } catch (e) {
+      console.error(e);
+      [
+        [wrapSueldo, inputSueldo],
+        [wrapGD, inputGD],
+        [wrapGN, inputGN],
+        [wrapGP, inputGP],
+      ].forEach(([wrap, input]) => {
+        wrap.classList.add('d-none');
+  if (input) { input.value = ''; input.disabled = true; input.required = false; }
+      });
+    }
+  }
+
+  selNomina.addEventListener('change', actualizarVisibilidadCampos);
+  // Ejecutar una vez por si hay item preseleccionado
+  if (selNomina.value) { actualizarVisibilidadCampos(); }
+</script>
+</div>
