@@ -1,7 +1,5 @@
 const router = require('express').Router();
 const PDFDocument = require('pdfkit');
-require('pdfkit-table');
-const archiver = require('archiver');
 const { logueado } = require('../Middleware/validarUsuario');
 const { pool } = require('../conexion');
 const { render, confirmar } = require('../Middleware/render');
@@ -71,8 +69,8 @@ async function obtenerResultado(actual) {
 
 async function cargarModelo() {
   try {
-  // Traer Periodo como string 'YYYY-MM-DD' para evitar corrimiento por huso horario
-  const [rows] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo, Observaciones FROM novedadese WHERE Actual = 1 LIMIT 1");
+    // Traer Periodo como string 'YYYY-MM-DD' para evitar corrimiento por huso horario
+    const [rows] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo, Observaciones FROM novedadese WHERE Actual = 1 LIMIT 1");
     if (!rows || rows.length === 0) {
       return { sinActual: true };
     }
@@ -101,8 +99,8 @@ async function procesarLiquidacion(actual, primerVale) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
-  // Evitar truncado de GROUP_CONCAT si hay muchas fechas
-  try { await conn.query('SET SESSION group_concat_max_len = 4096'); } catch {}
+    // Evitar truncado de GROUP_CONCAT si hay muchas fechas
+    try { await conn.query('SET SESSION group_concat_max_len = 4096'); } catch { }
 
     // Borrar liquidaciones existentes para el período (reliquidación)
     await conn.query('DELETE FROM liquidaciones WHERE Periodo = ?', [actual.Periodo]);
@@ -174,7 +172,7 @@ async function procesarLiquidacion(actual, primerVale) {
 
     await conn.commit();
   } catch (e) {
-    try { await conn.rollback(); } catch {}
+    try { await conn.rollback(); } catch { }
     // Propagar error más claro si falta la columna
     if (e && e.code === 'ER_BAD_FIELD_ERROR') {
       throw new Error('La tabla liquidaciones necesita la columna IdNovedadesE (y Periodo DATE). Ejecutá el script de alter en /sql para continuar.');
@@ -219,61 +217,154 @@ function formatearPeriodoLargo(periodoYYYYMMDD) {
  * Genera un PDF de liquidación para un Área y lo devuelve como stream (doc) ya iniciado.
  * El caller debe hacer doc.end() al finalizar.
  */
-function generarPdfArea({ periodoStr, area, grupos, subtotalArea }) {
+async function generarPdfArea({ periodoStr, area, grupos, subtotalArea }) {
   const doc = new PDFDocument({ size: 'A4', margin: 36 });
 
-  // Título (negrita y +2pt)
-  doc.font('Helvetica-Bold').fontSize(16).text(`Liquidación ${periodoStr} - Área ${area}`, { align: 'left' });
-  doc.moveDown(0.5);
+  // Config columnas
+  const colWidths = [170, 200, 80, 60];
+  const headers = ['APELLIDO Y NOMBRE', 'DETALLE', 'MONTO', 'VALE'];
+  const marginLeft = doc.page.margins.left;
+  const usableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const lineHeight = 12; // base
 
-  // Por cada sector, armar tabla de items y subtotal
-  for (const sector of grupos) {
-    doc.moveDown(0.5);
-    doc.font('Helvetica').fontSize(11).text(`Sector: ${sector.sectorNombre}`);
-
-    const headers = ['Empleado', 'Detalle', 'Monto', 'Vale'];
-    const rows = (sector.items || []).map((it) => [
-      it.apellidoYNombre || '-',
-      it.detalle || '',
-      formatoMonedaARS(it.monto),
-      padVale(it.vale)
-    ]);
-
-    doc.moveDown(0.25);
-    doc.table(
-      {
-        headers,
-        rows
-      },
-      {
-        prepareHeader: () => doc.font('Helvetica-Bold').fontSize(9),
-        prepareRow: () => doc.font('Helvetica').fontSize(9),
-        columnSpacing: 4,
-        columnsSize: [180, 220, 80, 60],
-        divider: {
-          horizontal: { disabled: false, width: 1, opacity: 1 },
-          vertical: { disabled: false, width: 1, opacity: 1 }
-        }
-      }
-    );
-
-    // Subtotal de sector
-    doc.moveDown(0.2);
-    doc.fontSize(10).text(`Subtotal sector: ${formatoMonedaARS(sector.subtotal)}`, { align: 'right' });
+  function ensureSpace(required) {
+    if (doc.y + required > doc.page.height - doc.page.margins.bottom) {
+      doc.addPage();
+      drawHeaderArea();
+      drawTableHeader();
+    }
   }
 
-  // Total de área
-  doc.moveDown(0.6);
-  doc.fontSize(12).text(`Total Área ${area}: ${formatoMonedaARS(subtotalArea)}`, { align: 'right' });
+  function drawHeaderArea() {
+    doc.font('Helvetica-Bold').fontSize(16).text(`Liquidación ${periodoStr} - Área ${area}`, { align: 'left' });
+    doc.moveDown(0.5);
+  }
 
+  function drawTableHeader() {
+    doc.save();
+    doc.font('Helvetica-Bold').fontSize(9);
+    const yStart = doc.y;
+    // Primer pasada: calcular alturas
+    const headerHeights = headers.map((h, idx) => {
+      const w = colWidths[idx];
+      return doc.heightOfString(h, { width: w - 4, align: idx >= 2 ? 'right' : 'left' });
+    });
+    const maxH = Math.max(...headerHeights);
+    const y0 = yStart - 2; // línea superior
+    const y1 = yStart + maxH + 4; // línea inferior
+    const rowHeight = y1 - y0; // alto total del renglón de encabezado (incluye padding visual)
+    // Dibujar líneas primero
+    doc.moveTo(marginLeft, y0).lineTo(marginLeft + usableWidth, y0).stroke();
+    doc.moveTo(marginLeft, y1).lineTo(marginLeft + usableWidth, y1).stroke();
+    // Segunda pasada: colocar cada header centrado verticalmente
+    let x = marginLeft;
+    headers.forEach((h, idx) => {
+      const w = colWidths[idx];
+      const hTxt = headerHeights[idx];
+      const opt = { width: w - 4, align: idx >= 2 ? 'right' : 'left' };
+      const yText = y0 + (rowHeight - hTxt) / 2; // centrado vertical
+      doc.text(h, x + 2, yText, opt);
+      x += w;
+    });
+    doc.y = y1 + 2; // avanzar debajo del header
+    doc.restore();
+  }
+
+  function drawFullWidthRow(texto, opts = {}) {
+    const paddingY = 3;
+    const fontSize = opts.fontSize || 9;
+    doc.font(opts.bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(fontSize);
+    const h = doc.heightOfString(texto, { width: usableWidth - 4 }) + paddingY * 2;
+    ensureSpace(h + 4);
+    const yTop = doc.y;
+    // Línea superior
+    doc.moveTo(marginLeft, yTop).lineTo(marginLeft + usableWidth, yTop).strokeColor('#999').stroke();
+    // Texto
+    doc.text(texto, marginLeft + 4, yTop + paddingY, { width: usableWidth - 8, align: opts.align || 'left' });
+    // Línea inferior
+    doc.moveTo(marginLeft, yTop + h).lineTo(marginLeft + usableWidth, yTop + h).strokeColor('#ccc').stroke();
+    doc.y = yTop + h + 1;
+  }
+
+  function drawRow(cols) {
+    doc.font('Helvetica').fontSize(8);
+    // Calcular alto de la fila (detalle puede envolver)
+    let heights = cols.map((c, idx) => {
+      return doc.heightOfString(c.text, { width: colWidths[idx] - 4, align: idx >= 2 ? 'right' : 'left' });
+    });
+    let rowH = Math.max(...heights) + 4; // padding vertical global
+    ensureSpace(rowH + 4);
+    let x = marginLeft;
+    const yTop = doc.y;
+    cols.forEach((c, idx) => {
+      const w = colWidths[idx];
+      const cellHeight = heights[idx];
+      // y para inicio del texto centrado verticalmente dentro de la fila
+      const yCell = yTop + (rowH - cellHeight) / 2;
+      doc.text(c.text, x + 2, yCell, { width: w - 4, align: idx >= 2 ? 'right' : 'left' });
+      x += w;
+    });
+    // Líneas horizontales
+    doc.moveTo(marginLeft, yTop).lineTo(marginLeft + usableWidth, yTop).strokeColor('#999').stroke();
+    doc.moveTo(marginLeft, yTop + rowH).lineTo(marginLeft + usableWidth, yTop + rowH).strokeColor('#ccc').stroke();
+    doc.y = yTop + rowH + 1;
+  }
+
+  function drawTotal(label, valor) {
+    // Dos columnas: etiqueta (derecha) y valor (derecha) para correcta justificación
+    const valueColWidth = 120; // ancho reservado para el importe formateado
+    const labelColWidth = usableWidth - valueColWidth;
+    ensureSpace(lineHeight * 2.2);
+    const y = doc.y;
+    doc.font('Helvetica-Bold').fontSize(10).text(label, marginLeft, y, { width: labelColWidth, align: 'right' });
+    doc.font('Helvetica-Bold').fontSize(10).text(valor, marginLeft + labelColWidth, y, { width: valueColWidth, align: 'right' });
+    doc.moveDown(0.4);
+  }
+
+  drawHeaderArea();
+  // Encabezado de columnas inicial (una vez por página)
+  drawTableHeader();
+
+  for (const sector of grupos) {
+    // Fila de sector de ancho completo
+    drawFullWidthRow(`Sector: ${sector.sectorNombre}`, { bold: true, fontSize: 10 });
+    const items = sector.items || [];
+    if (items.length === 0) {
+      drawRow([
+        { text: 'Sin registros' },
+        { text: '' },
+        { text: '' },
+        { text: '' }
+      ]);
+    } else {
+      for (const it of items) {
+        // Si falta espacio para una fila + subtotal potencial, se fuerza salto con reimpresión de encabezados
+        ensureSpace(30);
+        drawRow([
+          { text: it.apellidoYNombre || '-' },
+          { text: it.detalle || '' },
+          { text: formatoMonedaARS(Number(it.monto) || 0) },
+          { text: padVale(it.vale) }
+        ]);
+      }
+    }
+    const subtotalSector = items.reduce((acc, it) => acc + (Number(it.monto) || 0), 0);
+    ensureSpace(lineHeight * 2);
+    doc.font('Helvetica-Bold').fontSize(9).text(`Subtotal sector: ${formatoMonedaARS(subtotalSector)}`, { align: 'right' });
+    doc.moveDown(0.5);
+    // Antes de cambiar de página se reimprime encabezado (ensureSpace ya lo maneja); si la siguiente fila inicia página nueva, encabezado ya estará.
+  }
+
+  // Totales usando dos columnas para alinear correctamente
+  drawTotal(`Total Área ${area}:`, formatoMonedaARS(subtotalArea));
   return doc;
 }
 
 // Genera y devuelve un Buffer con el contenido PDF de un área
-function generarPdfBufferArea({ periodoStr, area, grupos, subtotalArea }) {
+async function generarPdfBufferArea({ periodoStr, area, grupos, subtotalArea }) {
+  const doc = await generarPdfArea({ periodoStr, area, grupos, subtotalArea });
   return new Promise((resolve, reject) => {
     try {
-      const doc = generarPdfArea({ periodoStr, area, grupos, subtotalArea });
       const chunks = [];
       doc.on('data', (c) => chunks.push(c));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
@@ -284,26 +375,12 @@ function generarPdfBufferArea({ periodoStr, area, grupos, subtotalArea }) {
     }
   });
 }
-// GET: muestra datos del período actual y botón para iniciar la liquidación
+
+// GET: pantalla principal de liquidación (formulario para generar)
 router.get('/', logueado, async (req, res) => {
   const modelo = await cargarModelo();
-  const { accion, forzar, primerVale } = req.query;
-  if (!modelo.sinActual && accion === 'liquidar' && forzar === '1' && primerVale) {
-    // Ejecutar directamente tras confirmación
-    try {
-  await procesarLiquidacion(modelo.actual, primerVale);
-  const datos = await obtenerResultado(modelo.actual);
-  return render(req, res, 'liquidacionesResultado', { ...datos, Mensaje: { title: 'Listo', text: 'Liquidación generada correctamente.', icon: 'success' } });
-    } catch (err) {
-      console.error('Error al procesar liquidación (GET):', err);
-      const actualizado = await cargarModelo();
-      const texto = err && err.message ? err.message : 'Ocurrió un problema al generar la liquidación.';
-      return render(req, res, 'liquidacionesProcesar', { ...actualizado, Mensaje: { title: 'Error', text: texto, icon: 'error' } });
-    }
-  }
-  // Mostrar alerta para pedir primer vale si viene accion=liquidar&forzar=1 sin número
-  if (!modelo.sinActual && accion === 'liquidar' && forzar === '1' && !primerVale) {
-    return render(req, res, 'liquidacionesProcesar', { ...modelo, pedirVale: true });
+  if (modelo.sinActual) {
+    return render(req, res, 'liquidacionesProcesar', { ...modelo, Mensaje: { title: 'Atención', text: 'No hay período actual para liquidar.', icon: 'warning' } });
   }
   return render(req, res, 'liquidacionesProcesar', modelo);
 });
@@ -347,8 +424,10 @@ router.get('/resultado/export/pdf', logueado, async (req, res) => {
       const nombre = `Liquidación ${periodoLargo} Area ${areaSel.area}.pdf`;
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre)}"`);
-      const buffer = await generarPdfBufferArea({ periodoStr: periodoLargo, area: areaSel.area, grupos: areaSel.grupos, subtotalArea: areaSel.subtotalArea });
-      return res.end(buffer);
+      const doc = await generarPdfArea({ periodoStr: periodoLargo, area: areaSel.area, grupos: areaSel.grupos, subtotalArea: areaSel.subtotalArea });
+      doc.pipe(res);
+      doc.end();
+      return;
     }
 
     // Si hay una sola área, descargar PDF directo. Si hay varias, mostrar opciones (dos links) para descargar cada PDF.
@@ -357,8 +436,10 @@ router.get('/resultado/export/pdf', logueado, async (req, res) => {
       const nombre = `Liquidación ${periodoLargo} Area ${a.area}.pdf`;
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre)}"`);
-      const buffer = await generarPdfBufferArea({ periodoStr: periodoLargo, area: a.area, grupos: a.grupos, subtotalArea: a.subtotalArea });
-      return res.end(buffer);
+      const doc = await generarPdfArea({ periodoStr: periodoLargo, area: a.area, grupos: a.grupos, subtotalArea: a.subtotalArea });
+      doc.pipe(res);
+      doc.end();
+      return;
     }
 
     // Varias áreas => renderizar una vista con los links de descarga individuales
@@ -415,7 +496,7 @@ router.get('/cerrar/confirmar', logueado, async (req, res) => {
     // 2) Marcar novedadesr del período como liquidadas y volcar a histórico opcional
     try {
       await conn.query(`UPDATE novedadesr SET Liquidado = 1 WHERE IdNovedadesE = ?`, [actual.Id]);
-    } catch {}
+    } catch { }
     // Si existiera tabla novedadesr_historico, insertar copia
     try {
       await conn.query(
@@ -424,7 +505,7 @@ router.get('/cerrar/confirmar', logueado, async (req, res) => {
          FROM novedadesr WHERE IdNovedadesE = ?`,
         [actual.Id]
       );
-    } catch {}
+    } catch { }
     // 3) Eliminar liquidaciones de trabajo del período actual
     await conn.query(`DELETE FROM liquidaciones WHERE IdNovedadesE = ?`, [actual.Id]);
     // 4) Marcar el período como no-Actual en novedadese
@@ -434,7 +515,7 @@ router.get('/cerrar/confirmar', logueado, async (req, res) => {
     // Mostrar resultados en modo consulta ya archivados
     return render(req, res, 'liquidacionesProcesar', { Mensaje: { title: 'Listo', text: `Liquidación del período ${perStr} cerrada correctamente.`, icon: 'success' } });
   } catch (err) {
-    try { await conn.rollback(); } catch {}
+    try { await conn.rollback(); } catch { }
     console.error('Error al cerrar liquidación:', err);
     return render(req, res, 'liquidacionesProcesar', { Mensaje: { title: 'Error', text: 'No fue posible cerrar la liquidación.', icon: 'error' } });
   } finally {
@@ -473,9 +554,9 @@ router.post('/', logueado, async (req, res) => {
       // Mostrar alerta para pedir primer vale desde POST también
       return render(req, res, 'liquidacionesProcesar', { ...modelo, pedirVale: true, Mensaje: { title: 'Falta dato', text: 'Indicá el número del primer vale.', icon: 'warning' } });
     }
-  await procesarLiquidacion(actual, primerVale);
-  const datos = await obtenerResultado(actual);
-  return render(req, res, 'liquidacionesResultado', { ...datos, Mensaje: { title: 'Listo', text: 'Liquidación generada correctamente.', icon: 'success' } });
+    await procesarLiquidacion(actual, primerVale);
+    const datos = await obtenerResultado(actual);
+    return render(req, res, 'liquidacionesResultado', { ...datos, Mensaje: { title: 'Listo', text: 'Liquidación generada correctamente.', icon: 'success' } });
   } catch (err) {
     console.error('Error al procesar liquidación:', err);
     const modeloError = await cargarModelo();
