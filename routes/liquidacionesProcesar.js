@@ -242,7 +242,7 @@ async function generarPdfArea({ periodoStr, area, grupos, subtotalArea }) {
 
   function drawTableHeader() {
     doc.save();
-    doc.font('Helvetica-Bold').fontSize(9);
+  doc.font('Helvetica-Bold').fontSize(11);
     const yStart = doc.y;
     // Primer pasada: calcular alturas
     const headerHeights = headers.map((h, idx) => {
@@ -273,21 +273,37 @@ async function generarPdfArea({ periodoStr, area, grupos, subtotalArea }) {
   function drawFullWidthRow(texto, opts = {}) {
     const paddingY = 3;
     const fontSize = opts.fontSize || 9;
-    doc.font(opts.bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(fontSize);
-    const h = doc.heightOfString(texto, { width: usableWidth - 4 }) + paddingY * 2;
+    const bold = opts.bold || false;
+    const bgColor = opts.bgColor || null;
+    const textColor = opts.textColor || '#000';
+    doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(fontSize);
+    const h = doc.heightOfString(texto, { width: usableWidth - 8 }) + paddingY * 2; // ajustar width para padding
     ensureSpace(h + 4);
     const yTop = doc.y;
-    // Línea superior
-    doc.moveTo(marginLeft, yTop).lineTo(marginLeft + usableWidth, yTop).strokeColor('#999').stroke();
-    // Texto
-    doc.text(texto, marginLeft + 4, yTop + paddingY, { width: usableWidth - 8, align: opts.align || 'left' });
-    // Línea inferior
-    doc.moveTo(marginLeft, yTop + h).lineTo(marginLeft + usableWidth, yTop + h).strokeColor('#ccc').stroke();
+    if (bgColor) {
+      doc.save();
+      doc.rect(marginLeft, yTop, usableWidth, h).fill(bgColor);
+      doc.fillColor(textColor);
+      doc.text(texto, marginLeft + 4, yTop + paddingY, { width: usableWidth - 8, align: opts.align || 'left' });
+      doc.restore();
+      // Líneas sobre fondo oscuro (ligeramente más claras para contraste)
+      doc.save();
+      doc.strokeColor('#555').moveTo(marginLeft, yTop).lineTo(marginLeft + usableWidth, yTop).stroke();
+      doc.strokeColor('#555').moveTo(marginLeft, yTop + h).lineTo(marginLeft + usableWidth, yTop + h).stroke();
+      doc.restore();
+    } else {
+      // Línea superior
+      doc.moveTo(marginLeft, yTop).lineTo(marginLeft + usableWidth, yTop).strokeColor('#999').stroke();
+      // Texto
+      doc.text(texto, marginLeft + 4, yTop + paddingY, { width: usableWidth - 8, align: opts.align || 'left' });
+      // Línea inferior
+      doc.moveTo(marginLeft, yTop + h).lineTo(marginLeft + usableWidth, yTop + h).strokeColor('#ccc').stroke();
+    }
     doc.y = yTop + h + 1;
   }
 
   function drawRow(cols) {
-    doc.font('Helvetica').fontSize(8);
+  doc.font('Helvetica').fontSize(10);
     // Calcular alto de la fila (detalle puede envolver)
     let heights = cols.map((c, idx) => {
       return doc.heightOfString(c.text, { width: colWidths[idx] - 4, align: idx >= 2 ? 'right' : 'left' });
@@ -310,15 +326,23 @@ async function generarPdfArea({ periodoStr, area, grupos, subtotalArea }) {
     doc.y = yTop + rowH + 1;
   }
 
-  function drawTotal(label, valor) {
-    // Dos columnas: etiqueta (derecha) y valor (derecha) para correcta justificación
-    const valueColWidth = 120; // ancho reservado para el importe formateado
+  function drawTwoCol(label, valor, options = {}) {
+    const valueColWidth = options.valueColWidth || 120;
     const labelColWidth = usableWidth - valueColWidth;
-    ensureSpace(lineHeight * 2.2);
+    const fontSize = options.fontSize || 9;
+    const verticalSpace = options.verticalSpace || (lineHeight * 1.5);
+    ensureSpace(verticalSpace + 2);
     const y = doc.y;
-    doc.font('Helvetica-Bold').fontSize(10).text(label, marginLeft, y, { width: labelColWidth, align: 'right' });
-    doc.font('Helvetica-Bold').fontSize(10).text(valor, marginLeft + labelColWidth, y, { width: valueColWidth, align: 'right' });
-    doc.moveDown(0.4);
+    doc.font(options.boldLabel ? 'Helvetica-Bold' : 'Helvetica').fontSize(fontSize)
+      .text(label, marginLeft, y, { width: labelColWidth, align: 'right' });
+    doc.font(options.boldValue ? 'Helvetica-Bold' : 'Helvetica').fontSize(fontSize)
+      .text(valor, marginLeft + labelColWidth, y, { width: valueColWidth, align: 'right' });
+    doc.y = y + fontSize + 4; // avance controlado sin moveDown grande
+  }
+
+  function drawTotal(label, valor) {
+    // Reusar lógica de dos columnas con mismo estilo que subtotales pero destacando total área
+    drawTwoCol(label, valor, { boldLabel: true, boldValue: true, fontSize: 11 });
   }
 
   drawHeaderArea();
@@ -327,7 +351,7 @@ async function generarPdfArea({ periodoStr, area, grupos, subtotalArea }) {
 
   for (const sector of grupos) {
     // Fila de sector de ancho completo
-    drawFullWidthRow(`Sector: ${sector.sectorNombre}`, { bold: true, fontSize: 10 });
+  drawFullWidthRow(`Sector: ${sector.sectorNombre}`, { bold: true, fontSize: 10, bgColor: '#333333', textColor: '#FFFFFF' });
     const items = sector.items || [];
     if (items.length === 0) {
       drawRow([
@@ -349,9 +373,8 @@ async function generarPdfArea({ periodoStr, area, grupos, subtotalArea }) {
       }
     }
     const subtotalSector = items.reduce((acc, it) => acc + (Number(it.monto) || 0), 0);
-    ensureSpace(lineHeight * 2);
-    doc.font('Helvetica-Bold').fontSize(9).text(`Subtotal sector: ${formatoMonedaARS(subtotalSector)}`, { align: 'right' });
-    doc.moveDown(0.5);
+  // Subtotal sector en dos columnas para menor altura
+  drawTwoCol('Subtotal sector:', formatoMonedaARS(subtotalSector), { boldLabel: true, boldValue: true, fontSize: 11 });
     // Antes de cambiar de página se reimprime encabezado (ensureSpace ya lo maneja); si la siguiente fila inicia página nueva, encabezado ya estará.
   }
 
