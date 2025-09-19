@@ -87,6 +87,7 @@ app.use('/blanquearClave', require('./routes/blanquearClave'));
 app.use('/password', require('./routes/password'));
 app.use('/liquidacionesProcesar', require('./routes/liquidacionesProcesar'));
 app.use('/ajustesLiquidacion', require('./routes/ajustesLiquidacion'));
+app.use('/cierreLiquidacion', require('./routes/cierreLiquidacion'));
 // Inicializo servidor
 app.listen(port, () => {
   console.log(`Aplicación corriendo en el puerto: ${port}`)
