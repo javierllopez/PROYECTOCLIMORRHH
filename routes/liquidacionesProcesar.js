@@ -164,6 +164,35 @@ async function procesarLiquidacion(actual, primerVale) {
       [actual.Id]
     );
 
+    // Aplicar ajustes: sumar monto de ajustes al primer registro del empleado del período y señalar en Detalle
+    try {
+      await conn.query(
+        `UPDATE liquidaciones l
+         JOIN (
+           SELECT IdEmpleado, SUM(Monto) AS Ajuste
+           FROM ajustes
+           GROUP BY IdEmpleado
+           HAVING SUM(Monto) <> 0
+         ) aj ON aj.IdEmpleado = l.IdEmpleado
+         JOIN (
+           SELECT IdEmpleado, MIN(Vale) AS ValeMin
+           FROM liquidaciones
+           WHERE Periodo = ?
+           GROUP BY IdEmpleado
+         ) prim ON prim.IdEmpleado = l.IdEmpleado AND prim.ValeMin = l.Vale
+         SET 
+           l.Monto = l.Monto + aj.Ajuste,
+           l.Detalle = CASE 
+             WHEN l.Detalle LIKE '%Se incluye ajuste%' THEN l.Detalle
+             ELSE CONCAT(COALESCE(l.Detalle,''), ' Se incluye ajuste')
+           END
+         WHERE l.Periodo = ?`,
+        [actual.Periodo, actual.Periodo]
+      );
+    } catch (e) {
+      console.warn('No se pudieron aplicar ajustes a la liquidación:', e.message);
+    }
+
     // Marcar como liquidadas (IdEstado = 6) las novedades aceptadas (5) del período actual
     await conn.query(
       'UPDATE novedadesr SET IdEstado = 6 WHERE IdNovedadesE = ? AND IdEstado = 5',
