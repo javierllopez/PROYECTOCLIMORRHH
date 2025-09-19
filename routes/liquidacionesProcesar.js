@@ -213,6 +213,185 @@ function formatearPeriodoLargo(periodoYYYYMMDD) {
   }
 }
 
+// Conversión básica de números a letras en español (solo parte entera, pesos)
+function numeroALetras(numero) {
+  const n = Math.floor(Number(numero) || 0);
+  if (n === 0) return 'CERO';
+  const unidades = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO','DIECINUEVE'];
+  const decenas = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+  const centenas = ['','CIEN','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+
+  function seccion(nro) {
+    if (nro < 20) return unidades[nro];
+    if (nro < 100) {
+      const d = Math.floor(nro / 10);
+      const r = nro % 10;
+      if (nro === 20) return 'VEINTE';
+      if (nro > 20 && nro < 30) return 'VEINTI' + unidades[r].toLowerCase();
+      return decenas[d] + (r ? ' Y ' + unidades[r] : '');
+    }
+    if (nro < 1000) {
+      const c = Math.floor(nro / 100);
+      const r = nro % 100;
+      if (nro === 100) return 'CIEN';
+      return (c === 1 ? 'CIENTO' : centenas[c]) + (r ? ' ' + seccion(r) : '');
+    }
+    if (nro < 1000000) {
+      const miles = Math.floor(nro / 1000);
+      const r = nro % 1000;
+      let pref = miles === 1 ? 'MIL' : seccion(miles) + ' MIL';
+      return pref + (r ? ' ' + seccion(r) : '');
+    }
+    if (nro < 1000000000) {
+      const mill = Math.floor(nro / 1000000);
+      const r = nro % 1000000;
+      let pref = mill === 1 ? 'UN MILLÓN' : seccion(mill) + ' MILLONES';
+      return pref + (r ? ' ' + seccion(r) : '');
+    }
+    return String(nro); // fallback para números muy grandes
+  }
+  return seccion(n);
+}
+
+// Generación de PDF de recibos por Área (4 recibos verticales por página)
+async function generarRecibosArea({ periodoStr, area, grupos }) {
+  const doc = new PDFDocument({ size: 'A4', margin: 36 });
+  const hoy = new Date();
+  const fechaStr = hoy.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+  // Armar lista plana de items por sector/persona conservando vale y detalle
+  const recibos = [];
+  for (const sector of grupos) {
+    for (const it of (sector.items || [])) {
+      recibos.push({
+        vale: padVale(it.vale),
+        apellidoYNombre: (it.apellidoYNombre || '').toUpperCase(),
+        detalle: (it.detalle || '').toUpperCase(),
+        monto: Number(it.monto) || 0,
+        sectorNombre: sector.sectorNombre || 'SIN SECTOR',
+        area: area
+      });
+    }
+  }
+
+  const anchoPagina = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const altoPagina = doc.page.height - doc.page.margins.top - doc.page.margins.bottom;
+  // Distribución: 4 recibos verticales ocupando todo el ancho; seccionamos alto en 4 bloques
+  const recibosPorPagina = 4;
+  const bloqueAlto = altoPagina / recibosPorPagina;
+
+  function dibujarMarco(x, y, w, h) {
+    doc.save();
+    doc.lineWidth(0.5).rect(x, y, w, h).stroke();
+    doc.restore();
+  }
+
+  function dibujarRecibo(r, idxEnPagina) {
+    const x = doc.page.margins.left;
+    const y = doc.page.margins.top + idxEnPagina * bloqueAlto;
+    const w = anchoPagina;
+    const h = bloqueAlto;
+    dibujarMarco(x, y, w, h);
+    const padding = 8;
+    let cursorY = y + padding;
+    const labelFont = 'Helvetica-Bold';
+  // Fila 1: Fecha a la izquierda, Recibo Nº a la derecha (font 14)
+  doc.font(labelFont).fontSize(14);
+  doc.text(`FECHA: ${fechaStr}`, x + padding, cursorY, { width: (w - padding * 2) / 2, align: 'left' });
+  doc.text(`RECIBO Nº ${r.vale}`, x + padding + (w - padding * 2) / 2, cursorY, { width: (w - padding * 2) / 2, align: 'right' });
+    cursorY += 20;
+  // Fila 2: Periodo + Área + Sector centrado font 14
+  doc.font(labelFont).fontSize(14);
+    const tituloLinea2 = `${periodoStr.toUpperCase()} - ÁREA ${r.area.toUpperCase()} - SECTOR ${r.sectorNombre.toUpperCase()}`;
+    doc.text(tituloLinea2, x + padding, cursorY, { width: w - padding * 2, align: 'center' });
+  cursorY += 20;
+  // Línea 3: Apellido y Nombre a la izquierda (font 16)
+  doc.font('Helvetica-Bold').fontSize(16).text(r.apellidoYNombre, x + padding, cursorY, { width: w - padding * 2, align: 'left' });
+  cursorY += 26;
+    // Tabla Detalle / Importe (header + datos) con altura dinámica
+    const montoStr = formatoMonedaARS(r.monto);
+    let tablaFontSize = 14;
+    const tablaAncho = w - padding * 2;
+    const colDetalleW = tablaAncho * 0.7;
+    const colImporteW = tablaAncho - colDetalleW; // 30%
+    const tablaX = x + padding;
+    let yTabla = cursorY;
+    const headerPaddingV = 4;
+    const cellPaddingV = 4;
+    const cellPaddingH = 4;
+
+    // Función para medir altura requerida de la fila de datos dada la fuente actual
+    function medirAlturas(fontSize) {
+      doc.font('Helvetica').fontSize(fontSize);
+      const hDetalle = doc.heightOfString(r.detalle, { width: colDetalleW - cellPaddingH * 2, align: 'left' });
+      doc.font('Helvetica-Bold').fontSize(fontSize);
+      const hImporte = doc.heightOfString(montoStr, { width: colImporteW - cellPaddingH * 2, align: 'right' });
+      const contenido = Math.max(hDetalle, hImporte);
+      const fila = contenido + cellPaddingV * 2;
+      return { hDetalle, hImporte, fila };
+    }
+
+    let medidas = medirAlturas(tablaFontSize);
+    const maxFilaAlto = (h - (cursorY - y) - 60); // margen razonable para no invadir firma y letras
+    while (medidas.fila > maxFilaAlto && tablaFontSize > 9) {
+      tablaFontSize -= 1;
+      medidas = medirAlturas(tablaFontSize);
+    }
+
+    const headerHeight = tablaFontSize + headerPaddingV * 2;
+    const rowHeight = medidas.fila;
+
+    // Header
+    doc.save();
+    doc.rect(tablaX, yTabla, colDetalleW, headerHeight).stroke();
+    doc.rect(tablaX + colDetalleW, yTabla, colImporteW, headerHeight).stroke();
+    doc.font('Helvetica-Bold').fontSize(tablaFontSize)
+      .text('DETALLE', tablaX + cellPaddingH, yTabla + headerPaddingV, { width: colDetalleW - cellPaddingH * 2, align: 'left' });
+    doc.text('IMPORTE', tablaX + colDetalleW + cellPaddingH, yTabla + headerPaddingV, { width: colImporteW - cellPaddingH * 2, align: 'right' });
+    doc.restore();
+    yTabla += headerHeight;
+
+    // Datos
+    doc.rect(tablaX, yTabla, colDetalleW, rowHeight).stroke();
+    doc.rect(tablaX + colDetalleW, yTabla, colImporteW, rowHeight).stroke();
+    doc.font('Helvetica').fontSize(tablaFontSize)
+      .text(r.detalle, tablaX + cellPaddingH, yTabla + cellPaddingV, { width: colDetalleW - cellPaddingH * 2, align: 'left' });
+    doc.font('Helvetica-Bold').fontSize(tablaFontSize)
+      .text(montoStr, tablaX + colDetalleW + cellPaddingH, yTabla + cellPaddingV, { width: colImporteW - cellPaddingH * 2, align: 'right' });
+
+    cursorY = yTabla + rowHeight + 14;
+    // Línea 5: Importe en letras
+    const letras = numeroALetras(r.monto);
+    doc.font('Helvetica').fontSize(8).text(`SON PESOS ${letras}`, x + padding, cursorY, { width: w - padding * 2, align: 'left' });
+    cursorY += 20;
+    // Línea 6: firma (línea) y siguiente línea "Firma" centrado con la línea
+    // Línea de firma alineada a la derecha con mayor espacio para firmar
+    // Reservar padding inferior para no chocar con el borde del recibo
+    const bottomPadding = 10; // espacio libre debajo de la firma
+    const firmaEspacioNecesario = 12 /*espacio previo*/ + 1 /*línea*/ + 6 /*gap*/ + 9 /*texto*/ + 2;
+    const bordeInferior = y + h - bottomPadding;
+    // Si no hay espacio suficiente, reubicar cursorY más arriba antes de agregar la firma
+    if (cursorY + firmaEspacioNecesario > bordeInferior) {
+      cursorY = Math.max(y + 40, bordeInferior - firmaEspacioNecesario); // 40px de margen superior mínimo dentro del bloque
+    }
+    cursorY += 12; // espacio antes de la línea de firma
+    const lineaAncho = Math.min(180, w - padding * 2);
+    const xLinea = x + padding + (w - padding * 2) - lineaAncho; // alinear a derecha
+    const yLinea = cursorY;
+    doc.moveTo(xLinea, yLinea).lineTo(xLinea + lineaAncho, yLinea).stroke();
+    cursorY += 6;
+    doc.font('Helvetica').fontSize(9).text('RECIBÍ CONFORME', xLinea, cursorY, { width: lineaAncho, align: 'center' });
+  }
+
+  recibos.forEach((r, idx) => {
+    const idxEnPagina = idx % recibosPorPagina;
+    if (idx > 0 && idxEnPagina === 0) {
+      doc.addPage();
+    }
+    dibujarRecibo(r, idxEnPagina);
+  });
+  return doc;
+}
+
 /**
  * Genera un PDF de liquidación para un Área y lo devuelve como stream (doc) ya iniciado.
  * El caller debe hacer doc.end() al finalizar.
@@ -331,13 +510,37 @@ async function generarPdfArea({ periodoStr, area, grupos, subtotalArea }) {
     const labelColWidth = usableWidth - valueColWidth;
     const fontSize = options.fontSize || 9;
     const verticalSpace = options.verticalSpace || (lineHeight * 1.5);
-    ensureSpace(verticalSpace + 2);
+    const paddingY = options.paddingY || 2;
+    const bgColor = options.bgColor || null; // permitir fondo para resaltar subtotales
+    const drawTopLine = options.drawTopLine || false;
+    const drawBottomLine = options.drawBottomLine || false;
+    const topLineColor = options.topLineColor || '#888';
+    const bottomLineColor = options.bottomLineColor || '#aaa';
+    // Altura estimada de la línea (una sola) + padding
+    const contentHeight = fontSize + paddingY * 2;
+    ensureSpace(contentHeight + 2);
     const y = doc.y;
+    if (drawTopLine) {
+      doc.save().strokeColor(topLineColor).moveTo(marginLeft, y).lineTo(marginLeft + usableWidth, y).stroke().restore();
+    }
+    // Fondo
+    if (bgColor) {
+      doc.save();
+      doc.rect(marginLeft, y + (drawTopLine ? 1 : 0), usableWidth, contentHeight).fill(bgColor);
+      doc.restore();
+    }
+    const baseY = y + paddingY + (drawTopLine ? 1 : 0);
     doc.font(options.boldLabel ? 'Helvetica-Bold' : 'Helvetica').fontSize(fontSize)
-      .text(label, marginLeft, y, { width: labelColWidth, align: 'right' });
+      .fillColor(options.labelColor || '#000')
+      .text(label, marginLeft + 4, baseY, { width: labelColWidth - 8, align: 'right' });
     doc.font(options.boldValue ? 'Helvetica-Bold' : 'Helvetica').fontSize(fontSize)
-      .text(valor, marginLeft + labelColWidth, y, { width: valueColWidth, align: 'right' });
-    doc.y = y + fontSize + 4; // avance controlado sin moveDown grande
+      .fillColor(options.valueColor || '#000')
+      .text(valor, marginLeft + labelColWidth, baseY, { width: valueColWidth - 4, align: 'right' });
+    if (drawBottomLine) {
+      const yBottom = y + contentHeight + (drawTopLine ? 1 : 0);
+      doc.save().strokeColor(bottomLineColor).moveTo(marginLeft, yBottom).lineTo(marginLeft + usableWidth, yBottom).stroke().restore();
+    }
+    doc.y = y + contentHeight + (drawTopLine ? 1 : 0) + 2;
   }
 
   function drawTotal(label, valor) {
@@ -373,8 +576,17 @@ async function generarPdfArea({ periodoStr, area, grupos, subtotalArea }) {
       }
     }
     const subtotalSector = items.reduce((acc, it) => acc + (Number(it.monto) || 0), 0);
-  // Subtotal sector en dos columnas para menor altura
-  drawTwoCol('Subtotal sector:', formatoMonedaARS(subtotalSector), { boldLabel: true, boldValue: true, fontSize: 11 });
+    // Subtotal sector resaltado: fondo gris claro y líneas superior/inferior suaves
+    drawTwoCol('Subtotal sector:', formatoMonedaARS(subtotalSector), {
+      boldLabel: true,
+      boldValue: true,
+      fontSize: 11,
+      bgColor: '#f0f0f0',
+      drawTopLine: true,
+      drawBottomLine: true,
+      topLineColor: '#bbb',
+      bottomLineColor: '#bbb'
+    });
     // Antes de cambiar de página se reimprime encabezado (ensureSpace ya lo maneja); si la siguiente fila inicia página nueva, encabezado ya estará.
   }
 
@@ -476,6 +688,55 @@ router.get('/resultado/export/pdf', logueado, async (req, res) => {
   } catch (err) {
     console.error('Error al exportar PDF:', err);
     const datos = { Mensaje: { title: 'Error', text: 'No fue posible exportar el PDF.', icon: 'error' } };
+    return render(req, res, 'liquidacionesProcesar', datos);
+  }
+});
+
+// GET: exportar Recibos (4 por página) por Área de la liquidación actual
+router.get('/resultado/export/recibos', logueado, async (req, res) => {
+  const modelo = await cargarModelo();
+  if (modelo.sinActual) {
+    return render(req, res, 'liquidacionesProcesar', { ...modelo, Mensaje: { title: 'Atención', text: 'No hay período actual para exportar.', icon: 'warning' } });
+  }
+  try {
+    const datos = await obtenerResultado(modelo.actual);
+    const periodoLargo = formatearPeriodoLargo(modelo.actual.Periodo); // ej: agosto de 2025
+    if (!datos.areas || datos.areas.length === 0) {
+      return render(req, res, 'liquidacionesResultado', { ...datos, Mensaje: { title: 'Atención', text: 'No hay datos para exportar.', icon: 'warning' } });
+    }
+    const areaQuery = (req.query.area || '').toString();
+    if (areaQuery) {
+      const areaSel = datos.areas.find((a) => String(a.area).toLowerCase() === areaQuery.toLowerCase());
+      if (!areaSel) {
+        return render(req, res, 'liquidacionesResultado', { ...datos, Mensaje: { title: 'Atención', text: 'El área solicitada no existe en la liquidación actual.', icon: 'warning' } });
+      }
+      const nombre = `Recibos Liquidación ${periodoLargo} Área ${areaSel.area}.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre)}"`);
+      const doc = await generarRecibosArea({ periodoStr: periodoLargo, area: areaSel.area, grupos: areaSel.grupos });
+      doc.pipe(res);
+      doc.end();
+      return;
+    }
+    if (datos.areas.length === 1) {
+      const a = datos.areas[0];
+      const nombre = `Recibos Liquidación ${periodoLargo} Área ${a.area}.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre)}"`);
+      const doc = await generarRecibosArea({ periodoStr: periodoLargo, area: a.area, grupos: a.grupos });
+      doc.pipe(res);
+      doc.end();
+      return;
+    }
+    const opciones = datos.areas.map((a) => ({
+      area: a.area,
+      url: `/liquidacionesProcesar/resultado/export/recibos?area=${encodeURIComponent(a.area)}`,
+      nombreArchivo: `Recibos Liquidación ${periodoLargo} Área ${a.area}.pdf`
+    }));
+    return render(req, res, 'liquidacionesExportarRecibos', { periodo: periodoLargo, opciones });
+  } catch (err) {
+    console.error('Error al exportar Recibos:', err);
+    const datos = { Mensaje: { title: 'Error', text: 'No fue posible exportar los recibos.', icon: 'error' } };
     return render(req, res, 'liquidacionesProcesar', datos);
   }
 });

@@ -328,28 +328,28 @@ router.post('/Agregar', logueado, async (req, res) => {
             let [hInicio, mInicio] = HoraInicio.split(':').map(Number);
             let [hFin, mFin] = HoraFin.split(':').map(Number);
             // Crear fechas en hora local
-            let entrada = new Date(Date.UTC(year, month - 1, day, hInicio, mInicio, 0, 0));
-            let salida = new Date(Date.UTC(year, month - 1, day, hFin, mFin, 0, 0));
+            let entrada = new Date(year, month - 1, day, hInicio, mInicio, 0, 0);
+            let salida = new Date(year, month - 1, day, hFin, mFin, 0, 0);
             // Si la hora de fin es menor o igual a la de inicio, sumar un día a la fecha de salida
             if (hFin < hInicio || (hFin === hInicio && mFin <= mInicio)) {
-                salida.setUTCDate(salida.getUTCDate() + 1);
+                salida.setDate(salida.getDate() + 1);
             }
             // Guardar en UTC (formato MySQL)
-            function toMySQLDatetimeUTC(date) {
+            function toMySQLDatetime(date) {
                 const pad = n => n < 10 ? '0' + n : n;
-                return date.getUTCFullYear() + '-' + pad(date.getUTCMonth() + 1) + '-' + pad(date.getUTCDate()) + ' ' + pad(date.getUTCHours()) + ':' + pad(date.getUTCMinutes()) + ':' + pad(date.getUTCSeconds());
+                return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
             }
-            _Inicio = new Date(toMySQLDatetimeUTC(entrada));
-            _Fin = new Date(toMySQLDatetimeUTC(salida));
+            _Inicio = new Date(toMySQLDatetime(entrada));
+            _Fin = new Date(toMySQLDatetime(salida));
         } else if (TipoNovedad == 'Guardias') {
             [guardias] = await pool.query(sqlGuardias, [GuardiaRealizada]);
             if (guardias.length === 0) {
                 throw new Error('Guardia no encontrada');
             }
             _IdGuardia = GuardiaRealizada;
-            function toMySQLDatetimeUTC(date) {
+            function toMySQLDatetime(date) {
                 const pad = n => n < 10 ? '0' + n : n;
-                return date.getUTCFullYear() + '-' + pad(date.getUTCMonth() + 1) + '-' + pad(date.getUTCDate()) + ' ' + pad(date.getUTCHours()) + ':' + pad(date.getUTCMinutes()) + ':' + pad(date.getUTCSeconds());
+                return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
             }
             if (TipoGuardia == 1) {
                 _IdParcial = 1;     //Guardia completa
@@ -358,21 +358,21 @@ router.post('/Agregar', logueado, async (req, res) => {
                 let [hFin, mFin] = ExtraerHora(guardias[0].Fin).split(':').map(Number);
                 // Crear fechas en UTC
                 // Si la hora de fin es menor o igual a la de inicio, sumar un día a la fecha de fin
-                let entrada = new Date(Date.UTC(anio, mes - 1, dia, hIni, mIni, 0, 0));
-                let salida = new Date(Date.UTC(anio, mes - 1, dia, hFin, mFin, 0, 0));
-                if (entrada > salida) salida.setUTCDate(salida.getUTCDate() + 1);
-                _Inicio = new Date(toMySQLDatetimeUTC(entrada));
-                _Fin = new Date(toMySQLDatetimeUTC(salida));
+                let entrada = new Date(Date(anio, mes - 1, dia, hIni, mIni, 0, 0));
+                let salida = new Date(Date(anio, mes - 1, dia, hFin, mFin, 0, 0));
+                if (entrada > salida) salida.setDate(salida.getDate() + 1);
+                _Inicio = new Date(toMySQLDatetime(entrada));
+                _Fin = new Date(toMySQLDatetime(salida));
             } else if (TipoGuardia == 2) {
                 _IdParcial = 2;     //Guardia parcial
                 let [anio, mes, dia] = FechaGuardia.split('-').map(Number);
                 let [hIni, mIni] = InicioGuardiaParcial.split(':').map(Number);
                 let [hFin, mFin] = FinGuardiaParcial.split(':').map(Number);
-                let inicio = new Date(Date.UTC(anio, mes-1, dia, hIni, mIni, 0, 0));
-                let fin = new Date(Date.UTC(anio, mes-1, dia, hFin, mFin, 0, 0));
-                if (inicio > fin) fin.setUTCDate(fin.getUTCDate() + 1);
-                _Inicio = new Date(toMySQLDatetimeUTC(inicio));
-                _Fin = new Date(toMySQLDatetimeUTC(fin));
+                let inicio = new Date(Date(anio, mes-1, dia, hIni, mIni, 0, 0));
+                let fin = new Date(Date(anio, mes-1, dia, hFin, mFin, 0, 0));
+                if (inicio > fin) fin.setDate(fin.getDate() + 1);
+                _Inicio = new Date(toMySQLDatetime(inicio));
+                _Fin = new Date(toMySQLDatetime(fin));
             } else {
                 throw new Error('Tipo de guardia no válido');
             }
@@ -411,7 +411,7 @@ router.post('/Agregar', logueado, async (req, res) => {
         _IdEmpleado = personal[0].Id;
         _IdNomina = parseInt(Nomina);
         const [nominaValores] = await pool.query(sqlNomina, [_IdNomina, FechaASqlFecha(_Inicio), FechaASqlFecha(_Inicio)]);
-        console.log('Nomina:', Nomina);
+        console.log('Nomina:', nominaValores);
         if (nominaValores.length === 0) {
             throw new Error('No se encontraron valores de nómina para la fecha seleccionada');
         }
@@ -456,10 +456,9 @@ router.post('/Agregar', logueado, async (req, res) => {
         //-------------------------------------------------------------------------------------------------
         if (TipoNovedad == 'Horas') {
             const extraerHs50 = TotalHoras50(_Inicio, _Fin);
-            console.log('Inicio:', _Inicio, 'Fin:', _Fin, 'Minutos:', extraerHs50[0], 'Horas:', extraerHs50[1]);
             _MinutosAl50 = extraerHs50[0] !== undefined ? extraerHs50[0] : 0;
             _Hs50 = extraerHs50[1] !== undefined ? extraerHs50[1] : '';
-            const [extraerHs100] = TotalHoras100(_Inicio, _Fin);
+            const extraerHs100 = TotalHoras100(_Inicio, _Fin);
             _MinutosAl100 = extraerHs100[0] !== undefined ? extraerHs100[0] : 0;
             _Hs100 = extraerHs100[1] !== undefined ? extraerHs100[1] : '';
             _IdNomina = Nomina;
@@ -486,11 +485,7 @@ router.post('/Agregar', logueado, async (req, res) => {
                 // Si es una guardia parcial saco la hora de entrada y salida de los campos del formulario
                 if (TipoGuardia == 2) {
                     _CoeficienteGuardia = (_Fin - _Inicio) / (guardias[0].Fin - guardias[0].Inicio) * guardias[0].Cantidad;
-                    console.log(_Fin - _Inicio);
-                    console.log('Inicio Guardia:', guardias[0].Inicio, 'Fin Guardia:', guardias[0].Fin);
-                    console.log('Diferencia:',guardias[0].Fin - guardias[0].Inicio);
-                    console.log('Coeficiente Guardia:', _CoeficienteGuardia);
-                    if (guardias[0].Tipo == 1) {
+                   if (guardias[0].Tipo == 1) {
                         _Monto = _CoeficienteGuardia * nominaValores[0].ValorGuardiaDiurna;
                         _GuardiasDiurnas = _CoeficienteGuardia;
                         _MinutosGD = (_Fin - _Inicio) / 60000;
@@ -510,7 +505,7 @@ router.post('/Agregar', logueado, async (req, res) => {
                 _Area,
                 _IdSector,
                 _IdEmpleado,
-        FechaLocalASqlDate(_Inicio),
+                FechaLocalASqlDate(_Inicio),
                 _Hs50,
                 _Hs100,
                 _GuardiasDiurnas,

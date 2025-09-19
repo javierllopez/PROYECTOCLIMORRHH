@@ -1,0 +1,13 @@
+<div class="container mt-4">
+  <h3>Recibos de Liquidación {{periodo}}</h3>
+  <p>Seleccioná el área para descargar los recibos correspondientes (4 por página).</p>
+  <div class="list-group mb-3">
+    {{#each opciones}}
+      <a href="{{this.url}}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+        <span>Área {{this.area}}</span>
+        <span class="badge bg-primary">Descargar</span>
+      </a>
+    {{/each}}
+  </div>
+  <a href="/liquidacionesProcesar/resultado" class="btn btn-secondary">Volver</a>
+</div>
