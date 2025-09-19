@@ -244,6 +244,21 @@ function formatoMonedaARS(valor) {
   }
 }
 
+// Sanitiza nombres de archivo para cabecera Content-Disposition
+function sanitizeFilename(name, fallback) {
+  const raw = String(name || '').trim();
+  if (!raw) return fallback;
+  // quitar rutas y caracteres peligrosos
+  let s = raw.replace(/[\\\/\r\n\t\0]/g, '');
+  // evitar directorios relativos
+  s = s.replace(/\.+/g, '.');
+  // aplicar extensión .pdf si falta
+  if (!/\.pdf$/i.test(s)) s = s + '.pdf';
+  // longitud razonable
+  if (s.length > 180) s = s.slice(0, 176) + '.pdf';
+  return s;
+}
+
 function formatearPeriodoLargo(periodoYYYYMMDD) {
   // Construir Date en UTC para evitar corrimientos
   const [y, m, d] = String(periodoYYYYMMDD || '').split('-').map((x) => parseInt(x, 10));
@@ -700,7 +715,8 @@ router.get('/resultado/export/pdf', logueado, async (req, res) => {
       if (!areaSel) {
         return render(req, res, 'liquidacionesResultado', { ...datos, Mensaje: { title: 'Atención', text: 'El área solicitada no existe en la liquidación actual.', icon: 'warning' } });
       }
-      const nombre = `Liquidación ${periodoLargo} Area ${areaSel.area}.pdf`;
+      const nombrePorDefecto = `Liquidación ${periodoLargo} Area ${areaSel.area}.pdf`;
+      const nombre = sanitizeFilename(req.query.filename, nombrePorDefecto);
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre)}"`);
       const doc = await generarPdfArea({ periodoStr: periodoLargo, area: areaSel.area, grupos: areaSel.grupos, subtotalArea: areaSel.subtotalArea });
@@ -709,19 +725,7 @@ router.get('/resultado/export/pdf', logueado, async (req, res) => {
       return;
     }
 
-    // Si hay una sola área, descargar PDF directo. Si hay varias, mostrar opciones (dos links) para descargar cada PDF.
-    if (datos.areas.length === 1) {
-      const a = datos.areas[0];
-      const nombre = `Liquidación ${periodoLargo} Area ${a.area}.pdf`;
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre)}"`);
-      const doc = await generarPdfArea({ periodoStr: periodoLargo, area: a.area, grupos: a.grupos, subtotalArea: a.subtotalArea });
-      doc.pipe(res);
-      doc.end();
-      return;
-    }
-
-    // Varias áreas => renderizar una vista con los links de descarga individuales
+    // Renderizar selector de descarga (permite elegir nombre) para una o múltiples áreas
     const opciones = datos.areas.map((a) => ({
       area: a.area,
       url: `/liquidacionesProcesar/resultado/export/pdf?area=${encodeURIComponent(a.area)}`,
@@ -754,20 +758,11 @@ router.get('/resultado/export/recibos', logueado, async (req, res) => {
       if (!areaSel) {
         return render(req, res, 'liquidacionesResultado', { ...datos, Mensaje: { title: 'Atención', text: 'El área solicitada no existe en la liquidación actual.', icon: 'warning' } });
       }
-      const nombre = `Recibos Liquidación ${periodoLargo} Área ${areaSel.area}.pdf`;
+      const nombrePorDefecto = `Recibos Liquidación ${periodoLargo} Área ${areaSel.area}.pdf`;
+      const nombre = sanitizeFilename(req.query.filename, nombrePorDefecto);
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre)}"`);
       const doc = await generarRecibosArea({ periodoStr: periodoLargo, area: areaSel.area, grupos: areaSel.grupos });
-      doc.pipe(res);
-      doc.end();
-      return;
-    }
-    if (datos.areas.length === 1) {
-      const a = datos.areas[0];
-      const nombre = `Recibos Liquidación ${periodoLargo} Área ${a.area}.pdf`;
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre)}"`);
-      const doc = await generarRecibosArea({ periodoStr: periodoLargo, area: a.area, grupos: a.grupos });
       doc.pipe(res);
       doc.end();
       return;
