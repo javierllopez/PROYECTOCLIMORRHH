@@ -164,6 +164,50 @@ async function procesarLiquidacion(actual, primerVale) {
       [actual.Id]
     );
 
+    // Aplicar ajustes: recalcular total del empleado (sin redondeo original), sumar ajuste y redondear a decena.
+    // Solo se modifica el primer registro (MIN(Vale)) por empleado del período y se agrega leyenda con el importe del ajuste.
+    try {
+      await conn.query(
+        `UPDATE liquidaciones l
+         JOIN (
+           SELECT e.Id AS IdNovedadesE, r.IdEmpleado, SUM(COALESCE(r.Monto,0)) AS TotalBase
+           FROM novedadesr r
+           INNER JOIN novedadese e ON e.Id = r.IdNovedadesE
+           WHERE e.Id = ? AND r.IdEstado IN (5,6)
+           GROUP BY e.Id, r.IdEmpleado
+         ) base ON base.IdNovedadesE = l.IdNovedadesE AND base.IdEmpleado = l.IdEmpleado
+         JOIN (
+           SELECT IdEmpleado, SUM(Monto) AS Ajuste
+           FROM ajustes
+           GROUP BY IdEmpleado
+         ) aj ON aj.IdEmpleado = l.IdEmpleado
+         JOIN (
+           SELECT IdEmpleado, MIN(Vale) AS ValeMin
+           FROM liquidaciones
+           WHERE Periodo = ?
+           GROUP BY IdEmpleado
+         ) prim ON prim.IdEmpleado = l.IdEmpleado AND prim.ValeMin = l.Vale
+         JOIN (
+           SELECT IdEmpleado, SUM(Monto) AS TotalActual
+           FROM liquidaciones
+           WHERE Periodo = ?
+           GROUP BY IdEmpleado
+         ) act ON act.IdEmpleado = l.IdEmpleado
+         SET 
+           l.Monto = l.Monto + (CAST(CEIL((base.TotalBase + COALESCE(aj.Ajuste,0)) / 10) * 10 AS DECIMAL(12,2)) - act.TotalActual),
+           l.Detalle = CASE 
+             WHEN COALESCE(aj.Ajuste,0) = 0 THEN l.Detalle
+             WHEN l.Detalle LIKE '%Se incluye ajuste por $%' THEN l.Detalle
+             WHEN l.Detalle LIKE '%Se incluye ajuste%' THEN REPLACE(l.Detalle, 'Se incluye ajuste', CONCAT('Se incluye ajuste por $ ', FORMAT(aj.Ajuste,2)))
+             ELSE CONCAT(COALESCE(l.Detalle,''), ' - Se incluye ajuste por $ ', FORMAT(aj.Ajuste,2))
+           END
+         WHERE l.Periodo = ? AND COALESCE(aj.Ajuste,0) <> 0`,
+        [actual.Id, actual.Periodo, actual.Periodo, actual.Periodo]
+      );
+    } catch (e) {
+      console.warn('No se pudieron aplicar ajustes/redondeo en la liquidación:', e.message);
+    }
+
     // Marcar como liquidadas (IdEstado = 6) las novedades aceptadas (5) del período actual
     await conn.query(
       'UPDATE novedadesr SET IdEstado = 6 WHERE IdNovedadesE = ? AND IdEstado = 5',
