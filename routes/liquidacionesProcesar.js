@@ -339,9 +339,11 @@ async function generarRecibosArea({ periodoStr, area, grupos }) {
 
   const anchoPagina = doc.page.width - doc.page.margins.left - doc.page.margins.right;
   const altoPagina = doc.page.height - doc.page.margins.top - doc.page.margins.bottom;
-  // Distribución: 4 recibos verticales ocupando todo el ancho; seccionamos alto en 4 bloques
+  // Distribución: 4 recibos verticales con padding entre ellos y línea de corte punteada
   const recibosPorPagina = 4;
-  const bloqueAlto = altoPagina / recibosPorPagina;
+  const espacioCorte = 12; // padding vertical entre recibos (px)
+  const altoTotalCortes = espacioCorte * (recibosPorPagina - 1);
+  const bloqueAlto = (altoPagina - altoTotalCortes) / recibosPorPagina;
 
   function dibujarMarco(x, y, w, h) {
     doc.save();
@@ -349,9 +351,19 @@ async function generarRecibosArea({ periodoStr, area, grupos }) {
     doc.restore();
   }
 
+  function dibujarLineaCorte(y) {
+    const xIni = doc.page.margins.left;
+    const xFin = doc.page.width - doc.page.margins.right;
+    doc.save();
+    doc.dash(3, { space: 3 }).strokeColor('#999');
+    doc.moveTo(xIni, y).lineTo(xFin, y).stroke();
+    doc.undash();
+    doc.restore();
+  }
+
   function dibujarRecibo(r, idxEnPagina) {
     const x = doc.page.margins.left;
-    const y = doc.page.margins.top + idxEnPagina * bloqueAlto;
+    const y = doc.page.margins.top + idxEnPagina * (bloqueAlto + espacioCorte);
     const w = anchoPagina;
     const h = bloqueAlto;
     dibujarMarco(x, y, w, h);
@@ -451,7 +463,13 @@ async function generarRecibosArea({ periodoStr, area, grupos }) {
     if (idx > 0 && idxEnPagina === 0) {
       doc.addPage();
     }
+    // Dibujar recibo en su bloque
     dibujarRecibo(r, idxEnPagina);
+    // Dibujar línea de corte en el padding, salvo después del último de la página
+    if (idxEnPagina < recibosPorPagina - 1) {
+      const yLinea = doc.page.margins.top + (idxEnPagina + 1) * (bloqueAlto + espacioCorte) - (espacioCorte / 2);
+      dibujarLineaCorte(yLinea);
+    }
   });
   return doc;
 }
