@@ -32,30 +32,12 @@ router.get('/', logueado, async (req, res) => {
                 dashboard.periodoActual = 'No definido';
                 dashboard.observacionesPeriodo = '';
             }
-            // Gráfico de torta: minutos trabajados agrupados por estado para el período actual
-            let graficoTorta = {
-                labels: ['Cargadas', 'Rechazadas por supervisor', 'Aceptadas por supervisor', 'Rechazadas por RRHH', 'Aprobadas RRHH', 'Liquidadas'],
-                data: [0, 0, 0, 0, 0, 0]
-            };
             let graficoTortaSectores = { labels: [], data: [] };
             if (periodoRows.length > 0) {
                 // Obtener el Id del período actual
                 const idNovedadesE = await pool.query("SELECT Id FROM novedadese WHERE Actual = 1 LIMIT 1");
                 if (idNovedadesE[0].length > 0) {
                     const idPeriodo = idNovedadesE[0][0].Id;
-                    // Sumar minutos agrupados por IdEstado
-                    const [minutosRows] = await pool.query(`
-                        SELECT IdEstado, 
-                            SUM(COALESCE(MinutosAl50,0) + COALESCE(MinutosAl100,0) + COALESCE(MinutosGd,0) + COALESCE(MinutosGN,0)) AS totalMinutos
-                        FROM novedadesr
-                        WHERE IdNovedadesE = ?
-                        GROUP BY IdEstado
-                    `, [idPeriodo]);
-                    minutosRows.forEach(row => {
-                        if (row.IdEstado >= 1 && row.IdEstado <= 6) {
-                            graficoTorta.data[row.IdEstado - 1] = Number(row.totalMinutos) || 0;
-                        }
-                    });
 
                     // Sumar minutos agrupados por sector
                     const [minutosSectoresRows] = await pool.query(`
@@ -70,9 +52,7 @@ router.get('/', logueado, async (req, res) => {
                     graficoTortaSectores.data = minutosSectoresRows.map(r => Number(r.totalMinutos) || 0);
                 }
             }
-            // Calcular total de minutos para la tabla del gráfico de torta
-            dashboard.totalMinutos = graficoTorta.data.reduce((a, b) => (Number(a) || 0) + (Number(b) || 0), 0);
-            dashboard.graficoTorta = graficoTorta;
+            dashboard.totalMinutos = graficoTortaSectores.data.reduce((a, b) => (Number(a) || 0) + (Number(b) || 0), 0);
             dashboard.graficoTortaSectores = graficoTortaSectores;
         } catch (err) {
             dashboard.usuariosActivos = 0;
@@ -92,9 +72,38 @@ router.get('/', logueado, async (req, res) => {
             return render(req, res, 'partials/menuUsuario');
         }
     } else {
-        return render(req, res, 'index', { dashboard });
+        return render(req, res, 'index', { dashboard, nivelUsuario: req.session.nivelUsuario });
     }
 
+});
+
+// Detalle de horas por sector (admin)
+router.get('/detalleHorasSectores', logueado, async (req, res) => {
+    if (req.session.nivelUsuario != 1) return res.redirect('/');
+    try {
+        const [rowsE] = await pool.query('SELECT Id FROM novedadese WHERE Actual = 1 LIMIT 1');
+        if (!rowsE.length) return render(req, res, 'detalleHorasSectores', { detalle: [], total: { min50:0, min100:0, monto:0 } });
+        const idPeriodo = rowsE[0].Id;
+        const [rows] = await pool.query(`
+            SELECT s.Descripcion AS Sector,
+                   SUM(COALESCE(n.MinutosAl50,0) + COALESCE(n.MinutosGd,0)) AS Min50,
+                   SUM(COALESCE(n.MinutosAl100,0) + COALESCE(n.MinutosGN,0)) AS Min100,
+                   SUM(COALESCE(n.Monto,0)) AS Monto
+            FROM novedadesr n
+            INNER JOIN sectores s ON n.IdSector = s.Id
+            WHERE n.IdNovedadesE = ?
+            GROUP BY n.IdSector, s.Descripcion
+            ORDER BY s.Descripcion
+        `, [idPeriodo]);
+        const tot = rows.reduce((acc, r) => ({
+            min50: acc.min50 + Number(r.Min50 || 0),
+            min100: acc.min100 + Number(r.Min100 || 0),
+            monto: acc.monto + Number(r.Monto || 0)
+        }), { min50:0, min100:0, monto:0 });
+        return render(req, res, 'detalleHorasSectores', { detalle: rows, total: tot });
+    } catch (e) {
+        return render(req, res, 'detalleHorasSectores', { detalle: [], total: { min50:0, min100:0, monto:0 }, error: e.message });
+    }
 });
 
 
