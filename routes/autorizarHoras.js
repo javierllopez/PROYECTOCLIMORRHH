@@ -76,7 +76,7 @@ router.get('/pendientes', logueado, async (req, res) => {
         const sqlCuenta = `
             SELECT COUNT(*) AS cantidad
             FROM novedadesR
-            WHERE IdNovedadesE = ? AND IdSupervisor = ? AND IdEstado = 1
+            WHERE IdNovedadesE = ? AND IdSupervisor = ? AND IdEstado IN (1,4)
         `;
         const [rowsC] = await pool.query(sqlCuenta, [idNovedadesE, req.session.idUsuario]);
         const cantidad = rowsC[0]?.cantidad || 0;
