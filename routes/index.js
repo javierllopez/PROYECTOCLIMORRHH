@@ -33,6 +33,7 @@ router.get('/', logueado, async (req, res) => {
                 dashboard.observacionesPeriodo = '';
             }
             let graficoTortaSectores = { labels: [], data: [] };
+            let graficoTortaMotivos = { labels: [], data: [] };
             if (periodoRows.length > 0) {
                 // Obtener el Id del período actual
                 const idNovedadesE = await pool.query("SELECT Id FROM novedadese WHERE Actual = 1 LIMIT 1");
@@ -41,7 +42,7 @@ router.get('/', logueado, async (req, res) => {
 
                     // Sumar minutos agrupados por sector
                     const [minutosSectoresRows] = await pool.query(`
-                        SELECT s.Descripcion as sector, SUM(COALESCE(n.MinutosAl50,0) + COALESCE(n.MinutosAl100,0) + COALESCE(n.MinutosGd,0) + COALESCE(n.MinutosGN,0)) as totalMinutos
+                        SELECT s.Descripcion as sector, SUM(COALESCE(n.MinutosAl50,0) + COALESCE(n.MinutosAl100,0) + COALESCE(n.MinutosGD,0) + COALESCE(n.MinutosGN,0)) as totalMinutos
                         FROM novedadesr n
                         INNER JOIN sectores s ON n.IdSector = s.Id
                         WHERE n.IdNovedadesE = ?
@@ -61,10 +62,33 @@ router.get('/', logueado, async (req, res) => {
                         graficoTortaSectores.labels.push('Otros sectores');
                         graficoTortaSectores.data.push(sumaResto);
                     }
+
+                    // Sumar minutos agrupados por motivo
+                    const [minutosMotivosRows] = await pool.query(`
+                        SELECT m.Descripcion as motivo, SUM(COALESCE(n.MinutosAl50,0) + COALESCE(n.MinutosAl100,0) + COALESCE(n.MinutosGD,0) + COALESCE(n.MinutosGN,0)) as totalMinutos
+                        FROM novedadesr n
+                        INNER JOIN motivos m ON n.IdMotivo = m.Id
+                        WHERE n.IdNovedadesE = ?
+                        GROUP BY n.IdMotivo, m.Descripcion
+                        ORDER BY m.Descripcion
+                    `, [idPeriodo]);
+                    const ordenadosM = minutosMotivosRows
+                        .map(r => ({ motivo: r.motivo, total: Number(r.totalMinutos) || 0 }))
+                        .sort((a, b) => b.total - a.total);
+                    const top5M = ordenadosM.slice(0, 5);
+                    const restoM = ordenadosM.slice(5);
+                    const sumaRestoM = restoM.reduce((acc, it) => acc + it.total, 0);
+                    graficoTortaMotivos.labels = top5M.map(it => it.motivo);
+                    graficoTortaMotivos.data = top5M.map(it => it.total);
+                    if (sumaRestoM > 0) {
+                        graficoTortaMotivos.labels.push('Otros motivos');
+                        graficoTortaMotivos.data.push(sumaRestoM);
+                    }
                 }
             }
             dashboard.totalMinutos = graficoTortaSectores.data.reduce((a, b) => (Number(a) || 0) + (Number(b) || 0), 0);
             dashboard.graficoTortaSectores = graficoTortaSectores;
+            dashboard.graficoTortaMotivos = graficoTortaMotivos;
         } catch (err) {
             dashboard.usuariosActivos = 0;
             dashboard.periodoActual = 'No definido';
@@ -92,15 +116,16 @@ router.get('/', logueado, async (req, res) => {
 router.get('/detalleHorasSectores', logueado, async (req, res) => {
     if (req.session.nivelUsuario != 1) return res.redirect('/');
     try {
-        const [rowsE] = await pool.query('SELECT Id FROM novedadese WHERE Actual = 1 LIMIT 1');
-        if (!rowsE.length) return render(req, res, 'detalleHorasSectores', { detalle: [], total: { min50:0, min100:0, monto:0 } });
+        const [rowsE] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo FROM novedadese WHERE Actual = 1 LIMIT 1");
+        if (!rowsE.length) return render(req, res, 'detalleHorasSectores', { detalle: [], total: { min50:0, min100:0, monto:0 }, periodoActual: '' });
         const idPeriodo = rowsE[0].Id;
+        const periodoActual = rowsE[0].Periodo;
         const [rows] = await pool.query(`
             SELECT s.Descripcion AS Sector,
-                   SUM(COALESCE(n.MinutosAl50,0) + COALESCE(n.MinutosGd,0)) AS Min50,
+                   SUM(COALESCE(n.MinutosAl50,0) + COALESCE(n.MinutosGD,0)) AS Min50,
                    SUM(COALESCE(n.MinutosAl100,0) + COALESCE(n.MinutosGN,0)) AS Min100,
                    SUM(COALESCE(n.Monto,0)) AS Monto,
-                   SUM(COALESCE(n.MinutosAl50,0) + COALESCE(n.MinutosGd,0) + COALESCE(n.MinutosAl100,0) + COALESCE(n.MinutosGN,0)) AS TotalMin
+                   SUM(COALESCE(n.MinutosAl50,0) + COALESCE(n.MinutosGD,0) + COALESCE(n.MinutosAl100,0) + COALESCE(n.MinutosGN,0)) AS TotalMin
             FROM novedadesr n
             INNER JOIN sectores s ON n.IdSector = s.Id
             WHERE n.IdNovedadesE = ?
@@ -112,11 +137,45 @@ router.get('/detalleHorasSectores', logueado, async (req, res) => {
             min100: acc.min100 + Number(r.Min100 || 0),
             monto: acc.monto + Number(r.Monto || 0)
         }), { min50:0, min100:0, monto:0 });
-        return render(req, res, 'detalleHorasSectores', { detalle: rows, total: tot });
+        const hayDatos = rows.length > 0;
+        return render(req, res, 'detalleHorasSectores', { detalle: rows, total: tot, periodoActual, hayDatos });
     } catch (e) {
-        return render(req, res, 'detalleHorasSectores', { detalle: [], total: { min50:0, min100:0, monto:0 }, error: e.message });
+        return render(req, res, 'detalleHorasSectores', { detalle: [], total: { min50:0, min100:0, monto:0 }, periodoActual: '', hayDatos: false, error: e.message });
     }
 });
+
+// Detalle de horas por motivo (admin)
+router.get('/detalleHorasMotivos', logueado, async (req, res) => {
+    if (req.session.nivelUsuario != 1) return res.redirect('/');
+    try {
+        const [rowsE] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo FROM novedadese WHERE Actual = 1 LIMIT 1");
+        if (!rowsE.length) return render(req, res, 'detalleHorasMotivos', { detalle: [], total: { min50:0, min100:0, monto:0 }, periodoActual: '' });
+        const idPeriodo = rowsE[0].Id;
+        const periodoActual = rowsE[0].Periodo;
+        const [rows] = await pool.query(`
+            SELECT m.Descripcion AS Motivo,
+                   SUM(COALESCE(n.MinutosAl50,0) + COALESCE(n.MinutosGD,0)) AS Min50,
+                   SUM(COALESCE(n.MinutosAl100,0) + COALESCE(n.MinutosGN,0)) AS Min100,
+                   SUM(COALESCE(n.Monto,0)) AS Monto,
+                   SUM(COALESCE(n.MinutosAl50,0) + COALESCE(n.MinutosGD,0) + COALESCE(n.MinutosAl100,0) + COALESCE(n.MinutosGN,0)) AS TotalMin
+            FROM novedadesr n
+            INNER JOIN motivos m ON n.IdMotivo = m.Id
+            WHERE n.IdNovedadesE = ?
+            GROUP BY n.IdMotivo, m.Descripcion
+            ORDER BY TotalMin DESC
+        `, [idPeriodo]);
+        const tot = rows.reduce((acc, r) => ({
+            min50: acc.min50 + Number(r.Min50 || 0),
+            min100: acc.min100 + Number(r.Min100 || 0),
+            monto: acc.monto + Number(r.Monto || 0)
+        }), { min50:0, min100:0, monto:0 });
+        return render(req, res, 'detalleHorasMotivos', { detalle: rows, total: tot, periodoActual });
+    } catch (e) {
+        return render(req, res, 'detalleHorasMotivos', { detalle: [], total: { min50:0, min100:0, monto:0 }, periodoActual: '', error: e.message });
+    }
+});
+
+// Detalle de horas por motivo (admin)
 
 
 module.exports = router;

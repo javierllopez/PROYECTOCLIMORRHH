@@ -1,7 +1,7 @@
 <div class="container my-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h4>
-      Detalle de horas por sector
+      Detalle de horas por motivo
       {{#if periodoActual}}
         <small class="text-muted">— Período: {{Periodo periodoActual}}</small>
       {{/if}}
@@ -16,7 +16,7 @@
         <table class="table table-striped table-hover mb-0">
           <thead class="table-light">
             <tr>
-              <th>Sector</th>
+              <th>Motivo</th>
               <th class="text-end">Horas al 50</th>
               <th class="text-end">Horas al 100</th>
               <th class="text-end">Total Horas</th>
@@ -26,7 +26,7 @@
           <tbody>
             {{#each detalle}}
             <tr>
-              <td>{{Sector}}</td>
+              <td>{{Motivo}}</td>
               <td class="text-end">{{minutosAHoras Min50}}</td>
               <td class="text-end">{{minutosAHoras Min100}}</td>
               <td class="text-end">{{minutosAHoras (add Min50 Min100)}}</td>

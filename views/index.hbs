@@ -10,15 +10,28 @@
     <!-- Dashboard administrador simplificado: solo torta por sector -->
     {{#ifmay dashboard.totalMinutos 0}}
     <div class="container my-4">
-        <div class="card text-bg-info">
-            <div class="card-body">
-                <h5 class="card-title text-center">Distribución de horas trabajadas por sector</h5>
-                <div class="row justify-content-center">
-                    <div class="col-12 col-md-6 col-lg-4 d-flex justify-content-center">
-                        <canvas id="tortaMinutosSectores" style="max-width:100%; height:auto; cursor:pointer"></canvas>
+        <div class="row g-3 justify-content-center">
+            <div class="col-12 col-lg-4">
+                <div class="card text-bg-info h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Distribución de horas por sector</h5>
+                        <div class="d-flex justify-content-center">
+                            <canvas id="tortaMinutosSectores" style="max-width:100%; height:auto; cursor:pointer"></canvas>
+                        </div>
+                        <p class="text-muted mt-2 text-center">Hacé clic para ver el detalle por sector</p>
                     </div>
                 </div>
-                <p class="text-muted mt-2 text-center">Hacé clic en el gráfico para ver el detalle por sector</p>
+            </div>
+            <div class="col-12 col-lg-4">
+                <div class="card text-bg-warning h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Distribución de horas por motivo</h5>
+                        <div class="d-flex justify-content-center">
+                            <canvas id="tortaMinutosMotivos" style="max-width:100%; height:auto; cursor:pointer"></canvas>
+                        </div>
+                        <p class="text-muted mt-2 text-center">Hacé clic para ver el detalle por motivo</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -34,7 +47,9 @@
         document.addEventListener('DOMContentLoaded', function () {
             // Gráfico de torta por sector (en la card de sectores)
             var tortaSectoresData = {{{json dashboard.graficoTortaSectores}}};
+            var tortaMotivosData = {{{json dashboard.graficoTortaMotivos}}};
             var ctxTortaSectores = document.getElementById('tortaMinutosSectores');
+            var ctxTortaMotivos = document.getElementById('tortaMinutosMotivos');
             if (ctxTortaSectores && typeof Chart !== 'undefined' && tortaSectoresData) {
                 var colores = [
                     '#0d6efd', '#dc3545', '#198754', '#ffc107', '#20c997',
@@ -44,7 +59,7 @@
                 while (colores.length < tortaSectoresData.labels.length) {
                     colores.push('#' + Math.floor(Math.random()*16777215).toString(16));
                 }
-                var chart = new Chart(ctxTortaSectores, {
+                var chartSectores = new Chart(ctxTortaSectores, {
                     type: 'doughnut',
                     data: {
                         labels: tortaSectoresData.labels,
@@ -63,8 +78,10 @@
                                 color: '#222',
                                 font: { weight: 'bold', size: 13 },
                                 formatter: function(value, context) {
+                                    var total = (context.chart.data.datasets[0].data || []).reduce(function(a,b){return a+(b||0)},0) || 1;
+                                    var pct = Math.round((value/total)*100);
                                     if (value > 0) {
-                                        return context.chart.data.labels[context.dataIndex];
+                                        return context.chart.data.labels[context.dataIndex] + ' (' + pct + '%)';
                                     }
                                     return '';
                                 }
@@ -73,7 +90,60 @@
                                 callbacks: {
                                     label: function(context) {
                                         var minutos = context.parsed;
-                                        return context.label + ': ' + minutosAFormato(minutos);
+                                        var total = (context.dataset.data || []).reduce(function(a,b){return a+(b||0)},0) || 1;
+                                        var pct = Math.round((minutos/total)*100);
+                                        return context.label + ': ' + minutosAFormato(minutos) + ' (' + pct + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [ChartDataLabels]
+                });
+            }
+            if (ctxTortaMotivos && typeof Chart !== 'undefined' && tortaMotivosData) {
+                var coloresM = [
+                    '#0d6efd', '#dc3545', '#198754', '#ffc107', '#20c997',
+                    '#6f42c1', '#fd7e14', '#6610f2', '#adb5bd', '#198754',
+                    '#e83e8c', '#20c997', '#343a40', '#ffc107', '#6c757d'
+                ];
+                while (coloresM.length < tortaMotivosData.labels.length) {
+                    coloresM.push('#' + Math.floor(Math.random()*16777215).toString(16));
+                }
+                var chartMotivos = new Chart(ctxTortaMotivos, {
+                    type: 'doughnut',
+                    data: {
+                        labels: tortaMotivosData.labels,
+                        datasets: [
+                            {
+                                data: tortaMotivosData.data,
+                                backgroundColor: coloresM.slice(0, tortaMotivosData.labels.length)
+                            }
+                        ]
+                    },
+                    options: {
+                        onClick: function() { window.location.href = '/detalleHorasMotivos'; },
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            datalabels: {
+                                color: '#222',
+                                font: { weight: 'bold', size: 13 },
+                                formatter: function(value, context) {
+                                    var total = (context.chart.data.datasets[0].data || []).reduce(function(a,b){return a+(b||0)},0) || 1;
+                                    var pct = Math.round((value/total)*100);
+                                    if (value > 0) {
+                                        return context.chart.data.labels[context.dataIndex] + ' (' + pct + '%)';
+                                    }
+                                    return '';
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        var minutos = context.parsed;
+                                        var total = (context.dataset.data || []).reduce(function(a,b){return a+(b||0)},0) || 1;
+                                        var pct = Math.round((minutos/total)*100);
+                                        return context.label + ': ' + minutosAFormato(minutos) + ' (' + pct + '%)';
                                     }
                                 }
                             }
