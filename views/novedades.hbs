@@ -83,6 +83,7 @@
                         <th>Monto</th>
                     </thead>
                     <tbody class="text-center">
+                        {{#ifmay totalesPendientes.totalMonto 0}}
                         <tr>
                             <td>Pendiente</td>
                             {{#ifeq columnas.Horas50 true}}
@@ -110,6 +111,8 @@
                             {{/ifeq}}
                             <td>{{formatoMoneda totalesPendientes.totalMonto}}</td>
                         </tr>
+                        {{/ifmay}}
+                        {{#ifmay totalesCancelados.totalMonto 0}}
                         <tr>
                             <td>Rechazados</td>
                             {{#ifeq columnas.Horas50 true}}
@@ -137,6 +140,8 @@
                             {{/ifeq}}
                             <td>{{formatoMoneda totalesCancelados.totalMonto}}</td>
                         </tr>
+                        {{/ifmay}}
+                        {{#ifmay totalesConfirmados.totalMonto 0}}
                         <tr>
                             <td>Confirmado</td>
                             {{#ifeq columnas.Horas50 true}}
@@ -161,6 +166,36 @@
                             {{/ifeq}}
                             <td>{{formatoMoneda totalesConfirmados.totalMonto}}</td>
                         </tr>
+                        {{/ifmay}}
+                        {{#ifmay totalesLiquidados.totalMonto 0}}
+                        <tr>
+                            <td>Liquidado</td>
+                            {{#ifeq columnas.Horas50 true}}
+                            {{#ifmay totalesLiquidados.totalMin50 0}} <td>{{minutosAHoras totalesLiquidados.totalMin50}}
+                            </td> {{else}} <td>00:00</td> {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.Horas100 true}}
+                            {{#ifmay totalesLiquidados.totalMin100 0}} <td>{{minutosAHoras
+                                totalesLiquidados.totalMin100}}</td> {{else}} <td>00:00</td> {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.GuardiasDiurnas true}}
+                            {{#ifmay totalesLiquidados.totalGuardiasDiurnas 0}} <td>
+                                {{formatoNumero totalesLiquidados.totalGuardiasDiurnas}}</td>{{else}} <td>0</td>
+                            {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.GuardiasNocturnas true}}
+                            {{#ifmay totalesLiquidados.totalGuardiasNocturnas 0}} <td>
+                                {{formatoNumero totalesLiquidados.totalGuardiasNocturnas}}</td>{{else}} <td>0</td>
+                            {{/ifmay}}
+                            {{/ifeq}}
+                            {{#ifeq columnas.GuardiasPasivas true}}
+                            {{#ifmay totalesLiquidados.totalGuardiasPasivas 0}} <td>
+                                {{formatoNumero totalesLiquidados.totalGuardiasPasivas}}</td>{{else}} <td>0</td>
+                            {{/ifmay}}
+                            {{/ifeq}}
+                            <td>{{formatoMoneda totalesLiquidados.totalMonto}}</td>
+                        </tr>
+                        {{/ifmay}}
                 </table>
             </div>
 
