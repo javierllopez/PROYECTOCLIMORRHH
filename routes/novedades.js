@@ -72,6 +72,15 @@ router.get('/', logueado, async (req, res) => {
         totalOtros: 0,
         totalMonto: 0        
     }
+    let totalesLiquidados = {
+        totalMin50: 0,
+        totalMin100: 0,
+        totalGuardiasDiurnas: 0,
+        totalGuardiasNocturnas: 0,
+        totalGuardiasPasivas: 0,
+        totalOtros: 0,
+        totalMonto: 0
+    }
     let totalesCancelados = {
         totalMin50: 0,
         totalMin100: 0,
@@ -115,7 +124,7 @@ router.get('/', logueado, async (req, res) => {
                 totalesPendientes.totalMin100 += novedades[i].MinutosAl100;
                 totalesPendientes.totalGuardiasDiurnas += parseFloat(novedades[i].GD);
                 totalesPendientes.totalGuardiasNocturnas += parseFloat(novedades[i].GN);
-                totalesPendientes.totalGuardiasPasivas += parseFloat(novedades[i].GuardiasPasivas);
+                totalesPendientes.totalGuardiasPasivas += parseFloat(novedades[i].GP);
                 totalesPendientes.totalMonto += parseFloat(novedades[i].Monto);
                 }
                 if (novedades[i].Estado == 2 || novedades[i].Estado == 4) {
@@ -123,7 +132,7 @@ router.get('/', logueado, async (req, res) => {
                 totalesCancelados.totalMin100 += novedades[i].MinutosAl100;
                 totalesCancelados.totalGuardiasDiurnas += parseFloat(novedades[i].GD);
                 totalesCancelados.totalGuardiasNocturnas += parseFloat(novedades[i].GN);
-                totalesCancelados.totalGuardiasPasivas += parseFloat(novedades[i].GuardiasPasivas);
+                totalesCancelados.totalGuardiasPasivas += parseFloat(novedades[i].GP);
                 totalesCancelados.totalMonto += parseFloat(novedades[i].Monto);
                 }
                 if (novedades[i].Estado == 5) {
@@ -131,8 +140,16 @@ router.get('/', logueado, async (req, res) => {
                 totalesConfirmados.totalMin100 += novedades[i].MinutosAl100;
                 totalesConfirmados.totalGuardiasDiurnas += parseFloat(novedades[i].GD);
                 totalesConfirmados.totalGuardiasNocturnas += parseFloat(novedades[i].GN);
-                totalesConfirmados.totalGuardiasPasivas += parseFloat(novedades[i].GuardiasPasivas);
+                totalesConfirmados.totalGuardiasPasivas += parseFloat(novedades[i].GP);
                 totalesConfirmados.totalMonto += parseFloat(novedades[i].Monto);
+                }
+                if (novedades[i].Estado == 6) {
+                totalesLiquidados.totalMin50 += novedades[i].MinutosAl50;
+                totalesLiquidados.totalMin100 += novedades[i].MinutosAl100;
+                totalesLiquidados.totalGuardiasDiurnas += parseFloat(novedades[i].GD);
+                totalesLiquidados.totalGuardiasNocturnas += parseFloat(novedades[i].GN);
+                totalesLiquidados.totalGuardiasPasivas += parseFloat(novedades[i].GP);
+                totalesLiquidados.totalMonto += parseFloat(novedades[i].Monto);
                 }
             }
         }
@@ -148,7 +165,7 @@ router.get('/', logueado, async (req, res) => {
             }
         };
 
-        return render(req, res, 'novedades', { personal: personal[0], nominaHabilitada: nominaHabilitada[0], nominaValores: nominaHabilitadaValores, columnas: columnas, novedades: novedades, botonGuardias, botonGuardiasPasivas, botonHoras, hayLiquidacion, totalesPendientes, totalesConfirmados, totalesCancelados });
+    return render(req, res, 'novedades', { personal: personal[0], nominaHabilitada: nominaHabilitada[0], nominaValores: nominaHabilitadaValores, columnas: columnas, novedades: novedades, botonGuardias, botonGuardiasPasivas, botonHoras, hayLiquidacion, totalesPendientes, totalesConfirmados, totalesCancelados, totalesLiquidados });
 
     } catch (error) {     
         enviarMensaje(req, res, "Error", error.message, 'danger');
