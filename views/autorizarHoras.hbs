@@ -90,6 +90,15 @@
                                 href="/autorizarHoras/deshacer/{{this.IdNovedadesR}}">
                                 <i class="bi-arrow-counterclockwise"></i> </a>
                             {{/ifeq}}
+                            {{!Si es rechazado por RRHH, puede aprobar o rechazar }}
+                            {{#ifeq this.IdEstado 4}}
+                            <a type="button" class="btn btn-primary rounded-circle"
+                                href="/autorizarHoras/OK/{{this.IdNovedadesR}}">
+                                <i class="bi-hand-thumbs-up"></i> </a>
+                            <a type="button" class="btn btn-danger rounded-circle"
+                                href="/autorizarHoras/NO/{{this.IdNovedadesR}}">
+                                <i class="bi-hand-thumbs-down"></i> </a>
+                            {{/ifeq}}
                             {{/ifeq}}
                         </td>
                     </tr>
