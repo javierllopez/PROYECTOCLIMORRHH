@@ -14,6 +14,7 @@
               <th>Sector</th>
               <th class="text-end">Horas al 50</th>
               <th class="text-end">Horas al 100</th>
+              <th class="text-end">Total Horas</th>
               <th class="text-end">Monto</th>
             </tr>
           </thead>
@@ -23,6 +24,7 @@
               <td>{{Sector}}</td>
               <td class="text-end">{{minutosAHoras Min50}}</td>
               <td class="text-end">{{minutosAHoras Min100}}</td>
+              <td class="text-end">{{minutosAHoras (add Min50 Min100)}}</td>
               <td class="text-end">{{formatoMoneda Monto}}</td>
             </tr>
             {{/each}}
@@ -32,6 +34,7 @@
               <td>Total general</td>
               <td class="text-end">{{minutosAHoras total.min50}}</td>
               <td class="text-end">{{minutosAHoras total.min100}}</td>
+              <td class="text-end">{{minutosAHoras (add total.min50 total.min100)}}</td>
               <td class="text-end">{{formatoMoneda total.monto}}</td>
             </tr>
           </tfoot>
