@@ -158,6 +158,36 @@ router.get('/', logueado, async (req, res) => {
 
 });
 
+// Endpoint JSON: cantidad de novedades del usuario que requieren atención (estados 2 o 4)
+router.get('/pendientes', logueado, async (req, res) => {
+    try {
+        // Identificar liquidación activa
+        const [rowsE] = await pool.query('SELECT Id FROM novedadese WHERE Actual = 1');
+        if (!rowsE.length) {
+            return res.json({ cantidad: 0 });
+        }
+        const idNovedadesE = rowsE[0].Id;
+
+        // Obtener Id de empleado a partir del usuario logueado
+        const [rowsP] = await pool.query('SELECT Id FROM personal WHERE idUsuario = ? LIMIT 1', [req.session.idUsuario]);
+        if (!rowsP.length) {
+            return res.json({ cantidad: 0 });
+        }
+        const idEmpleado = rowsP[0].Id;
+
+        // Contar novedades en estados 2 (rechazada) o 4 (anulada/cancelada)
+        const [rowsC] = await pool.query(
+            'SELECT COUNT(*) AS cantidad FROM novedadesr WHERE IdNovedadesE = ? AND IdEmpleado = ? AND IdEstado IN (2,4)',
+            [idNovedadesE, idEmpleado]
+        );
+        const cantidad = rowsC[0]?.cantidad || 0;
+        return res.json({ cantidad });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ cantidad: 0, error: 'Error al obtener pendientes' });
+    }
+});
+
 // Carga de nuevas novedades
 
 router.get('/agregarHoras/:Legajo', logueado, async (req, res) => {
@@ -332,7 +362,7 @@ router.post('/EditarHoras/:Id', logueado, async (req, res) => {
 
         //Controlo que las horas ingresadas no se superpongan con otras cargadas anteriormente
 
-    const [controlFecha] = await pool.query(sqlControlFecha, [personal[0].Id, FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaHasta)]);
+    const [controlFecha] = await pool.query(sqlControlFecha, [personal[0].Id, Id, FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaHasta)]);
         if (controlFecha.length > 0) {
             throw new Error('Las horas ingresadas se superponen con otras ingresadas anteriormente'); 
         }

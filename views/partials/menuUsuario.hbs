@@ -7,9 +7,9 @@
         <hr>
         <ul class="nav nav-pills flex-column mb-auto">
             <li>
-                <a href="/novedades" class="nav-link link-body-emphasis" aria-current="page">
-                    <i class="bi-calendar3 p-2"></i>
-                    Mis Horas
+                <a href="/novedades" class="nav-link link-body-emphasis d-flex align-items-center justify-content-between" aria-current="page" id="link-novedades-desktop">
+                    <span><i class="bi-calendar3 p-2"></i> Mis Horas</span>
+                    <span id="badge-novedades-desktop" class="badge rounded-pill bg-warning text-dark d-none"></span>
                 </a>
             </li>
         </ul>
@@ -58,11 +58,34 @@
         </div>
     </div>
     <div class="row justify-content-center mt-2 p-2">
-        <div class="col-5">
-            <a href="/novedades" class="btn btn-primary w-100 d-flex justify-content-between align-items-center shadow">
+        <div class="col-5 position-relative d-flex">
+            <a href="/novedades" class="btn btn-primary w-100 h-100 d-flex justify-content-between align-items-center shadow position-relative" id="link-novedades-mobile">
+                <span id="badge-novedades-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark d-none"></span>
                 <i class="bi-calendar3 text-white display-4"></i>
-                <span class="text-white">Mis Horas</span>
+                <span class="text-white fs-6">Mis Horas</span>
             </a>
         </div>
     </div>
 </div>
+<script>
+    (function() {
+        const actualizarBadgeNovedades = async () => {
+            try {
+                const resp = await fetch('/novedades/pendientes', { headers: { 'Accept': 'application/json' }, cache: 'no-store', credentials: 'same-origin' });
+                if (!resp.ok) return;
+                const data = await resp.json();
+                const cantidad = Number(data.cantidad) || 0;
+                const desk = document.getElementById('badge-novedades-desktop');
+                const mob = document.getElementById('badge-novedades-mobile');
+                const toggle = (el) => {
+                    if (!el) return;
+                    if (cantidad > 0) { el.textContent = cantidad > 99 ? '99+' : String(cantidad); el.classList.remove('d-none'); }
+                    else { el.classList.add('d-none'); }
+                };
+                toggle(desk); toggle(mob);
+            } catch(e) { /* noop */ }
+        };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', actualizarBadgeNovedades); else actualizarBadgeNovedades();
+        setInterval(actualizarBadgeNovedades, 60000);
+    })();
+</script>
