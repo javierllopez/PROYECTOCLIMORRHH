@@ -48,8 +48,19 @@ router.get('/', logueado, async (req, res) => {
                         GROUP BY n.IdSector, s.Descripcion
                         ORDER BY s.Descripcion
                     `, [idPeriodo]);
-                    graficoTortaSectores.labels = minutosSectoresRows.map(r => r.sector);
-                    graficoTortaSectores.data = minutosSectoresRows.map(r => Number(r.totalMinutos) || 0);
+                    // Ordenar por total de minutos desc y agrupar "Otros sectores" a partir del 6to
+                    const ordenados = minutosSectoresRows
+                        .map(r => ({ sector: r.sector, total: Number(r.totalMinutos) || 0 }))
+                        .sort((a, b) => b.total - a.total);
+                    const top5 = ordenados.slice(0, 5);
+                    const resto = ordenados.slice(5);
+                    const sumaResto = resto.reduce((acc, it) => acc + it.total, 0);
+                    graficoTortaSectores.labels = top5.map(it => it.sector);
+                    graficoTortaSectores.data = top5.map(it => it.total);
+                    if (sumaResto > 0) {
+                        graficoTortaSectores.labels.push('Otros sectores');
+                        graficoTortaSectores.data.push(sumaResto);
+                    }
                 }
             }
             dashboard.totalMinutos = graficoTortaSectores.data.reduce((a, b) => (Number(a) || 0) + (Number(b) || 0), 0);
@@ -88,12 +99,13 @@ router.get('/detalleHorasSectores', logueado, async (req, res) => {
             SELECT s.Descripcion AS Sector,
                    SUM(COALESCE(n.MinutosAl50,0) + COALESCE(n.MinutosGd,0)) AS Min50,
                    SUM(COALESCE(n.MinutosAl100,0) + COALESCE(n.MinutosGN,0)) AS Min100,
-                   SUM(COALESCE(n.Monto,0)) AS Monto
+                   SUM(COALESCE(n.Monto,0)) AS Monto,
+                   SUM(COALESCE(n.MinutosAl50,0) + COALESCE(n.MinutosGd,0) + COALESCE(n.MinutosAl100,0) + COALESCE(n.MinutosGN,0)) AS TotalMin
             FROM novedadesr n
             INNER JOIN sectores s ON n.IdSector = s.Id
             WHERE n.IdNovedadesE = ?
             GROUP BY n.IdSector, s.Descripcion
-            ORDER BY s.Descripcion
+            ORDER BY TotalMin DESC
         `, [idPeriodo]);
         const tot = rows.reduce((acc, r) => ({
             min50: acc.min50 + Number(r.Min50 || 0),
