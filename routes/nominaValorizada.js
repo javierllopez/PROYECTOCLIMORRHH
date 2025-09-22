@@ -4,9 +4,7 @@ const { pool } = require('../conexion');
 const { render, enviarMensaje } = require('../Middleware/render');
 const { confirmar } = require('../Middleware/render');
 const { logueado } = require('../Middleware/validarUsuario');
-const { FechaSqlAFechaCorta, FechaASqlFecha, FechaSqlAFecha, FechaLocalASqlDate, FechaHTMLaFecha, FechaUtcASqlDate } = require('../lib/libreria');
-const { toZonedTime, fromZonedTime } = require('date-fns-tz');
-const ZONA_AR = 'America/Argentina/Buenos_Aires';
+const { FechaSqlAFechaCorta, FechaASqlFecha, FechaSqlAFecha, FechaLocalASqlDate, FechaHTMLaFecha } = require('../lib/libreria');
 const router = express.Router();
 const nivelAceptado = [1]; //Nivel de usuario aceptado para esta ruta
 
@@ -384,9 +382,11 @@ router.post('/generarNomina', logueado, async (req, res) => {
         opcionNomina
     } = req.body;
 
-    // Construir fechas UTC partiendo del calendario local AR usando date-fns-tz
-    const VigenteDesdeDate = VigenteDesde ? fromZonedTime(`${VigenteDesde} 00:00`, ZONA_AR) : null;
-    const VigenteHastaDate = VigenteHasta ? fromZonedTime(`${VigenteHasta} 23:59:59.999`, ZONA_AR) : null;
+    // Parseo sin huso: tratar fechas como calendario local
+    const VigenteDesdeDate = VigenteDesde ? FechaHTMLaFecha(VigenteDesde) : null;
+    const VigenteHastaDate = VigenteHasta ? FechaHTMLaFecha(VigenteHasta) : null;
+    if (VigenteDesdeDate) VigenteDesdeDate.setHours(0, 0, 0, 0);
+    if (VigenteHastaDate) VigenteHastaDate.setHours(23, 59, 59, 999);
     console.log("Vigencia Desde: " + VigenteDesdeDate + " Vigencia Hasta: " + VigenteHastaDate);
     const AumentoFactor = ((parseFloat(Aumento) / 100) + 1);
     IdNominaBase = parseInt(IdNominaBase);
@@ -402,10 +402,10 @@ router.post('/generarNomina', logueado, async (req, res) => {
         // Validación de superposición de rangos de fechas (inclusive)
         // [desde,hasta] del nuevo período no debe solaparse con ninguno existente
         for (const fila of nominaValoreseCompleta) {
-            const desdeStr = typeof fila.VigenteDesde === 'string' ? fila.VigenteDesde.substring(0,10) : FechaUtcASqlDate(fila.VigenteDesde);
-            const hastaStr = typeof fila.VigenteHasta === 'string' ? fila.VigenteHasta.substring(0,10) : FechaUtcASqlDate(fila.VigenteHasta);
-            const desdeExist = fromZonedTime(`${desdeStr} 00:00`, ZONA_AR);
-            const hastaExist = fromZonedTime(`${hastaStr} 23:59:59.999`, ZONA_AR);
+            const desdeStr = typeof fila.VigenteDesde === 'string' ? fila.VigenteDesde.substring(0,10) : `${fila.VigenteDesde.getUTCFullYear()}-${String(fila.VigenteDesde.getUTCMonth()+1).padStart(2,'0')}-${String(fila.VigenteDesde.getUTCDate()).padStart(2,'0')}`;
+            const hastaStr = typeof fila.VigenteHasta === 'string' ? fila.VigenteHasta.substring(0,10) : `${fila.VigenteHasta.getUTCFullYear()}-${String(fila.VigenteHasta.getUTCMonth()+1).padStart(2,'0')}-${String(fila.VigenteHasta.getUTCDate()).padStart(2,'0')}`;
+            const desdeExist = FechaHTMLaFecha(desdeStr); if (desdeExist) desdeExist.setHours(0,0,0,0);
+            const hastaExist = FechaHTMLaFecha(hastaStr); if (hastaExist) hastaExist.setHours(23,59,59,999);
             const solapa = (VigenteDesdeDate <= hastaExist) && (VigenteHastaDate >= desdeExist);
             if (solapa) {
                 throw new Error('Error en las fechas de vigencia');
@@ -431,13 +431,13 @@ router.post('/generarNomina', logueado, async (req, res) => {
             await conn.beginTransaction();
             const [nomina] = await conn.query(cadenaNomina);
             const sqlNominaValorese = "INSERT INTO nominavalorese (VigenteDesde, VigenteHasta) VALUES (?, ?)";
-            const [rNominaValoresE] = await conn.query(sqlNominaValorese, [FechaUtcASqlDate(VigenteDesdeDate), FechaUtcASqlDate(VigenteHastaDate)]);
+            const [rNominaValoresE] = await conn.query(sqlNominaValorese, [FechaLocalASqlDate(VigenteDesdeDate), FechaLocalASqlDate(VigenteHastaDate)]);
             let idNominaValoresE = rNominaValoresE.insertId;
             let i = 0;
             do {
                 let sqlNominaR = "";
                 sqlNominaR = "INSERT INTO nominavaloresr (IdNomina, IdNominaValoresE, ValorSueldoBasico, HorasMensuales, ValorHoraSimple, ValorHora50, ValorHora100, ValorGuardiaDiurna, HsGuardiaDiurna, ValorHoraGuardiaDiurna, ValorGuardiaNocturna, HsGuardiaNocturna, ValorHoraGuardiaNocturna, ValorGuardiaPasiva, ValorAdicional, VigenciaDesde, VigenciaHasta) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )";
-                await conn.query(sqlNominaR, [nomina[i].Id, idNominaValoresE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, FechaUtcASqlDate(VigenteDesdeDate), FechaUtcASqlDate(VigenteHastaDate)]);
+                await conn.query(sqlNominaR, [nomina[i].Id, idNominaValoresE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, FechaLocalASqlDate(VigenteDesdeDate), FechaLocalASqlDate(VigenteHastaDate)]);
                 i += 1;
             } while (i < nomina.length);
 
@@ -479,7 +479,7 @@ router.post('/generarNomina', logueado, async (req, res) => {
 
             try {
                 await conn.beginTransaction();
-                const [rNominaValoresE] = await conn.query(cadenaNominaValoresE, [FechaUtcASqlDate(VigenteDesdeDate), FechaUtcASqlDate(VigenteHastaDate)]);
+                const [rNominaValoresE] = await conn.query(cadenaNominaValoresE, [FechaLocalASqlDate(VigenteDesdeDate), FechaLocalASqlDate(VigenteHastaDate)]);
                 idNominaValoresE = rNominaValoresE.insertId;
 
                 const [rNominaValoresR] = await conn.query(SelectCadenaNominaValoresR, [IdNominaBase]);
@@ -527,7 +527,7 @@ router.post('/generarNomina', logueado, async (req, res) => {
                         valorAdicional = 0;
                     }
 
-                    await conn.query(InsertcadenaNominaValoresR, [rNominaValoresR[i].IdNomina, idNominaValoresE, valorSueldoBasico, horasMensuales, valorHoraSimple, valorHora50, valorHora100, valorGuardiaDiurna, hsGuardiaDiurna, valorHoraGuardiaDiurna, valorGuardiaNocturna, hsGuardiaNocturna, valorHoraGuardiaNocturna, valorGuardiaPasiva, valorAdicional, FechaUtcASqlDate(VigenteDesdeDate), FechaUtcASqlDate(VigenteHastaDate)]);
+                    await conn.query(InsertcadenaNominaValoresR, [rNominaValoresR[i].IdNomina, idNominaValoresE, valorSueldoBasico, horasMensuales, valorHoraSimple, valorHora50, valorHora100, valorGuardiaDiurna, hsGuardiaDiurna, valorHoraGuardiaDiurna, valorGuardiaNocturna, hsGuardiaNocturna, valorHoraGuardiaNocturna, valorGuardiaPasiva, valorAdicional, FechaLocalASqlDate(VigenteDesdeDate), FechaLocalASqlDate(VigenteHastaDate)]);
                     i += 1;
                 } while (i < rNominaValoresR.length);
 
