@@ -7,12 +7,9 @@
 
             {{#each tablaNominaValorese}}
 
-            <option {{#ifeq this.Id @root.idNomina}} selected {{/ifeq}}value="{{this.Id}}">
-                Entre {{FechaCorta
-                this.VigenteDesde}}
-                y
-                {{FechaCorta
-                this.VigenteHasta}}
+            <option {{#ifeq this.Id @root.idNomina}} selected {{/ifeq}} value="{{this.Id}}"
+                    data-desde="{{this.VigenteDesde}}" data-hasta="{{this.VigenteHasta}}">
+                Entre {{FechaCorta this.VigenteDesde}} y {{FechaCorta this.VigenteHasta}}
             </option>
             {{/each}}
         </select>
@@ -74,6 +71,36 @@
 {{{funcionesNominaValoresr}}}
 
 <script>
+    // Convierte una fecha UTC (YYYY-MM-DD o ISO) a texto local DD/MM/YYYY
+    function fechaUtcATextoLocal(entrada) {
+        if (!entrada) return '';
+        const s = String(entrada);
+        const ymd = s.includes('T') ? s.split('T')[0] : (s.includes(' ') ? s.split(' ')[0] : s);
+        const d = new Date(ymd + 'T00:00:00Z');
+        if (isNaN(d.getTime())) return '';
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        return `${dd}/${mm}/${yyyy}`;
+    }
+
+    // Reescribe los textos del selector asumiendo que data-desde/hasta están en UTC
+    (function ajustarTextoPeriodo() {
+        const sel = document.getElementById('periodoNomina');
+        if (!sel) return;
+        sel.querySelectorAll('option').forEach(opt => {
+            const desde = opt.getAttribute('data-desde');
+            const hasta = opt.getAttribute('data-hasta');
+            if (desde && hasta) {
+                const desdeTxt = fechaUtcATextoLocal(desde);
+                const hastaTxt = fechaUtcATextoLocal(hasta);
+                if (desdeTxt && hastaTxt) {
+                    opt.textContent = `Entre ${desdeTxt} y ${hastaTxt}`;
+                }
+            }
+        });
+    })();
+
     document.getElementById('periodoNomina').addEventListener('change', async function () {
         const selectedValue = this.value;
         try {
@@ -90,12 +117,8 @@
             }
 
             window.location.reload();
-
-            //const data = await response.json();
-            // Handle the response data as needed
         } catch (error) {
             console.error('There was a problem with the fetch operation:', error);
         }
-
     });
 </script>

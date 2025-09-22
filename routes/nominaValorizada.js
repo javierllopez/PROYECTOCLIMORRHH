@@ -1,10 +1,12 @@
 const express = require('express');
 const { Tabla } = require('../Clases/Tabla');
 const { pool } = require('../conexion');
-const {render, enviarMensaje } = require('../Middleware/render');
+const { render, enviarMensaje } = require('../Middleware/render');
 const { confirmar } = require('../Middleware/render');
 const { logueado } = require('../Middleware/validarUsuario');
-const { FechaSqlAFechaCorta, FechaASqlFecha, FechaSqlAFecha} = require('../lib/libreria');
+const { FechaSqlAFechaCorta, FechaASqlFecha, FechaSqlAFecha, FechaLocalASqlDate, FechaHTMLaFecha, FechaUtcASqlDate } = require('../lib/libreria');
+const { toZonedTime, fromZonedTime } = require('date-fns-tz');
+const ZONA_AR = 'America/Argentina/Buenos_Aires';
 const router = express.Router();
 const nivelAceptado = [1]; //Nivel de usuario aceptado para esta ruta
 
@@ -107,7 +109,23 @@ router.get('/', logueado, async (req, res) => {
     const sqlNominaValorese = "SELECT * FROM nominavalorese ORDER BY VigenteDesde DESC"
 
     try {
-        const [tablaNominaValorese] = await pool.query(sqlNominaValorese);
+        const [tablaNominaValoreseRaw] = await pool.query(sqlNominaValorese);
+        // Convertir fechas UTC (DATE) a objetos Date locales para mostrar correctamente en la vista
+        const tablaNominaValorese = tablaNominaValoreseRaw.map(r => {
+            const normalizar = (val) => {
+                if (!val) return val;
+                // Unificar a 'YYYY-MM-DD'
+                const s = typeof val === 'string' ? val.substring(0, 10) : `${val.getUTCFullYear()}-${String(val.getUTCMonth() + 1).padStart(2, '0')}-${String(val.getUTCDate()).padStart(2, '0')}`;
+                const [y, m, d] = s.split('-').map(Number);
+                // Construir Date local en medianoche local
+                return new Date(y, m - 1, d);
+            };
+            return {
+                ...r,
+                VigenteDesde: normalizar(r.VigenteDesde),
+                VigenteHasta: normalizar(r.VigenteHasta)
+            };
+        });
         let idNomina
         if (nominavaloresr.filtroGeneral == "") {
             idNomina = parseInt(tablaNominaValorese[0].Id);
@@ -115,21 +133,21 @@ router.get('/', logueado, async (req, res) => {
         } else {
             idNomina = parseInt(nominavaloresr.tag);
         }
-                const sqlNominaValoresr = nominavaloresr.getSQL();
+        const sqlNominaValoresr = nominavaloresr.getSQL();
         const encabezadoHTMLNominaValoresr = nominavaloresr.getEncabezado();
         const paginadorNominaValoresr = await nominavaloresr.getPaginador();
         const funcionesNominaValoresr = nominavaloresr.getFunciones();
         const [tablaNominaValoresr] = await pool.query(sqlNominaValoresr);
 
-                // Detectar si hay ítems de nómina sin correlativo en nominavaloresr para el período seleccionado
-                const [faltantesRows] = await pool.query(`
+        // Detectar si hay ítems de nómina sin correlativo en nominavaloresr para el período seleccionado
+        const [faltantesRows] = await pool.query(`
                         SELECT COUNT(*) AS faltantes
                         FROM nomina n
                         LEFT JOIN nominavaloresr r
                             ON r.IdNomina = n.Id AND r.IdNominaValoresE = ?
                         WHERE r.Id IS NULL
                 `, [idNomina]);
-                const hayFaltantes = (faltantesRows && faltantesRows[0] && Number(faltantesRows[0].faltantes) > 0);
+        const hayFaltantes = (faltantesRows && faltantesRows[0] && Number(faltantesRows[0].faltantes) > 0);
 
         return render(req, res, 'nominaValorizada', {
             encabezadoHTMLNominaValoresr: encabezadoHTMLNominaValoresr,
@@ -139,8 +157,8 @@ router.get('/', logueado, async (req, res) => {
             permiteBorrarNominaValoresr: nominavaloresr.borrable,
             permiteEditarNominaValoresr: nominavaloresr.editable,
             tablaNominaValorese: tablaNominaValorese,
-                    idNomina: idNomina,
-                    hayFaltantes
+            idNomina: idNomina,
+            hayFaltantes
         });
     }
     catch (err) {
@@ -366,10 +384,11 @@ router.post('/generarNomina', logueado, async (req, res) => {
         opcionNomina
     } = req.body;
 
-
-    VigenteDesde = new Date(VigenteDesde);
-    VigenteHasta = new Date(VigenteHasta);
-    Aumento = ((parseFloat(Aumento)/100)+1);
+    // Construir fechas UTC partiendo del calendario local AR usando date-fns-tz
+    const VigenteDesdeDate = VigenteDesde ? fromZonedTime(`${VigenteDesde} 00:00`, ZONA_AR) : null;
+    const VigenteHastaDate = VigenteHasta ? fromZonedTime(`${VigenteHasta} 23:59:59.999`, ZONA_AR) : null;
+    console.log("Vigencia Desde: " + VigenteDesdeDate + " Vigencia Hasta: " + VigenteHastaDate);
+    const AumentoFactor = ((parseFloat(Aumento) / 100) + 1);
     IdNominaBase = parseInt(IdNominaBase);
     opcionNomina = parseInt(opcionNomina);
 
@@ -380,19 +399,22 @@ router.post('/generarNomina', logueado, async (req, res) => {
         const cadenaNominaValoreseCompeta = "SELECT * FROM nominavalorese";
         const [nominaValoreseCompleta] = await pool.query(cadenaNominaValoreseCompeta);
 
-        let i = 0;
-        do {
-
-            // Condición para salir del ciclo
-            if ((VigenteDesde >= FechaSqlAFecha(nominaValoreseCompleta[i].VigenteDesde) && FechaSqlAFecha(VigenteDesde <= nominaValoreseCompleta[i].VigenteHasta)) || (VigenteHasta >= FechaSqlAFecha(nominaValoreseCompleta[i].VigenteDesde) && VigenteHasta <= FechaSqlAFecha(nominaValoreseCompleta[i].VigenteHasta))) {
+        // Validación de superposición de rangos de fechas (inclusive)
+        // [desde,hasta] del nuevo período no debe solaparse con ninguno existente
+        for (const fila of nominaValoreseCompleta) {
+            const desdeStr = typeof fila.VigenteDesde === 'string' ? fila.VigenteDesde.substring(0,10) : FechaUtcASqlDate(fila.VigenteDesde);
+            const hastaStr = typeof fila.VigenteHasta === 'string' ? fila.VigenteHasta.substring(0,10) : FechaUtcASqlDate(fila.VigenteHasta);
+            const desdeExist = fromZonedTime(`${desdeStr} 00:00`, ZONA_AR);
+            const hastaExist = fromZonedTime(`${hastaStr} 23:59:59.999`, ZONA_AR);
+            const solapa = (VigenteDesdeDate <= hastaExist) && (VigenteHastaDate >= desdeExist);
+            if (solapa) {
                 throw new Error('Error en las fechas de vigencia');
             }
-
-            i++;
-        } while (i < nominaValoreseCompleta.length);
+        }
     } catch (error) {
         console.log(error);
-        return render(req, res, 'generarNomina', { Mensaje: { title: 'Atención', text: 'Error en las fechas de vigencia', icon: 'error' }, Paquete: { VigenteDesde: FechaASqlFecha(VigenteDesde), VigenteHasta: FechaASqlFecha(VigenteHasta), Aumento: Aumento, IdNominaBase: IdNominaBase } });
+        // Devolver valores compatibles con inputs type=date (local calendar)
+        return render(req, res, 'generarNomina', { Mensaje: { title: 'Atención', text: 'Error en las fechas de vigencia', icon: 'error' }, Paquete: { VigenteDesde: FechaLocalASqlDate(VigenteDesdeDate), VigenteHasta: FechaLocalASqlDate(VigenteHastaDate), Aumento: (parseFloat(Aumento) || 0), IdNominaBase: IdNominaBase } });
 
     }
     if (opcionNomina == 2) {
@@ -409,13 +431,13 @@ router.post('/generarNomina', logueado, async (req, res) => {
             await conn.beginTransaction();
             const [nomina] = await conn.query(cadenaNomina);
             const sqlNominaValorese = "INSERT INTO nominavalorese (VigenteDesde, VigenteHasta) VALUES (?, ?)";
-            const [rNominaValoresE] = await conn.query(sqlNominaValorese, [FechaASqlFecha(VigenteDesde), FechaASqlFecha(VigenteHasta)]);
+            const [rNominaValoresE] = await conn.query(sqlNominaValorese, [FechaUtcASqlDate(VigenteDesdeDate), FechaUtcASqlDate(VigenteHastaDate)]);
             let idNominaValoresE = rNominaValoresE.insertId;
             let i = 0;
             do {
                 let sqlNominaR = "";
                 sqlNominaR = "INSERT INTO nominavaloresr (IdNomina, IdNominaValoresE, ValorSueldoBasico, HorasMensuales, ValorHoraSimple, ValorHora50, ValorHora100, ValorGuardiaDiurna, HsGuardiaDiurna, ValorHoraGuardiaDiurna, ValorGuardiaNocturna, HsGuardiaNocturna, ValorHoraGuardiaNocturna, ValorGuardiaPasiva, ValorAdicional, VigenciaDesde, VigenciaHasta) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )";
-                await conn.query(sqlNominaR, [nomina[i].Id, idNominaValoresE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, FechaASqlFecha(VigenteDesde), FechaASqlFecha(VigenteHasta)]);
+                await conn.query(sqlNominaR, [nomina[i].Id, idNominaValoresE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, FechaUtcASqlDate(VigenteDesdeDate), FechaUtcASqlDate(VigenteHastaDate)]);
                 i += 1;
             } while (i < nomina.length);
 
@@ -457,14 +479,14 @@ router.post('/generarNomina', logueado, async (req, res) => {
 
             try {
                 await conn.beginTransaction();
-                const [rNominaValoresE] = await conn.query(cadenaNominaValoresE, [FechaASqlFecha(VigenteDesde), FechaASqlFecha(VigenteHasta)]);
+                const [rNominaValoresE] = await conn.query(cadenaNominaValoresE, [FechaUtcASqlDate(VigenteDesdeDate), FechaUtcASqlDate(VigenteHastaDate)]);
                 idNominaValoresE = rNominaValoresE.insertId;
 
                 const [rNominaValoresR] = await conn.query(SelectCadenaNominaValoresR, [IdNominaBase]);
                 let i = 0;
                 do {
                     if (rNominaValoresR[i].ValorSueldoBasico > 0) {
-                        valorSueldoBasico = rNominaValoresR[i].ValorSueldoBasico * Aumento;
+                        valorSueldoBasico = rNominaValoresR[i].ValorSueldoBasico * AumentoFactor;
                         horasMensuales = rNominaValoresR[i].HorasMensuales;
                         valorHoraSimple = valorSueldoBasico / horasMensuales;
                         valorHora50 = valorHoraSimple * 1.5;
@@ -477,7 +499,7 @@ router.post('/generarNomina', logueado, async (req, res) => {
                         valorHora100 = 0;
                     }
                     if (rNominaValoresR[i].ValorGuardiaDiurna > 0) {
-                        valorGuardiaDiurna = Math.round(rNominaValoresR[i].ValorGuardiaDiurna * Aumento);
+                        valorGuardiaDiurna = Math.round(rNominaValoresR[i].ValorGuardiaDiurna * AumentoFactor);
                         hsGuardiaDiurna = rNominaValoresR[i].HsGuardiaDiurna;
                         valorHoraGuardiaDiurna = valorGuardiaDiurna / hsGuardiaDiurna;
                     } else {
@@ -486,7 +508,7 @@ router.post('/generarNomina', logueado, async (req, res) => {
                         valorHoraGuardiaDiurna = 0;
                     }
                     if (rNominaValoresR[i].ValorGuardiaNocturna > 0) {
-                        valorGuardiaNocturna = Math.round(rNominaValoresR[i].ValorGuardiaNocturna*Aumento);
+                        valorGuardiaNocturna = Math.round(rNominaValoresR[i].ValorGuardiaNocturna * AumentoFactor);
                         hsGuardiaNocturna = rNominaValoresR[i].HsGuardiaNocturna;
                         valorHoraGuardiaNocturna = valorGuardiaNocturna / hsGuardiaNocturna;
                     } else {
@@ -495,17 +517,17 @@ router.post('/generarNomina', logueado, async (req, res) => {
                         valorHoraGuardiaNocturna = 0;
                     }
                     if (rNominaValoresR[i].ValorGuardiaPasiva > 0) {
-                        valorGuardiaPasiva = Math.round(rNominaValoresR[i].ValorGuardiaPasiva*Aumento);
+                        valorGuardiaPasiva = Math.round(rNominaValoresR[i].ValorGuardiaPasiva * AumentoFactor);
                     } else {
                         valorGuardiaPasiva = 0;
                     }
                     if (rNominaValoresR[i].ValorAdicional > 0) {
-                        valorAdicional = Math.round(rNominaValoresR[i].ValorAdicional*Aumento);
-                    }else {
+                        valorAdicional = Math.round(rNominaValoresR[i].ValorAdicional * AumentoFactor);
+                    } else {
                         valorAdicional = 0;
                     }
 
-                    await conn.query(InsertcadenaNominaValoresR, [rNominaValoresR[i].IdNomina, idNominaValoresE, valorSueldoBasico, horasMensuales, valorHoraSimple, valorHora50, valorHora100, valorGuardiaDiurna, hsGuardiaDiurna, valorHoraGuardiaDiurna, valorGuardiaNocturna, hsGuardiaNocturna, valorHoraGuardiaNocturna, valorGuardiaPasiva, valorAdicional, FechaASqlFecha(VigenteDesde), FechaASqlFecha(VigenteHasta)]);
+                    await conn.query(InsertcadenaNominaValoresR, [rNominaValoresR[i].IdNomina, idNominaValoresE, valorSueldoBasico, horasMensuales, valorHoraSimple, valorHora50, valorHora100, valorGuardiaDiurna, hsGuardiaDiurna, valorHoraGuardiaDiurna, valorGuardiaNocturna, hsGuardiaNocturna, valorHoraGuardiaNocturna, valorGuardiaPasiva, valorAdicional, FechaUtcASqlDate(VigenteDesdeDate), FechaUtcASqlDate(VigenteHastaDate)]);
                     i += 1;
                 } while (i < rNominaValoresR.length);
 
@@ -513,7 +535,7 @@ router.post('/generarNomina', logueado, async (req, res) => {
                 enviarMensaje(req, res, 'Generar nómina', 'Nómina generada correctamente', 'success');
 
             }
-            catch (error) {          
+            catch (error) {
                 console.log(error);
                 await conn.rollback();
                 conn.release();
