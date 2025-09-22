@@ -63,6 +63,29 @@ router.get('/', logueado, async (req, res) => {
         return res.redirect('/');
     }
 });
+
+// Endpoint JSON: cantidad de novedades pendientes de autorización para el supervisor logueado
+router.get('/pendientes', logueado, async (req, res) => {
+    try {
+        const sqlNovedadesE = "SELECT Id FROM novedadesE WHERE Actual = 1";
+        const [rowsE] = await pool.query(sqlNovedadesE);
+        if (!rowsE.length) {
+            return res.json({ cantidad: 0 });
+        }
+        const idNovedadesE = rowsE[0].Id;
+        const sqlCuenta = `
+            SELECT COUNT(*) AS cantidad
+            FROM novedadesR
+            WHERE IdNovedadesE = ? AND IdSupervisor = ? AND IdEstado = 1
+        `;
+        const [rowsC] = await pool.query(sqlCuenta, [idNovedadesE, req.session.idUsuario]);
+        const cantidad = rowsC[0]?.cantidad || 0;
+        return res.json({ cantidad });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ cantidad: 0, error: 'Error al obtener pendientes' });
+    }
+});
 router.get('/OK/:Id', logueado, async (req, res) => {
     const {Id} = req.params;
     const sqlNovedad = "SELECT Id, IdEmpleado, IdNomina, DATE_FORMAT(Fecha, '%Y-%m-%d') AS Fecha, Inicio, Fin, Hs50, Hs100, GuardiasDiurnas, GuardiasNocturnas, IdEstado, ObservacionesEstado, Observaciones FROM novedadesR WHERE Id = ?";

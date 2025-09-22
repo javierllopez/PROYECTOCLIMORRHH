@@ -7,15 +7,15 @@
         <hr>
         <ul class="nav nav-pills flex-column mb-auto">
             <li>
-                <a href="/novedades" class="nav-link link-body-emphasis" aria-current="page">
-                    <i class="bi-calendar3 p-2"></i>
-                    Mis Horas
+                <a href="/novedades" class="nav-link link-body-emphasis d-flex align-items-center justify-content-between" aria-current="page" id="link-novedades-desktop">
+                    <span><i class="bi-calendar3 p-2"></i> Mis Horas</span>
+                    <span id="badge-novedades-desktop" class="badge rounded-pill bg-warning text-dark d-none"></span>
                 </a>
             </li>
             <li>
-                <a href="/autorizarHoras" class="nav-link link-body-emphasis">
-                    <i class="bi-hand-thumbs-up p-2"></i>
-                    Autorizar Horas
+                <a href="/autorizarHoras" class="nav-link link-body-emphasis d-flex align-items-center justify-content-between" id="link-autorizar-horas-desktop">
+                    <span><i class="bi-hand-thumbs-up p-2"></i> Autorizar Horas</span>
+                    <span id="badge-autorizar-horas-desktop" class="badge rounded-pill bg-danger d-none"></span>
                 </a>
             </li>
         </ul>
@@ -64,18 +64,85 @@
             </div>
         </div>
     </div>
-    <div class="row justify-content-center mt-2 p-2">
-        <div class="col-5">
-            <a href="/novedades" class="btn btn-primary w-100 d-flex justify-content-between align-items-center shadow">
+    <div class="row justify-content-center align-items-stretch mt-2 p-2">
+        <div class="col-5 position-relative d-flex">
+            <a href="/novedades" class="btn btn-primary w-100 h-100 d-flex justify-content-between align-items-center shadow position-relative" id="link-novedades-mobile">
+                <span id="badge-novedades-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark d-none"></span>
                 <i class="bi-calendar3 text-white display-4"></i>
-                <span class="text-white">Mis Horas</span>
+                <span class="text-white fs-6">Mis Horas</span>
             </a>
         </div>
-        <div class="col-5">
-            <a href="/autorizarHoras" class="btn btn-primary w-100 d-flex justify-content-between align-items-center shadow">
-                <i class="bi-hand-thumbs-up text-white display-4"></i>
-                <span class="text-white fs-6">Autorizar Horas</span>
-            </a>
-        </div>
+        <div class="col-5 position-relative d-flex">
+            <a href="/autorizarHoras" class="btn btn-primary w-100 h-100 d-flex justify-content-between align-items-center shadow position-relative" id="link-autorizar-horas-mobile">
+                                <i class="bi-hand-thumbs-up text-white display-4"></i>
+                                <span class="text-white fs-6">Autorizar Horas</span>
+                        <span id="badge-autorizar-horas-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none d-md-none"></span>
+                        </a>
+                </div>
     </div>
 </div>
+
+<script>
+    (function() {
+        const actualizarBadges = async () => {
+            try {
+                const resp = await fetch('/autorizarHoras/pendientes', { headers: { 'Accept': 'application/json' }, cache: 'no-store', credentials: 'same-origin' });
+                if (!resp.ok) return;
+                const data = await resp.json();
+                const cantidad = Number(data.cantidad) || 0;
+
+                const badgeDesktop = document.getElementById('badge-autorizar-horas-desktop');
+                const badgeMobile = document.getElementById('badge-autorizar-horas-mobile');
+                const badgeNovDesk = document.getElementById('badge-novedades-desktop');
+                const badgeNovMob = document.getElementById('badge-novedades-mobile');
+
+                const toggleBadge = (badge) => {
+                    if (!badge) return;
+                    if (cantidad > 0) {
+                        badge.textContent = cantidad > 99 ? '99+' : String(cantidad);
+                        badge.classList.remove('d-none');
+                        badge.classList.add('d-inline-flex');
+                    } else {
+                        badge.classList.add('d-none');
+                        badge.classList.remove('d-inline-flex');
+                    }
+                };
+
+                        toggleBadge(badgeDesktop);
+                        toggleBadge(badgeMobile);
+
+                        // Actualizar conteo de novedades propias con estado 2 o 4
+                        try {
+                            const resp2 = await fetch('/novedades/pendientes', { headers: { 'Accept': 'application/json' }, cache: 'no-store', credentials: 'same-origin' });
+                            if (resp2.ok) {
+                                const data2 = await resp2.json();
+                                const cantidad2 = Number(data2.cantidad) || 0;
+                                const toggleBadgeVal = (badge) => {
+                                    if (!badge) return;
+                                    if (cantidad2 > 0) {
+                                        badge.textContent = cantidad2 > 99 ? '99+' : String(cantidad2);
+                                        badge.classList.remove('d-none');
+                                        badge.classList.add('d-inline-flex');
+                                    } else {
+                                        badge.classList.add('d-none');
+                                        badge.classList.remove('d-inline-flex');
+                                    }
+                                };
+                                toggleBadgeVal(badgeNovDesk);
+                                toggleBadgeVal(badgeNovMob);
+                            }
+                        } catch (e) { /* noop */ }
+            } catch (e) {
+                // Silenciar errores de red para no molestar al usuario
+            }
+        };
+
+        // Primera carga y luego cada 60 segundos
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', actualizarBadges);
+        } else {
+            actualizarBadges();
+        }
+            setInterval(actualizarBadges, 60000);
+    })();
+</script>
