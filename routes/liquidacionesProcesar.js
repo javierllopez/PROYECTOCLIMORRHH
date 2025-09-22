@@ -78,13 +78,18 @@ async function cargarModelo() {
     let yaExiste = false;
     let siguienteVale = null;
     try {
+      // Sugerir el próximo número de recibo desde histórico (global) => MAX(Vale) + 1
+      const [histRows] = await pool.query('SELECT MAX(Vale) AS maxVale FROM liquidaciones_historico');
+      const maxHist = histRows && histRows[0] && histRows[0].maxVale != null ? Number(histRows[0].maxVale) : null;
+      siguienteVale = Number.isFinite(maxHist) && maxHist > 0 ? (maxHist + 1) : 1;
+    } catch (e) {
+      console.warn('No se pudo consultar liquidaciones_historico:', e.message);
+      siguienteVale = 1;
+    }
+    try {
+      // Indicar si ya existen liquidaciones de trabajo para este período (para rotular "Reliquidar")
       const [existeRows] = await pool.query('SELECT COUNT(*) AS total FROM liquidaciones WHERE Periodo = ?', [actual.Periodo]);
       yaExiste = (existeRows && existeRows[0] && Number(existeRows[0].total) > 0);
-      if (yaExiste) {
-        const [maxRows] = await pool.query('SELECT MAX(Vale) AS maxVale FROM liquidaciones WHERE Periodo = ?', [actual.Periodo]);
-        const maxVale = maxRows && maxRows[0] && maxRows[0].maxVale ? Number(maxRows[0].maxVale) : null;
-        if (Number.isFinite(maxVale)) siguienteVale = maxVale + 1;
-      }
     } catch (e) {
       console.warn('No se pudo verificar liquidaciones existentes:', e.message);
     }
