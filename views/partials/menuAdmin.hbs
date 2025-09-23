@@ -27,11 +27,6 @@
                         <a href="/turnos" class="nav-link link-body-emphasis">
                             <i class="bi-clock p-2"></i>Turnos
                         </a>
-                  <li>
-                      <a href="/cierreLiquidacion" class="nav-link link-body-emphasis">
-                          <i class="bi-archive-fill p-2"></i>Cierre de liquidación
-                      </a>
-                  </li>
                     </li>
                     <li>
                         <a href="/motivos" class="nav-link link-body-emphasis">
@@ -91,7 +86,7 @@
             </li>
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle link-body-emphasis" href="#" id="navbarDropdownLiqui" role="button"
-                   data-bs-toggle="dropdown" aria-expanded="false">
+                    data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi-calculator p-2"></i>Liquidación
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="navbarDropdownLiqui">
@@ -113,8 +108,8 @@
                 </ul>
             </li>
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle link-body-emphasis" href="#" id="navbarDropdownConsultas" role="button"
-                   data-bs-toggle="dropdown" aria-expanded="false">
+                <a class="nav-link dropdown-toggle link-body-emphasis" href="#" id="navbarDropdownConsultas"
+                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi-search p-2"></i>Consultas
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="navbarDropdownConsultas">
@@ -127,11 +122,13 @@
             </li>
             <hr>
             <li>
-                <a href="/novedades" class="nav-link link-body-emphasis d-flex align-items-center justify-content-between" aria-current="page" id="link-novedades-desktop">
+                <a href="/novedades"
+                    class="nav-link link-body-emphasis d-flex align-items-center justify-content-between"
+                    aria-current="page" id="link-novedades-desktop">
                     <span><i class="bi-calendar3 p-2"></i> Mis Horas</span>
                     <span id="badge-novedades-desktop" class="badge rounded-pill bg-warning text-dark d-none"></span>
                 </a>
-            </li>            
+            </li>
         </ul>
         <hr>
         <div class="dropdown">
@@ -181,8 +178,11 @@
     </div>
     <div class="row justify-content-center mt-2 p-2">
         <div class="col-5 position-relative d-flex">
-            <a href="/novedades" class="btn btn-primary w-100 h-100 d-flex justify-content-between align-items-center shadow position-relative" id="link-novedades-mobile">
-                <span id="badge-novedades-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark d-none"></span>
+            <a href="/novedades"
+                class="btn btn-primary w-100 h-100 d-flex justify-content-between align-items-center shadow position-relative"
+                id="link-novedades-mobile">
+                <span id="badge-novedades-mobile"
+                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark d-none"></span>
                 <i class="bi-calendar3 text-white display-4"></i>
                 <span class="text-white fs-6">Mis Horas</span>
             </a>
@@ -190,7 +190,7 @@
     </div>
 </div>
 <script>
-    (function() {
+    (function () {
         const actualizarBadgeNovedades = async () => {
             try {
                 const resp = await fetch('/novedades/pendientes', { headers: { 'Accept': 'application/json' }, cache: 'no-store', credentials: 'same-origin' });
@@ -205,7 +205,7 @@
                     else { el.classList.add('d-none'); }
                 };
                 toggle(desk); toggle(mob);
-            } catch(e) { /* noop */ }
+            } catch (e) { /* noop */ }
         };
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', actualizarBadgeNovedades); else actualizarBadgeNovedades();
         setInterval(actualizarBadgeNovedades, 60000);
