@@ -34,7 +34,7 @@ router.get('/confirmar', logueado, async (req, res) => {
     const idE = actual.Id;
     // 1) Pasar novedadesr -> novedadesr_historico (si existe)
     try {
-      await conn.query(
+      const [resNovHist] = await conn.query(
         `INSERT INTO novedadesr_historico (
           IdNovedadesE, Area, IdSector, IdEmpleado, Fecha, Hs50, Hs100, GuardiasDiurnas, GuardiasNocturnas, GuardiasPasivas, Monto, IdGuardia, IdParcial, IdNomina, IdTurno, IdCategoria, IdEstado, ObservacionesEstado, IdSupervisor, MinutosAl50, MinutosAl100, MinutosGD, MinutosGN, Inicio, Fin, IdMotivo, IdReemplazo, Observaciones, CreadoPorAdmin
         )
@@ -42,9 +42,11 @@ router.get('/confirmar', logueado, async (req, res) => {
         FROM novedadesr WHERE IdNovedadesE = ?`,
         [idE]
       );
-    } catch {}
+    } catch (e) {
+      console.warn('Aviso: no se pudieron archivar novedadesr (continuo con cierre):', e.message);
+    }
     // 2) Pasar liquidaciones -> liquidaciones_historico
-    await conn.query(
+    const [resLiqHist] = await conn.query(
       `INSERT INTO liquidaciones_historico (IdNovedadesE, Area, Periodo, Sector, IdEmpleado, Detalle, Monto, Vale)
        SELECT IdNovedadesE, Area, Periodo, Sector, IdEmpleado, Detalle, Monto, Vale
        FROM liquidaciones WHERE IdNovedadesE = ?`,
@@ -52,17 +54,34 @@ router.get('/confirmar', logueado, async (req, res) => {
     );
     // 3) Pasar ajustes -> ajustes_historico
     try {
-      await conn.query(
+     const [result] = await conn.query(
         `INSERT INTO ajustes_historico (IdNovedadesE, IdEmpleado, Descripcion, Monto, IdUsuario, TimeStamp)
-         SELECT ?, IdEmpleado, Descripcion, Monto, IdUsuario, TimeStamp
+         SELECT ? as IdNovedadesE, IdEmpleado, Descripcion, Monto, IdUsuario, TimeStamp
          FROM ajustes`,
         [idE]
       );
-    } catch {}
+    } catch (e) {
+      console.warn('Aviso: no se pudieron archivar ajustes (continuo con cierre):', e.message);
+    }
     // 4) Eliminar datos de trabajo
-    try { await conn.query('DELETE FROM novedadesr WHERE IdNovedadesE = ?', [idE]); } catch {}
-    try { await conn.query('DELETE FROM liquidaciones WHERE IdNovedadesE = ?', [idE]); } catch {}
-    try { await conn.query('DELETE FROM ajustes'); } catch {}
+    try {
+      const [delNov] = await conn.query('DELETE FROM novedadesr WHERE IdNovedadesE = ?', [idE]);
+     } catch (e) {
+      console.error('Error al eliminar novedadesr:', e.message);
+      throw e;
+    }
+    try {
+      const [delLiq] = await conn.query('DELETE FROM liquidaciones WHERE IdNovedadesE = ?', [idE]);
+    } catch (e) {
+      console.error('Error al eliminar liquidaciones:', e.message);
+      throw e;
+    }
+    try {
+      const [delAju] = await conn.query('DELETE FROM ajustes');
+    } catch (e) {
+      console.error('Error al eliminar ajustes:', e.message);
+      throw e;
+    }
     // 5) Marcar novedadese como no-Actual
     await conn.query('UPDATE novedadese SET Actual = 0 WHERE Id = ?', [idE]);
 

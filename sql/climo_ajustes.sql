@@ -1,4 +1,4 @@
-CCREATE TABLE `ajustes` (
+CREATE TABLE `ajustes` (
   `Id` int NOT NULL AUTO_INCREMENT,
   `IdEmpleado` int DEFAULT NULL,
   `Descripcion` text,
