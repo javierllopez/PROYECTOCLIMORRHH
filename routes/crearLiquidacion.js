@@ -63,7 +63,7 @@ router.post ('/', logueado, async (req, res) => {
             throw new Error('Ya existe un período actual');
         }
         await pool.query(sqlAgregarPeriodo, [`${anio}-${mes}-01`, observaciones, NovedadesHasta]);
-        return render(req, res, 'periodoActual', {Mensaje: {Title: 'Éxito', text: 'Período agregado correctamente', icon: 'success'}});
+        return res.redirect('/');
     }
     catch (error) {
         console.error(error);
