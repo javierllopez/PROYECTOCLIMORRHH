@@ -45,11 +45,19 @@
     <!-- Gráfico de líneas: evolución últimos 5 meses (siempre visible) -->
     <div class="container my-4">
         <div class="row g-3 justify-content-center mt-1">
-            <div class="col-12 col-lg-8">
+            <div class="col-12 col-lg-6">
                 <div class="card text-bg-light h-100">
                     <div class="card-body">
                         <h5 class="card-title text-center">Evolución de horas (últimos 5 meses)</h5>
                         <canvas id="lineaHoras" style="max-width:100%; height:auto;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6">
+                <div class="card text-bg-light h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Importes pagados (últimos 5 meses)</h5>
+                        <canvas id="barrasImportes" style="max-width:100%; height:auto;"></canvas>
                     </div>
                 </div>
             </div>
@@ -62,9 +70,11 @@
             var tortaSectoresData = {{{json dashboard.graficoTortaSectores}}};
             var tortaMotivosData = {{{json dashboard.graficoTortaMotivos}}};
             var lineaHorasData = {{{json dashboard.graficoLineaHoras}}};
+            var lineaImportesData = {{{json dashboard.graficoLineaImportes}}};
             var ctxTortaSectores = document.getElementById('tortaMinutosSectores');
             var ctxTortaMotivos = document.getElementById('tortaMinutosMotivos');
             var ctxLineaHoras = document.getElementById('lineaHoras');
+            var ctxBarrasImportes = document.getElementById('barrasImportes');
             if (ctxTortaSectores && typeof Chart !== 'undefined' && tortaSectoresData) {
                 var colores = [
                     '#0d6efd', '#dc3545', '#198754', '#ffc107', '#20c997',
@@ -202,11 +212,51 @@
                     }
                 });
             }
+
+            // Gráfico de barras de importes (últimos 5 meses)
+            if (ctxBarrasImportes && typeof Chart !== 'undefined' && lineaImportesData && (lineaImportesData.labels||[]).length) {
+                var chartBarras = new Chart(ctxBarrasImportes, {
+                    type: 'bar',
+                    data: {
+                        labels: lineaImportesData.labels,
+                        datasets: [
+                            { label: 'Importes pagados', data: lineaImportesData.importes, backgroundColor: 'rgba(13,110,253,0.25)', borderColor: '#0d6efd', borderWidth: 1 }
+                        ]
+                    },
+                    options: {
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        var valor = (context.parsed && (context.parsed.y!=null)) ? context.parsed.y : context.parsed;
+                                        return context.dataset.label + ': ' + monedaArs(valor||0);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: {
+                                    callback: function(value){ return monedaArs(value); }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
         });
         function minutosAFormato(minutos) {
             var horas = Math.floor(minutos / 60).toString().padStart(2, '0');
             var mins = (minutos % 60).toString().padStart(2, '0');
             return horas + ':' + mins;
+        }
+        function monedaArs(valor) {
+            try {
+                return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(valor)||0);
+            } catch (e) {
+                var n = Number(valor)||0; return '$ ' + n.toFixed(2);
+            }
         }
     </script>
 </div>

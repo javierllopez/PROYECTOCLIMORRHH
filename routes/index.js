@@ -34,6 +34,8 @@ router.get('/', logueado, async (req, res) => {
             }
             let graficoTortaSectores = { labels: [], data: [] };
             let graficoTortaMotivos = { labels: [], data: [] };
+            let graficoLineaHoras = { labels: [], min50: [], min100: [], total: [] };
+            let graficoLineaImportes = { labels: [], importes: [] };
             if (periodoRows.length > 0) {
                 // Obtener el Id del período actual
                 const idNovedadesE = await pool.query("SELECT Id FROM novedadese WHERE Actual = 1 LIMIT 1");
@@ -89,6 +91,71 @@ router.get('/', logueado, async (req, res) => {
             dashboard.totalMinutos = graficoTortaSectores.data.reduce((a, b) => (Number(a) || 0) + (Number(b) || 0), 0);
             dashboard.graficoTortaSectores = graficoTortaSectores;
             dashboard.graficoTortaMotivos = graficoTortaMotivos;
+
+            // Serie de líneas: últimos 5 meses (Min50, Min100, Total) desde histórico
+            try {
+                const [periodosRows] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo FROM novedadese ORDER BY Periodo DESC LIMIT 5");
+                if (periodosRows && periodosRows.length) {
+                    const ids = periodosRows.map(r => r.Id);
+                    // Sumas por IdNovedadesE en histórico
+                    let sumasMap = new Map();
+                    try {
+                        const [sumasRows] = await pool.query(
+                            `SELECT IdNovedadesE, SUM(COALESCE(MinutosAl50,0)) AS Min50, SUM(COALESCE(MinutosAl100,0)) AS Min100
+                             FROM novedadesr_historico
+                             WHERE IdNovedadesE IN (${ids.map(() => '?').join(',')})
+                             GROUP BY IdNovedadesE`, ids
+                        );
+                        for (const r of sumasRows) {
+                            sumasMap.set(r.IdNovedadesE, { min50: Number(r.Min50) || 0, min100: Number(r.Min100) || 0 });
+                        }
+                    } catch (e) {
+                        // Si no existe la tabla histórico o falla, dejar los datos en cero
+                        sumasMap = new Map();
+                    }
+
+                    // Sumas de importes pagados por período desde liquidaciones_historico
+                    let importesMap = new Map();
+                    try {
+                        const [impRows] = await pool.query(
+                            `SELECT IdNovedadesE, SUM(COALESCE(Monto,0)) AS Total
+                             FROM liquidaciones_historico
+                             WHERE IdNovedadesE IN (${ids.map(() => '?').join(',')})
+                             GROUP BY IdNovedadesE`, ids
+                        );
+                        for (const r of impRows) {
+                            importesMap.set(r.IdNovedadesE, Number(r.Total) || 0);
+                        }
+                    } catch (e) {
+                        importesMap = new Map();
+                    }
+                    // Ordenar cronológicamente ascendente para el gráfico
+                    const mesesAsc = [...periodosRows].sort((a, b) => (a.Periodo < b.Periodo ? -1 : 1));
+                    const labels = [];
+                    const serie50 = [];
+                    const serie100 = [];
+                    const serieTotal = [];
+                    const serieImportes = [];
+                    for (const p of mesesAsc) {
+                        const [y, m] = String(p.Periodo).split('-');
+                        labels.push(`${m}/${y}`);
+                        const s = sumasMap.get(p.Id) || { min50: 0, min100: 0 };
+                        const v50 = Number(s.min50) || 0;
+                        const v100 = Number(s.min100) || 0;
+                        serie50.push(v50);
+                        serie100.push(v100);
+                        serieTotal.push(v50 + v100);
+                        const imp = importesMap.get(p.Id) || 0;
+                        serieImportes.push(imp);
+                    }
+                    graficoLineaHoras = { labels, min50: serie50, min100: serie100, total: serieTotal };
+                    graficoLineaImportes = { labels, importes: serieImportes };
+                }
+            } catch (e) {
+                // Ignorar si no hay datos históricos
+            }
+            dashboard.graficoLineaHoras = graficoLineaHoras;
+            dashboard.graficoLineaImportes = graficoLineaImportes;
         } catch (err) {
             dashboard.usuariosActivos = 0;
             dashboard.periodoActual = 'No definido';
