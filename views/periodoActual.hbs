@@ -35,8 +35,7 @@
                         <div class="col-4">
                             <div class="row align-items-center">
                                 <div class="col">
-                                    <input type="number" class="form-control" id="mes" name="mes" min="1" max="12"
-                                        placeholder="Mes" required>
+                                    <input type="number" class="form-control" id="mes" name="mes" min="1" max="12" step="1" inputmode="numeric" placeholder="Mes" required>
                                 </div>
                                 <div class="col">
                                     <input type="number" class="form-control" id="anio" name="anio" min="1900"
@@ -55,9 +54,31 @@
                                             const novedadesHasta = document.getElementById('NovedadesHasta');
                                             const periodoDisplay = document.getElementById('periodoDisplay');
 
+                                            // Evitar caracteres no numéricos en el input de número (e, E, +, -, .)
+                                            mesInput.addEventListener('keydown', function (e) {
+                                                const bloqueados = ['e','E','+','-','.',' ',','];
+                                                if (bloqueados.includes(e.key)) {
+                                                    e.preventDefault();
+                                                }
+                                            });
+
+                                            // Sanitiza y limita el valor a enteros [1..12]
+                                            function normalizarMes(valor) {
+                                                const soloDigitos = String(valor || '').replace(/\D+/g, '').slice(0, 2);
+                                                if (soloDigitos.length === 0) return '';
+                                                let n = parseInt(soloDigitos, 10);
+                                                if (isNaN(n)) return '';
+                                                if (n < 1) n = 1;
+                                                if (n > 12) n = 12;
+                                                return String(n);
+                                            }
+
                                             function updatePeriodoDisplay() {
-                                                const mes = mesInput.value;
+                                                const mes = normalizarMes(mesInput.value);
                                                 const anio = anioInput.value;
+                                                if (mes !== mesInput.value) {
+                                                    mesInput.value = mes; // reflejar limpieza/clamp
+                                                }
                                                 if (mes && anio) {
                                                     const mesNombre = new Date(0, mes - 1).toLocaleString('es-ES', { month: 'long' });
                                                     periodoDisplay.textContent = `${mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1)} ${anio}`;
@@ -68,8 +89,35 @@
                                                 }
                                             }
 
-                                            mesInput.addEventListener('input', updatePeriodoDisplay);
+                                            let autoTabTimer = null;
+                                            mesInput.addEventListener('input', function () {
+                                                const raw = mesInput.value;
+                                                const mesNorm = normalizarMes(raw);
+                                                if (mesNorm !== raw) mesInput.value = mesNorm;
+                                                updatePeriodoDisplay();
+                                                // Lógica de autoTab: si es de 2 dígitos (10-12) o un dígito que no sea '1' (2-9), avanzar
+                                                clearTimeout(autoTabTimer);
+                                                autoTabTimer = setTimeout(function () {
+                                                    if (!mesNorm) return;
+                                                    if (mesNorm.length === 2 || (mesNorm.length === 1 && mesNorm !== '1')) {
+                                                        const n = parseInt(mesNorm, 10);
+                                                        if (n >= 1 && n <= 12) {
+                                                            anioInput.focus();
+                                                            anioInput.select();
+                                                        }
+                                                    }
+                                                }, 120);
+                                            });
                                             anioInput.addEventListener('input', updatePeriodoDisplay);
+
+                                            // También sanitizar pegado de valores
+                                            mesInput.addEventListener('paste', function (e) {
+                                                e.preventDefault();
+                                                const texto = (e.clipboardData || window.clipboardData).getData('text');
+                                                const limpio = normalizarMes(texto);
+                                                mesInput.value = limpio;
+                                                updatePeriodoDisplay();
+                                            });
 
                                         });
                                     </script>
