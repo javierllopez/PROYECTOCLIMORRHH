@@ -40,32 +40,7 @@
 <div class="d-block d-md-none">
     <!-- Navbar vertical súper angosta con íconos -->
     <div class="d-flex">
-        <nav class="nav flex-column bg-light border-end" style="width: 56px; min-height: 100vh; position: sticky; top: 0; z-index: 1020;">
-            <a class="nav-link py-3 text-center" href="/">
-                <i class="bi-house-door fs-5"></i>
-            </a>
-            <a class="nav-link py-3 text-center position-relative" href="/novedades" id="link-novedades-mobile">
-                <i class="bi-calendar3 fs-5"></i>
-                <span id="badge-novedades-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark d-none"></span>
-            </a>
-            <a class="nav-link py-3 text-center position-relative" href="/autorizarHoras" id="link-autorizar-horas-mobile">
-                <i class="bi-hand-thumbs-up fs-5"></i>
-                <span id="badge-autorizar-horas-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none d-md-none"></span>
-            </a>
-            <div class="mt-auto">
-                <div class="dropup">
-                    <a class="nav-link py-3 text-center dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi-person-circle fs-5"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end text-small shadow">
-                        <li class="dropdown-header">{{usuario}}</li>
-                        <li><a class="dropdown-item" href="#">Cambiar contraseña</a></li>
-                        <li><hr class="dropdown-divider"/></li>
-                        <li><a class="dropdown-item" href="/salir">Salir</a></li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
+        {{> supervisorNavbarMobile}}
         <!-- Contenido principal al lado de la navbar -->
         <div class="flex-grow-1">
             <div class="p-2">
