@@ -1,4 +1,17 @@
 <div class="d-flex w-auto row flex-fill mx-2">
+    {{#ifeq nivelUsuario 2}}
+    <style>
+        /* Títulos de tablas en mobile para supervisores */
+        @media (max-width: 767.98px) {
+            .titulo-tabla-sup {
+                font-size: 1.5rem; /* tamaño grande uniforme */
+                line-height: 1.2;
+                margin-top: .5rem !important;
+                margin-bottom: .5rem !important;
+            }
+        }
+    </style>
+    {{/ifeq}}
     <div class="row flex-row justify-content-between my-2">
         <div class="col flex-col">
             <div class="h1">Mis Horas</div>
@@ -7,11 +20,11 @@
             <div class="container {{#ifeq pantalla " phone"}}px-2 {{/ifeq}}">
                 {{#if hayLiquidacion}}
                 {{#if botonHoras}}<a href="/novedades/agregarHoras/{{personal.Legajo}}"
-                    class="btn btn-primary rounded-circle"> <i class="bi-clock h3"></i> </a>{{/if}}
+                    class="btn btn-primary rounded-circle"> <i class="bi-plus h3"></i> </a>{{/if}}
                 {{#if botonGuardias}}<a href="/novedades/agregarGuardias/{{personal.Legajo}}"
-                    class="btn btn-primary rounded-circle"> <i class="bi-telephone-forward h3"></i> </a>{{/if}}
+                    class="btn btn-primary rounded-circle"> <i class="bi-plus h3"></i> </a>{{/if}}
                 {{#if botonGuardiasPasivas}}<a href="/novedades/agregarGuardiasPasivas"
-                    class="btn btn-primary rounded-circle"> <i class="bi-telephone-inbound h3"></i> </a>{{/if}}
+                    class="btn btn-primary rounded-circle"> <i class="bi-plus h3"></i> </a>{{/if}}
                 {{/if}}
                 {{#unless hayLiquidacion}}
                 <div class="h2 text-center">
@@ -21,16 +34,17 @@
             </div>
         </div>
     </div>
-    <div class="row row-flex my-2 justify-content-around">
-        <div class="col col-md-5 mx-1 col-sm-10">
-            <div class="row bg-primary text-white">
-                <div class="col text-center">
-                    <h2>Valores actuales</h2>
+    <div class="row row-flex my-2 gx-3" id="ValoresYTotales">
+        <div class="col-12 col-md-6 {{#ifeq nivelUsuario 2}}mb-4 mb-md-0{{/ifeq}}">
+            <div class="border rounded-3 overflow-hidden shadow-sm">
+                <div class="row bg-primary text-white">
+                    <div class="col text-center">
+                        <h2 class="my-2 {{#ifeq nivelUsuario 2}}titulo-tabla-sup{{/ifeq}}">Valores actuales</h2>
+                    </div>
                 </div>
-            </div>
-            <div class="row align-items-stretch">
-                <div class="col d-flex align-items-center justify-content-center">
-                    <table class="table table-sm">
+                <div class="row align-items-stretch">
+                    <div class="col">
+                        <table class="table table-sm mb-0" id="tablaValores">
                         <thead class="text-center">
                             <tr class="align-middle">
                                 <th>Categoría</th>
@@ -61,19 +75,33 @@
                             </tr>
                             {{/each}}
                         </tbody>
-                    </table>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col col-md-5 mx-1 col-sm-10">
-            <div class="row bg-primary text-white">
-                <div class="col text-center">
-                    <h2>Totales</h2>
+        <div class="col-12 col-md-6">
+            <div class="border rounded-3 overflow-hidden shadow-sm">
+                <div class="row bg-primary text-white">
+                    <div class="col text-center">
+                        <h2 class="my-2 {{#ifeq nivelUsuario 2}}titulo-tabla-sup{{/ifeq}}">Totales</h2>
+                    </div>
                 </div>
-            </div>
-            <div class="row align-items-stretch">
-                <table class="table table-sm">
-                    <thead class="text-center">
+                <div class="row align-items-stretch">
+                    <div class="col">
+                        <table class="table table-sm mb-0">
+                    {{#ifeq nivelUsuario 2}}
+                    <thead class="text-center d-table-header-group d-md-none">
+                        <th class="border-0">Estado</th>
+                        {{#ifeq columnas.Horas50 true}}<th class="border-0">Hs. 50%</th>{{/ifeq}}
+                        {{#ifeq columnas.Horas100 true}}<th class="border-0">Hs. 100%</th>{{/ifeq}}
+                        {{#ifeq columnas.GuardiasDiurnas true}}<th class="border-0">G. Diur.</th>{{/ifeq}}
+                        {{#ifeq columnas.GuardiasNocturnas true}}<th class="border-0">G. Noct.</th>{{/ifeq}}
+                        {{#ifeq columnas.GuardiasPasivas true}}<th class="border-0">G. Pas.</th>{{/ifeq}}
+                        <th class="border-0">Monto</th>
+                    </thead>
+                    {{/ifeq}}
+                    <thead class="text-center {{#ifeq nivelUsuario 2}}d-none d-md-table-header-group{{/ifeq}}">
                         <th>Estado</th>
                         {{#ifeq columnas.Horas50 true}}<th>Hs. 50%</th>{{/ifeq}}
                         {{#ifeq columnas.Horas100 true}}<th>Hs. 100%</th>{{/ifeq}}
@@ -196,7 +224,10 @@
                             <td>{{formatoMoneda totalesLiquidados.totalMonto}}</td>
                         </tr>
                         {{/ifmay}}
-                </table>
+                    </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -332,15 +363,23 @@
             </tbody>
         </table>
     </div>
-    <div class="row flex-row d-md-none align-items-center">
-        <table class="table table-sm table-bordered table-striped small">
-            <thead>
-                <th class="text-center">Detalle</th>
-                <th class="text-center">Estado</th>
-                <th class="text-center">Acc.</th>
-            </thead>
+    <div class="row flex-row d-md-none align-items-center {{#ifeq nivelUsuario 2}}mt-4{{/ifeq}}">
+        <div class="border rounded-3 overflow-hidden shadow-sm w-100">
+            <div class="row bg-primary text-white">
+                <div class="col text-center">
+                    <h2 class="my-2 {{#ifeq nivelUsuario 2}}titulo-tabla-sup{{/ifeq}}">Detalle de horas</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <table class="table table-sm small mb-0">
+                        <thead>
+                            <th class="text-center">Detalle</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center">Acc.</th>
+                        </thead>
 
-            <tbody>
+                        <tbody>
                 {{#each novedades}}
                 <tr class="align-middle">
                     <td class="text-center">
@@ -446,11 +485,11 @@
                     </td>
                 </tr>
                 {{/each}}
-            </tbody>
-        </table>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class='d-lg-none text-center mt-3'>
-        <button class='btn btn-primary h1' onclick='window.location.href="/"'> <i
-                class='bi-box-arrow-left h1 me-2'></i>Atrás</button>
-    </div>
+    
 </div>
