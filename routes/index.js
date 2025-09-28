@@ -7,6 +7,9 @@ const nivelAceptado = [1,2,3];
 
 router.get('/', logueado, async (req, res) => {
     let dashboard = {};
+    // Datos para vista de supervisor (nivel 2)
+    let supervisorNombre = null;
+    let supervisorSectores = [];
     if (req.session.nivelUsuario == 1) {
         try {
             // Personal vigente al día de hoy: Ingreso <= hoy y Baja NULL o >= hoy
@@ -191,18 +194,30 @@ router.get('/', logueado, async (req, res) => {
         }
     }
 
+    // Si es supervisor, obtener su nombre y sectores antes del render
+    if (req.session.nivelUsuario == 2) {
+        try {
+            const [pers] = await pool.query('SELECT ApellidoYNombre FROM personal WHERE idUsuario = ? LIMIT 1', [req.session.idUsuario]);
+            if (pers && pers.length) supervisorNombre = pers[0].ApellidoYNombre;
+        } catch (e) { /* noop */ }
+        try {
+            const [secs] = await pool.query('SELECT Id, Descripcion FROM sectores WHERE IdSupervisor = ? ORDER BY Descripcion', [req.session.idUsuario]);
+            supervisorSectores = Array.isArray(secs) ? secs : [];
+        } catch (e) { supervisorSectores = []; }
+    }
+
     if (req.device.type === 'phone') {
         if (req.session.nivelUsuario == 1) {
             return render(req, res, 'partials/menuAdmin', { dashboard });
         }
         if (req.session.nivelUsuario == 2) {
-            return render(req, res, 'partials/menuSupervisor');
+            return render(req, res, 'partials/menuSupervisor', { supervisorNombre, supervisorSectores });
         }
         if (req.session.nivelUsuario == 3) {
             return render(req, res, 'partials/menuUsuario');
         }
     } else {
-        return render(req, res, 'index', { dashboard, nivelUsuario: req.session.nivelUsuario });
+        return render(req, res, 'index', { dashboard, nivelUsuario: req.session.nivelUsuario, supervisorNombre, supervisorSectores });
     }
 
 });

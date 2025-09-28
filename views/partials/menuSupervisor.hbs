@@ -38,47 +38,43 @@
 </div>
 <!-- Contenido a mostrar en pantallas pequeñas -->
 <div class="d-block d-md-none">
-    <div class="container">
-        <div class="row justify-content-between align-items-center shadow-sm">
-            <div class="col">
-                <a href="/" class="align-items-center mb-3 link-body-emphasis text-decoration-none">
-                    <img src="/img/DelBuenPastor.jpg" alt="" width="130" height="90" class="me-2">
-                </a>
-            </div>
-            <div class="col">
-                <div class="dropdown">
-                    <a href="#"
-                        class="link-body-emphasis text-decoration-none dropdown-toggle"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                        <strong class="me-2">{{usuario}}</strong>
-                        <img src="/img/usuario.png" alt="" width="32" height="32" class="rounded-circle">
+    <!-- Navbar vertical súper angosta con íconos -->
+    <div class="d-flex">
+        <nav class="nav flex-column bg-light border-end" style="width: 56px; min-height: 100vh; position: sticky; top: 0; z-index: 1020;">
+            <a class="nav-link py-3 text-center" href="/">
+                <i class="bi-house-door fs-5"></i>
+            </a>
+            <a class="nav-link py-3 text-center position-relative" href="/novedades" id="link-novedades-mobile">
+                <i class="bi-calendar3 fs-5"></i>
+                <span id="badge-novedades-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark d-none"></span>
+            </a>
+            <a class="nav-link py-3 text-center position-relative" href="/autorizarHoras" id="link-autorizar-horas-mobile">
+                <i class="bi-hand-thumbs-up fs-5"></i>
+                <span id="badge-autorizar-horas-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none d-md-none"></span>
+            </a>
+            <div class="mt-auto">
+                <div class="dropup">
+                    <a class="nav-link py-3 text-center dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi-person-circle fs-5"></i>
                     </a>
-                    <ul class="dropdown-menu text-small shadow">
+                    <ul class="dropdown-menu dropdown-menu-end text-small shadow">
+                        <li class="dropdown-header">{{usuario}}</li>
                         <li><a class="dropdown-item" href="#">Cambiar contraseña</a></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
+                        <li><hr class="dropdown-divider"/></li>
                         <li><a class="dropdown-item" href="/salir">Salir</a></li>
                     </ul>
                 </div>
             </div>
+        </nav>
+        <!-- Contenido principal al lado de la navbar -->
+        <div class="flex-grow-1">
+            <div class="p-2">
+                <a href="/" class="align-items-center mb-2 link-body-emphasis text-decoration-none d-flex gap-2">
+                    <img src="/img/DelBuenPastor.jpg" alt="" width="110" height="76" class="me-2">
+                    <strong class="small">{{usuario}}</strong>
+                </a>
+            </div>
         </div>
-    </div>
-    <div class="row justify-content-center align-items-stretch mt-2 p-2">
-        <div class="col-5 position-relative d-flex">
-            <a href="/novedades" class="btn btn-primary w-100 h-100 d-flex justify-content-between align-items-center shadow position-relative" id="link-novedades-mobile">
-                <span id="badge-novedades-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark d-none"></span>
-                <i class="bi-calendar3 text-white display-4"></i>
-                <span class="text-white fs-6">Mis Horas</span>
-            </a>
-        </div>
-        <div class="col-5 position-relative d-flex">
-            <a href="/autorizarHoras" class="btn btn-primary w-100 h-100 d-flex justify-content-between align-items-center shadow position-relative" id="link-autorizar-horas-mobile">
-                                <i class="bi-hand-thumbs-up text-white display-4"></i>
-                                <span class="text-white fs-6">Autorizar Horas</span>
-                        <span id="badge-autorizar-horas-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none d-md-none"></span>
-                        </a>
-                </div>
     </div>
 </div>
 

@@ -291,9 +291,34 @@
 {{/ifeq}}
 
 {{#ifeq nivelUsuario 2}}
-<div id="supervisor-div" class="alert alert-success text-center">
-    <h2>Bienvenido Supervisor</h2>
-    <p>Esta es la vista exclusiva para supervisores.</p>
+<div id="supervisor-div" class="container mt-3">
+    <!-- Encabezado destacado solo para pantallas grandes -->
+    <div class="d-none d-md-block">
+        <div class="alert alert-success shadow-sm">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi-person-badge fs-4"></i>
+                    <div>
+                        <div class="fw-bold">Supervisor</div>
+                        <div>{{#if supervisorNombre}}{{supervisorNombre}}{{else}}{{usuario}}{{/if}}</div>
+                    </div>
+                </div>
+                {{#if supervisorSectores}}
+                <div class="vr"></div>
+                <div>
+                    <div class="fw-bold">Sectores a cargo</div>
+                    <div class="small">
+                        {{#each supervisorSectores}}
+                            <span class="badge text-bg-success me-1 mb-1 fs-6">{{this.Descripcion}}</span>
+                        {{/each}}
+                    </div>
+                </div>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido adicional de la vista de supervisor (si fuera necesario) -->
 </div>
 {{/ifeq}}
 
