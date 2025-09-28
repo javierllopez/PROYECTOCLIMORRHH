@@ -21,16 +21,17 @@
             </div>
         </div>
     </div>
-    <div class="row row-flex my-2 justify-content-around">
-        <div class="col col-md-5 mx-1 col-sm-10">
-            <div class="row bg-primary text-white">
-                <div class="col text-center">
-                    <h2>Valores actuales</h2>
+    <div class="row row-flex my-2 gx-3" id="ValoresYTotales">
+        <div class="col-12 col-md-6">
+            <div class="border rounded-3 overflow-hidden shadow-sm">
+                <div class="row bg-primary text-white">
+                    <div class="col text-center">
+                        <h2 class="my-2">Valores actuales</h2>
+                    </div>
                 </div>
-            </div>
-            <div class="row align-items-stretch">
-                <div class="col d-flex align-items-center justify-content-center">
-                    <table class="table table-sm">
+                <div class="row align-items-stretch">
+                    <div class="col">
+                        <table class="table table-sm mb-0" id="tablaValores">
                         <thead class="text-center">
                             <tr class="align-middle">
                                 <th>Categoría</th>
@@ -61,18 +62,21 @@
                             </tr>
                             {{/each}}
                         </tbody>
-                    </table>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col col-md-5 mx-1 col-sm-10">
-            <div class="row bg-primary text-white">
-                <div class="col text-center">
-                    <h2>Totales</h2>
+    <div class="col-12 col-md-6">
+            <div class="border rounded-3 overflow-hidden shadow-sm">
+                <div class="row bg-primary text-white">
+                    <div class="col text-center">
+                        <h2 class="my-2">Totales</h2>
+                    </div>
                 </div>
-            </div>
-            <div class="row align-items-stretch">
-                <table class="table table-sm">
+                <div class="row align-items-stretch">
+                    <div class="col">
+                        <table class="table table-sm mb-0">
                     <thead class="text-center">
                         <th>Estado</th>
                         {{#ifeq columnas.Horas50 true}}<th>Hs. 50%</th>{{/ifeq}}
@@ -196,7 +200,9 @@
                             <td>{{formatoMoneda totalesLiquidados.totalMonto}}</td>
                         </tr>
                         {{/ifmay}}
-                </table>
+                        </table>
+                    </div>
+                </div>
             </div>
 
         </div>
