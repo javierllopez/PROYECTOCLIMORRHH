@@ -1,0 +1,77 @@
+{{! Vista: Evolución de importes pagados por sector (últimos 5 meses) }}
+<div class="container my-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Importes pagados por sector (últimos 5 meses)</h3>
+    <a class="btn btn-outline-secondary btn-sm" href="/">Volver</a>
+  </div>
+
+  {{#if hayDatos}}
+  <div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Sector</th>
+          {{#each labels}}
+            <th class="text-center">{{this}}</th>
+          {{/each}}
+          <th class="text-center">Evolución</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each sectores}}
+          <tr>
+            <td>{{this.sector}}</td>
+            {{#each this.importes}}
+              <td class="text-center">{{formatoMoneda this}}</td>
+            {{/each}}
+            <td class="text-center" style="min-width:160px; width:160px;">
+              <canvas class="sparkline" data-puntos='{{json this.importes}}' height="40"></canvas>
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+      {{#if totalesImportes}}
+      <tfoot>
+        <tr class="table-secondary fw-semibold">
+          <td>Totales</td>
+          {{#each totalesImportes}}
+            <td class="text-center">{{formatoMoneda this}}</td>
+          {{/each}}
+          <td class="text-center" style="min-width:160px; width:160px;">
+            <canvas class="sparkline" data-puntos='{{json totalesImportes}}' height="40"></canvas>
+          </td>
+        </tr>
+      </tfoot>
+      {{/if}}
+    </table>
+  </div>
+  {{else}}
+  <div class="alert alert-warning">No hay datos históricos para mostrar.</div>
+  {{/if}}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    try {
+      var canvases = document.querySelectorAll('canvas.sparkline');
+      if (!canvases || !canvases.length || typeof Chart === 'undefined') return;
+      canvases.forEach(function(cv){
+        var puntos = [];
+        try { puntos = JSON.parse(cv.getAttribute('data-puntos')||'[]') || []; } catch(e) { puntos = []; }
+        new Chart(cv.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels: puntos.map((_,i) => i+1),
+            datasets: [{ data: puntos, borderColor: '#198754', backgroundColor: 'rgba(25,135,84,0.10)', tension: 0.3, fill: true, pointRadius: 0 }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: { x: { display: false }, y: { display: false } }
+          }
+        });
+      });
+    } catch (e) {}
+  });
+</script>

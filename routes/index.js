@@ -9,9 +9,16 @@ router.get('/', logueado, async (req, res) => {
     let dashboard = {};
     if (req.session.nivelUsuario == 1) {
         try {
-            // Total de personal en actividad: FechaBaja IS NULL o ''
-            const [rows] = await pool.query("SELECT COUNT(*) as total FROM personal WHERE FechaBaja IS NULL");
-            dashboard.usuariosActivos = rows[0].total;
+            // Personal vigente al día de hoy: Ingreso <= hoy y Baja NULL o >= hoy
+                        const [vigRows] = await pool.query(
+                                `SELECT COUNT(*) AS total
+                                 FROM personal
+                                 WHERE FechaIngreso <= CURDATE()
+                                     AND (FechaBaja IS NULL OR UNIX_TIMESTAMP(FechaBaja) IS NULL OR FechaBaja >= CURDATE())`
+                        );
+            dashboard.personalVigente = (vigRows && vigRows[0] && Number(vigRows[0].total)) ? Number(vigRows[0].total) : 0;
+            // Por compatibilidad con código previo
+            dashboard.usuariosActivos = dashboard.personalVigente;
             // Período de liquidación actual y observaciones
             const [periodoRows] = await pool.query("SELECT DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo, Observaciones FROM novedadese WHERE Actual = 1 LIMIT 1");
             if (periodoRows.length > 0) {
@@ -41,6 +48,18 @@ router.get('/', logueado, async (req, res) => {
                 const idNovedadesE = await pool.query("SELECT Id FROM novedadese WHERE Actual = 1 LIMIT 1");
                 if (idNovedadesE[0].length > 0) {
                     const idPeriodo = idNovedadesE[0][0].Id;
+                    // Empleados con horas cargadas (DISTINCT IdEmpleado) en el período actual
+                    const [empHorasRows] = await pool.query(
+                        "SELECT COUNT(DISTINCT IdEmpleado) AS cant FROM novedadesr WHERE IdNovedadesE = ?",
+                        [idPeriodo]
+                    );
+                    dashboard.empleadosConHoras = (empHorasRows && empHorasRows[0] && Number(empHorasRows[0].cant)) ? Number(empHorasRows[0].cant) : 0;
+                    // Monto total a pagar en el período actual
+                    const [montoRows] = await pool.query(
+                        "SELECT SUM(COALESCE(Monto,0)) AS total FROM novedadesr WHERE IdNovedadesE = ?",
+                        [idPeriodo]
+                    );
+                    dashboard.montoTotalPagar = (montoRows && montoRows[0] && Number(montoRows[0].total)) ? Number(montoRows[0].total) : 0;
 
                     // Sumar minutos agrupados por sector
                     const [minutosSectoresRows] = await pool.query(`
@@ -101,7 +120,9 @@ router.get('/', logueado, async (req, res) => {
                     let sumasMap = new Map();
                     try {
                         const [sumasRows] = await pool.query(
-                            `SELECT IdNovedadesE, SUM(COALESCE(MinutosAl50,0)) AS Min50, SUM(COALESCE(MinutosAl100,0)) AS Min100
+                            `SELECT IdNovedadesE,
+                                    SUM(COALESCE(MinutosAl50,0) + COALESCE(MinutosGD,0)) AS Min50,
+                                    SUM(COALESCE(MinutosAl100,0) + COALESCE(MinutosGN,0)) AS Min100
                              FROM novedadesr_historico
                              WHERE IdNovedadesE IN (${ids.map(() => '?').join(',')})
                              GROUP BY IdNovedadesE`, ids
@@ -156,8 +177,15 @@ router.get('/', logueado, async (req, res) => {
             }
             dashboard.graficoLineaHoras = graficoLineaHoras;
             dashboard.graficoLineaImportes = graficoLineaImportes;
+            // Defaults si no hubo período
+            if (dashboard.empleadosConHoras == null) dashboard.empleadosConHoras = 0;
+            if (dashboard.montoTotalPagar == null) dashboard.montoTotalPagar = 0;
         } catch (err) {
+            console.log(err);
             dashboard.usuariosActivos = 0;
+            dashboard.personalVigente = 0;
+            dashboard.empleadosConHoras = 0;
+            dashboard.montoTotalPagar = 0;
             dashboard.periodoActual = 'No definido';
             dashboard.observacionesPeriodo = '';
         }
@@ -177,6 +205,63 @@ router.get('/', logueado, async (req, res) => {
         return render(req, res, 'index', { dashboard, nivelUsuario: req.session.nivelUsuario });
     }
 
+});
+
+// Evolución de importes pagados por sector (últimos 5 meses) con matriz Sector x Período
+router.get('/evolucionImportesSectores', logueado, async (req, res) => {
+    if (req.session.nivelUsuario != 1) return res.redirect('/');
+    try {
+        const [periodosRows] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo FROM novedadese ORDER BY Periodo DESC LIMIT 5");
+        if (!periodosRows || !periodosRows.length) {
+            return render(req, res, 'evolucionImportesSectores', { labels: [], sectores: [], hayDatos: false });
+        }
+        const mesesAsc = [...periodosRows].sort((a, b) => (a.Periodo < b.Periodo ? -1 : 1));
+        const labels = mesesAsc.map(p => {
+            const [y, m] = String(p.Periodo).split('-');
+            return `${m}/${y}`;
+        });
+        const ids = mesesAsc.map(p => p.Id);
+        try {
+            const [rows] = await pool.query(
+                `SELECT s.Id AS SectorId, s.Descripcion AS Sector, l.IdNovedadesE,
+                        SUM(COALESCE(l.Monto,0)) AS Importe
+                 FROM liquidaciones_historico l
+                 INNER JOIN sectores s ON s.Id = l.Sector
+                 WHERE l.IdNovedadesE IN (${ids.map(() => '?').join(',')})
+                 GROUP BY s.Id, s.Descripcion, l.IdNovedadesE`, ids
+            );
+            const sectoresMap = new Map();
+            for (const r of rows) {
+                const secId = r.SectorId;
+                if (!sectoresMap.has(secId)) {
+                    sectoresMap.set(secId, { id: secId, sector: r.Sector, importes: Array(ids.length).fill(0) });
+                }
+                const idx = ids.indexOf(r.IdNovedadesE);
+                const imp = Number(r.Importe) || 0;
+                if (idx >= 0) sectoresMap.get(secId).importes[idx] = imp;
+            }
+            let totalesImportes = Array(ids.length).fill(0);
+            const sectores = Array.from(sectoresMap.values())
+                .map(s => ({
+                    id: s.id,
+                    sector: s.sector,
+                    importes: s.importes,
+                    totalImportes: s.importes.reduce((a, b) => (Number(a) || 0) + (Number(b) || 0), 0)
+                }))
+                .filter(s => s.totalImportes > 0)
+                .sort((a, b) => b.totalImportes - a.totalImportes);
+
+            for (const s of sectores) {
+                s.importes.forEach((v, i) => { totalesImportes[i] += Number(v) || 0; });
+            }
+
+            return render(req, res, 'evolucionImportesSectores', { labels, sectores, totalesImportes, hayDatos: sectores.length > 0 });
+        } catch (e) {
+            return render(req, res, 'evolucionImportesSectores', { labels, sectores: [], totalesImportes: [], hayDatos: false, error: e.message });
+        }
+    } catch (e) {
+        return render(req, res, 'evolucionImportesSectores', { labels: [], sectores: [], totalesImportes: [], hayDatos: false, error: e.message });
+    }
 });
 
 // Detalle de horas por sector (admin)
@@ -241,7 +326,124 @@ router.get('/detalleHorasMotivos', logueado, async (req, res) => {
         return render(req, res, 'detalleHorasMotivos', { detalle: [], total: { min50:0, min100:0, monto:0 }, periodoActual: '', error: e.message });
     }
 });
+    // Evolución de horas por sector (últimos 5 meses) con matriz Sector x Período
+    router.get('/evolucionHorasSectores', logueado, async (req, res) => {
+        if (req.session.nivelUsuario != 1) return res.redirect('/');
+        try {
+            const [periodosRows] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo FROM novedadese ORDER BY Periodo DESC LIMIT 5");
+            if (!periodosRows || !periodosRows.length) {
+                return render(req, res, 'evolucionHorasSectores', { labels: [], sectores: [], hayDatos: false });
+            }
+            const mesesAsc = [...periodosRows].sort((a, b) => (a.Periodo < b.Periodo ? -1 : 1));
+            const labels = mesesAsc.map(p => {
+                const [y, m] = String(p.Periodo).split('-');
+                return `${m}/${y}`;
+            });
+            const ids = mesesAsc.map(p => p.Id);
+            try {
+                const [rows] = await pool.query(
+            `SELECT s.Id AS SectorId, s.Descripcion AS Sector, h.IdNovedadesE,
+                SUM(COALESCE(h.MinutosAl50,0) + COALESCE(h.MinutosGD,0)) AS Min50,
+                SUM(COALESCE(h.MinutosAl100,0) + COALESCE(h.MinutosGN,0)) AS Min100
+                     FROM novedadesr_historico h
+                     INNER JOIN sectores s ON s.Id = h.IdSector
+                     WHERE h.IdNovedadesE IN (${ids.map(() => '?').join(',')})
+                     GROUP BY s.Id, s.Descripcion, h.IdNovedadesE`, ids
+                );
+                const sectoresMap = new Map();
+                for (const r of rows) {
+                    const secId = r.SectorId;
+                    if (!sectoresMap.has(secId)) {
+                        sectoresMap.set(secId, { id: secId, sector: r.Sector, minutos: Array(ids.length).fill(0) });
+                    }
+                    const idx = ids.indexOf(r.IdNovedadesE);
+                    const min = (Number(r.Min50) || 0) + (Number(r.Min100) || 0);
+                    if (idx >= 0) sectoresMap.get(secId).minutos[idx] = min;
+                }
+                const sectores = Array.from(sectoresMap.values())
+                    .map(s => ({
+                        id: s.id,
+                        sector: s.sector,
+                        minutos: s.minutos,
+                        horasDec: s.minutos.map(m => (Number(m) || 0) / 60),
+                        totalMinutos: s.minutos.reduce((a, b) => (Number(a) || 0) + (Number(b) || 0), 0)
+                    }))
+                    .filter(s => s.totalMinutos > 0)
+                    .sort((a, b) => b.totalMinutos - a.totalMinutos);
 
+                const totals = Array(ids.length).fill(0);
+                for (const s of sectores) {
+                    for (let i = 0; i < totals.length; i++) {
+                        totals[i] += Number(s.minutos[i]) || 0;
+                    }
+                }
+                const totalFila = { sector: 'Totales', minutos: totals, totalMinutos: totals.reduce((a,b)=>a+(Number(b)||0),0) };
+
+                return render(req, res, 'evolucionHorasSectores', { labels, sectores, totalFila, hayDatos: sectores.length > 0 });
+            } catch (e) {
+                return render(req, res, 'evolucionHorasSectores', { labels, sectores: [], hayDatos: false, error: e.message });
+            }
+        } catch (e) {
+            return render(req, res, 'evolucionHorasSectores', { labels: [], sectores: [], hayDatos: false, error: e.message });
+        }
+    });
+// Evolución de importes pagados por sector (últimos 5 meses) con matriz Sector x Período
+router.get('/evolucionImportesSectores', logueado, async (req, res) => {
+    if (req.session.nivelUsuario != 1) return res.redirect('/');
+    try {
+        const [periodosRows] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo FROM novedadese ORDER BY Periodo DESC LIMIT 5");
+        if (!periodosRows || !periodosRows.length) {
+            return render(req, res, 'evolucionImportesSectores', { labels: [], sectores: [], hayDatos: false });
+        }
+        const mesesAsc = [...periodosRows].sort((a, b) => (a.Periodo < b.Periodo ? -1 : 1));
+        const labels = mesesAsc.map(p => {
+            const [y, m] = String(p.Periodo).split('-');
+            return `${m}/${y}`;
+        });
+        const ids = mesesAsc.map(p => p.Id);
+        try {
+            const [rows] = await pool.query(
+                `SELECT s.Id AS SectorId, s.Descripcion AS Sector, h.IdNovedadesE,
+                        SUM(COALESCE(h.Monto,0)) AS Importe
+                 FROM liquidaciones_historico h
+                 INNER JOIN sectores s ON s.Id = h.IdSector
+                 WHERE h.IdNovedadesE IN (${ids.map(() => '?').join(',')})
+                 GROUP BY s.Id, s.Descripcion, h.IdNovedadesE`, ids
+            );
+            const sectoresMap = new Map();
+            for (const r of rows) {
+                const secId = r.SectorId;
+                if (!sectoresMap.has(secId)) {
+                    sectoresMap.set(secId, { id: secId, sector: r.Sector, importes: Array(ids.length).fill(0) });
+                }
+                const idx = ids.indexOf(r.IdNovedadesE);
+                const imp = Number(r.Importe) || 0;
+                if (idx >= 0) sectoresMap.get(secId).importes[idx] = imp;
+            }
+            const sectores = Array.from(sectoresMap.values())
+                .map(s => ({
+                    id: s.id,
+                    sector: s.sector,
+                    importes: s.importes,
+                    totalImportes: s.importes.reduce((a, b) => (Number(a) || 0) + (Number(b) || 0), 0)
+                }))
+                .filter(s => s.totalImportes > 0)
+                .sort((a, b) => b.totalImportes - a.totalImportes);
+
+            const totalesImportes = Array(ids.length).fill(0);
+            for (const s of sectores) {
+                s.importes.forEach((v, i) => { totalesImportes[i] = (Number(totalesImportes[i])||0) + (Number(v)||0); });
+            }
+            const totalGeneralImportes = totalesImportes.reduce((a,b)=>(Number(a)||0)+(Number(b)||0),0);
+
+            return render(req, res, 'evolucionImportesSectores', { labels, sectores, totalesImportes, totalGeneralImportes, hayDatos: sectores.length > 0 });
+        } catch (e) {
+            return render(req, res, 'evolucionImportesSectores', { labels, sectores: [], totalesImportes: [], totalGeneralImportes: 0, hayDatos: false, error: e.message });
+        }
+    } catch (e) {
+        return render(req, res, 'evolucionImportesSectores', { labels: [], sectores: [], totalesImportes: [], totalGeneralImportes: 0, hayDatos: false, error: e.message });
+    }
+});
 // Detalle de horas por motivo (admin)
 
 

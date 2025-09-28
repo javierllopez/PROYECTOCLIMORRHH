@@ -7,6 +7,27 @@
     {{#if dashboard.observacionesPeriodo}}
     <p class="text-muted">{{dashboard.observacionesPeriodo}}</p>
     {{/if}}
+    <!-- Métricas de la liquidación actual -->
+    <div class="container mt-3">
+        <div class="row justify-content-center g-3">
+            <div class="col-12 col-lg-3 d-flex justify-content-center">
+                <span class="badge bg-primary p-3 w-100" style="font-size:1rem;">
+                    Personal vigente: <span class="fw-bold">{{dashboard.personalVigente}}</span>
+                </span>
+            </div>
+            <div class="col-12 col-lg-3 d-flex justify-content-center">
+                <span class="badge bg-success p-3 w-100" style="font-size:1rem;">
+                    Con horas cargadas: <span class="fw-bold">{{dashboard.empleadosConHoras}}</span>
+                </span>
+            </div>
+            <div class="col-12 col-lg-3 d-flex justify-content-center">
+                <span class="badge bg-danger p-3 w-100" style="font-size:1rem;">
+                    Monto a pagar: <span class="fw-bold">{{formatoMoneda dashboard.montoTotalPagar}}</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
     <!-- Dashboard administrador simplificado: solo torta por sector -->
     {{#ifmay dashboard.totalMinutos 0}}
     <div class="container my-4">
@@ -49,7 +70,7 @@
                 <div class="card text-bg-light h-100">
                     <div class="card-body">
                         <h5 class="card-title text-center">Evolución de horas (últimos 5 meses)</h5>
-                        <canvas id="lineaHoras" style="max-width:100%; height:auto;"></canvas>
+                        <canvas id="lineaHoras" style="max-width:100%; height:auto; cursor:pointer;"></canvas>
                     </div>
                 </div>
             </div>
@@ -66,6 +87,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Registrar plugin DataLabels solo si está disponible para evitar errores
+            var DLP = (typeof ChartDataLabels !== 'undefined') ? ChartDataLabels : null;
+            if (DLP && typeof Chart !== 'undefined' && Chart.register) {
+                try { Chart.register(DLP); } catch (e) {}
+            }
             // Gráfico de torta por sector (en la card de sectores)
             var tortaSectoresData = {{{json dashboard.graficoTortaSectores}}};
             var tortaMotivosData = {{{json dashboard.graficoTortaMotivos}}};
@@ -122,8 +148,7 @@
                                 }
                             }
                         }
-                    },
-                    plugins: [ChartDataLabels]
+                    }
                 });
             }
             if (ctxTortaMotivos && typeof Chart !== 'undefined' && tortaMotivosData) {
@@ -173,8 +198,7 @@
                                 }
                             }
                         }
-                    },
-                    plugins: [ChartDataLabels]
+                    }
                 });
             }
 
@@ -193,6 +217,7 @@
                     options: {
                         plugins: {
                             legend: { position: 'bottom' },
+                            datalabels: { display: false },
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
@@ -211,6 +236,7 @@
                         }
                     }
                 });
+                ctxLineaHoras.addEventListener('click', function(){ window.location.href = '/evolucionHorasSectores'; });
             }
 
             // Gráfico de barras de importes (últimos 5 meses)
@@ -226,6 +252,7 @@
                     options: {
                         plugins: {
                             legend: { position: 'bottom' },
+                            datalabels: { display: false },
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
@@ -244,6 +271,7 @@
                         }
                     }
                 });
+                ctxBarrasImportes.addEventListener('click', function(){ window.location.href = '/evolucionImportesSectores'; });
             }
         });
         function minutosAFormato(minutos) {
