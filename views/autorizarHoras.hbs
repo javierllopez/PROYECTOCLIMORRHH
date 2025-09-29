@@ -1,18 +1,24 @@
-<div class="d-flex w-auto row flex-fill justify-content-center">
+<div class="container-fluid px-2">
     <div class="row flex-row mt-2">
         <div class="col-10 text-center">
             <div class="h1 text-center">Autorización de horas - Período {{Periodo novedadesE.Periodo}}</div>
         </div>
     </div>
     <div class="row flex-row m-2">
-        <div class="table-responsive table-sm">
-            <table class="table table-bordered table-striped">
+        <div class="border rounded-3 overflow-hidden shadow-sm w-100">
+            <div class="row bg-primary text-white">
+                <div class="col text-center">
+                    <h2 class="my-2">Autorización de horas</h2>
+                </div>
+            </div>
+            <div>
+            <table class="table table-sm mb-0 w-100">
                 <thead>
                     <tr>
                         <th class="d-none d-md-table-cell text-center">Empleado</th>
                         <th class="d-none d-md-table-cell text-center">Fecha</th>
                         <th class="text-center">Detalle</th>
-                        <th class="text-center">Estado</th>
+                        <th class="text-center d-none d-md-table-cell">Estado</th>
                         <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
@@ -37,7 +43,7 @@
                                 {{#ifeq this.IdEstado 4}}<br>
                                 <strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
                             </div>
-                            <div class="d-md-none align-middle d-block d-md-none">
+                            <div class="d-md-none align-middle d-block d-md-none text-start text-break">
                                 Empleado: {{this.Empleado}}<br> Fecha: {{FechaDiaSem this.Fecha}}<br> De: {{Hora
                                 this.Inicio}} a {{Hora this.Fin}}
                                 {{#if this.Hs50}} {{this.Hs50}} hs 50% {{/if}}
@@ -50,9 +56,36 @@
                                 this.GuardiasNocturnas 1}}s{{/ifmay}} nocturna{{#ifmay this.GuardiasNocturna
                                 1}}s{{/ifmay}}{{/ifmay}}{{#ifeq this.IdEstado 2}}<br>
                                 <strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
+                                <hr class="my-1 border-secondary opacity-25">
+                                <div class="mt-1 d-flex align-items-center justify-content-between">
+                                    <div class="small text-start">
+                                        <span class="fw-semibold">Estado:</span>
+                                        {{#ifeq this.IdEstado 1}}Ingresado{{/ifeq}}
+                                        {{#ifeq this.IdEstado 2}}Rechazado Supervisor{{/ifeq}}
+                                        {{#ifeq this.IdEstado 3}}Aprobado Supervisor{{/ifeq}}
+                                        {{#ifeq this.IdEstado 4}}Rechazado RRHH{{/ifeq}}
+                                        {{#ifeq this.IdEstado 5}}Aprobado RRHH{{/ifeq}}
+                                        {{#ifeq this.IdEstado 6}}Liquidado{{/ifeq}}
+                                    </div>
+                                    <div class="text-center">
+                                        {{#ifeq this.IdEstado 1}}<img src="/img/estado1.png" alt="Ingresado" title="Ingresado" width="40"
+                                            height="15"> {{/ifeq}}
+                                        {{#ifeq this.IdEstado 2}}<img src="/img/estado2.png" alt="Rechazado Supervisor"
+                                            title="Rechazado Supervisor" width="40" height="15"> {{/ifeq}}
+                                        {{#ifeq this.IdEstado 3}}<img src="/img/estado3.png" alt="Aprobado Supervisor"
+                                            title="Aprobado Supervisor" width="40" height="15"> {{/ifeq}}
+                                        {{#ifeq this.IdEstado 4}}<img src="/img/estado4.png" alt="Rechazado Recursos Humanos"
+                                            title="Rechazado Recursos Humanos" width="40" height="15"> {{/ifeq}}
+                                        {{#ifeq this.IdEstado 5}}<img src="/img/estado5.png" alt="Aprobado RRHH" title="Aprobado RRHH" width="40"
+                                                height="15"> {{/ifeq}}
+                                        {{#ifeq this.IdEstado 6}}
+                                            <i class="bi bi-check-circle-fill text-success fs-4" aria-label="Liquidado" title="Liquidado"></i>
+                                        {{/ifeq}}
+                                    </div>
+                                </div>
                             </div>
                         </td>
-                        <td class="align-middle"> {{#ifeq this.IdEstado 1}}<img src="/img/estado1.png" alt="Ingresado"
+                        <td class="align-middle d-none d-md-table-cell"> {{#ifeq this.IdEstado 1}}<img src="/img/estado1.png" alt="Ingresado"
                                 title="Ingresado" width="50" height="10"> {{/ifeq}}
                             {{#ifeq this.IdEstado 2}}<img src="/img/estado2.png" alt="Rechazado Supervisor"
                                 title="Rechazado Supervisor" width="50" height="10"> {{/ifeq}}
@@ -105,6 +138,7 @@
                     {{/each}}
                 </tbody>
             </table>
+            </div>
         </div>
     </div>
 </div>

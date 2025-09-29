@@ -375,22 +375,31 @@
                     <table class="table table-sm small mb-0">
                         <thead>
                             <th class="text-center">Detalle</th>
-                            <th class="text-center">Estado</th>
                             <th class="text-center">Acc.</th>
                         </thead>
 
                         <tbody>
                 {{#each novedades}}
                 <tr class="align-middle">
-                    <td class="text-center">
+                    <td class="text-start">
                         Fecha: {{FechaDiaSem this.Fecha}} De: {{Hora this.Inicio}} a
                         {{Hora this.Fin}} - {{this.Nomina}} Monto: {{formatoMoneda this.Monto}} {{#ifeq this.Estado
                         2}}<br>
                         <strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
                         {{#ifeq this.Estado 4}}<br>
                         <strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
-                    </td>
-                                        <td class="text-center">
+                        <hr class="my-1 border-secondary opacity-25">
+                        <div class="mt-1 d-flex align-items-center justify-content-between">
+                            <div class="small text-start">
+                                <span class="fw-semibold">Estado:</span>
+                                {{#ifeq this.Estado 1}}Ingresado{{/ifeq}}
+                                {{#ifeq this.Estado 2}}Rechazado Supervisor{{/ifeq}}
+                                {{#ifeq this.Estado 3}}Aprobado Supervisor{{/ifeq}}
+                                {{#ifeq this.Estado 4}}Rechazado RRHH{{/ifeq}}
+                                {{#ifeq this.Estado 5}}Aprobado RRHH{{/ifeq}}
+                                {{#ifeq this.Estado 6}}Liquidado{{/ifeq}}
+                            </div>
+                            <div class="text-center">
                         {{#ifeq this.Estado 1}}<img src="/img/estado1.png" alt="Ingresado" title="Ingresado" width="40"
                             height="15"> {{/ifeq}}
                         {{#ifeq this.Estado 2}}<img src="/img/estado2.png" alt="Rechazado Supervisor"
@@ -399,13 +408,13 @@
                             title="Aprobado Supervisor" width="40" height="15"> {{/ifeq}}
                         {{#ifeq this.Estado 4}}<img src="/img/estado4.png" alt="Rechazado Recursos Humanos"
                             title="Rechazado Recursos Humanos" width="40" height="15"> {{/ifeq}}
-                                                {{#ifeq this.Estado 5}}<img src="/img/estado5.png" alt="Aprobado RRHH" title="Aprobado RRHH" width="40"
-                                                        height="15"> {{/ifeq}}
-                                                {{#ifeq this.Estado 6}}
-                                                <div class="w-100 text-center">
-                                                    <i class="bi bi-check-circle-fill text-success fs-4" aria-label="Liquidado" title="Liquidado"></i>
-                                                </div>
-                                                {{/ifeq}}
+                        {{#ifeq this.Estado 5}}<img src="/img/estado5.png" alt="Aprobado RRHH" title="Aprobado RRHH" width="40"
+                                height="15"> {{/ifeq}}
+                        {{#ifeq this.Estado 6}}
+                            <i class="bi bi-check-circle-fill text-success fs-4" aria-label="Liquidado" title="Liquidado"></i>
+                        {{/ifeq}}
+                            </div>
+                        </div>
                     </td>
                     <td class="text-center">
                         {{#ifmen this.Estado 3}}
