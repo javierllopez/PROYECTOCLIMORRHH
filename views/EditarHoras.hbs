@@ -6,7 +6,7 @@
         <div class="row">
             <div class="col mx-2">
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header bg-primary text-white">
                         {{#if Id}} <!-- Si Id está definido => estoy editando el registro -->
                         <h2 class="text-center">Modificar horas extra ingresdas</h2>
                         {{else}}
@@ -20,45 +20,64 @@
                             <span>Ingresar la fecha y hora en que se comenzó a hacer horas extra, <strong>no la jornada
                                 completa</strong></span>
                             <hr>
-                            <div class="row">
-                                <div class="col">
-                                    <label for="NominaHabilitada" class="form-label">valor hora realizada</label>
-                                    <select class="form-select" id="NominaHabilitada" name="NominaHabilitada">
+                            <!-- Leyenda Categoría -->
+                            <div class="row mb-2">
+                                <div class="col text-start">
+                                    <div class="fw-semibold">Categoría</div>
+                                </div>
+                            </div>
+                            <div class="row gy-2 mb-3">
+                                <div class="col-12 col-md-12">
+                                    <label for="NominaHabilitada" class="form-label d-none d-md-inline">valor hora realizada</label>
+                                    <select class="form-select" id="NominaHabilitada" name="NominaHabilitada" aria-label="Valor hora realizada">
                                         {{#each nominaHabilitada}}
                                         <option value="{{this.IdNomina}}"{{#ifeq @root.novedadesR.IdNomina this.idNomina}} selected {{/ifeq}}>{{this.Descripcion}}</option>
                                         {{/each}}
                                     </select>
                                 </div>
                             </div>
-
-                            <div class="row">
-                                <div class="col d-flex align-items-center">
-                                    <label>Inicio</label>
-                                </div>
-                                <div class="col">
-                                    <label for="FechaInicio" class="form-label">Fecha</label>
-                                    <input type="date" class="form-control" id="FechaInicio" name="FechaInicio"
-                                        value="{{FechaIso novedadesR.Inicio}}">
-                                </div>
-                                <div class="col">
-                                    <label for="HoraInicio" class="form-label">Hora</label>
-                                    <input type="time" class="form-control" id="HoraInicio" name="HoraInicio"
-                                        value="{{Hora novedadesR.Inicio}}">
+                            <!-- Leyenda Ingreso -->
+                            <div class="row mt-3 mb-2">
+                                <div class="col text-start">
+                                    <div class="fw-semibold">Ingreso</div>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col d-flex align-items-center">
-                                    <label>Salida</label>
+                            <!-- Inicio: fecha y hora en la misma fila -->
+                            <div class="row g-2 align-items-end mb-3">
+                                <div class="col-12 d-none d-md-flex align-items-center">
+                                    <label class="mb-0">Inicio</label>
                                 </div>
-                                <div class="col">
-                                    <label for="FechaFin" class="form-label">Fecha</label>
+                                <div class="col-6 col-md-6">
+                                    <label for="FechaInicio" class="form-label d-none d-md-inline">Fecha</label>
+                                    <input type="date" class="form-control" id="FechaInicio" name="FechaInicio"
+                                        value="{{FechaIso novedadesR.Inicio}}" placeholder="Fecha de inicio">
+                                </div>
+                                <div class="col-6 col-md-6">
+                                    <label for="HoraInicio" class="form-label d-none d-md-inline">Hora</label>
+                                    <input type="time" class="form-control" id="HoraInicio" name="HoraInicio"
+                                        value="{{Hora novedadesR.Inicio}}" placeholder="Hora de inicio">
+                                </div>
+                            </div>
+                            <!-- Leyenda Salida -->
+                            <div class="row mt-3 mb-2">
+                                <div class="col text-start">
+                                    <div class="fw-semibold">Salida</div>
+                                </div>
+                            </div>
+                            <!-- Salida: fecha y hora en la misma fila -->
+                            <div class="row g-2 align-items-end mb-3">
+                                <div class="col-12 d-none d-md-flex align-items-center">
+                                    <label class="mb-0">Salida</label>
+                                </div>
+                                <div class="col-6 col-md-6">
+                                    <label for="FechaFin" class="form-label d-none d-md-inline">Fecha</label>
                                     <input type="date" class="form-control" id="FechaFin" name="FechaFin"
-                                        value="{{FechaIso novedadesR.Fin}}">
+                                        value="{{FechaIso novedadesR.Fin}}" placeholder="Fecha de salida">
                                 </div>
-                                <div class="col">
-                                    <label for="HoraFin" class="form-label">Hora</label>
+                                <div class="col-6 col-md-6">
+                                    <label for="HoraFin" class="form-label d-none d-md-inline">Hora</label>
                                     <input type="time" class="form-control" id="HoraFin" name="HoraFin"
-                                        value="{{Hora novedadesR.Fin}}">
+                                        value="{{Hora novedadesR.Fin}}" placeholder="Hora de salida">
                                 </div>
                             </div>
                         </div>
@@ -75,26 +94,36 @@
                             <span>Ingresar la fecha y hora en que se comenzó a hacer horas extra, <strong>no la jornada
                                 completa</strong></span>
                             <hr>
-                            <div class="row">
-                                <div class="col d-flex align-items-center">
-                                    <label for="NominaHabilitada" class="form-label">valor hora realizada</label>
+                            <!-- Leyenda Categoría -->
+                            <div class="row mb-2">
+                                <div class="col text-start">
+                                    <div class="fw-semibold">Categoría</div>
                                 </div>
-                                <div class="col-8">
-                                    <select class="form-select" id="NominaHabilitada" name="ItemNomina">
+                            </div>
+                            <div class="row gy-2 mb-3">
+                                <div class="col-12 col-md-12">
+                                    <label for="NominaHabilitada" class="form-label d-none d-md-inline">valor hora realizada</label>
+                                    <select class="form-select" id="NominaHabilitada" name="ItemNomina" aria-label="Valor hora realizada">
                                         {{#each nominaHabilitada}}
                                         <option value="{{this.IdNomina}}">{{this.Descripcion}}</option>
                                         {{/each}}
                                     </select>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col d-flex align-items-center">
-                                    <label>Inicio</label>
+                            <!-- Leyenda Ingreso -->
+                            <div class="row mt-3 mb-2">
+                                <div class="col text-start">
+                                    <div class="fw-semibold">Ingreso</div>
                                 </div>
-                                <div class="col">
-                                    <label for="Fecha" class="form-label">Fecha</label>
+                            </div>
+                            <div class="row g-2 align-items-end mb-3">
+                                <div class="col-12 d-none d-md-flex align-items-center">
+                                    <label class="mb-0">Inicio</label>
+                                </div>
+                                <div class="col-6 col-md-6">
+                                    <label for="Fecha" class="form-label d-none d-md-inline">Fecha</label>
                                     <input type="date" class="form-control" id="FechaEntrada" name="FechaEntrada"
-                                        required>
+                                        required placeholder="Fecha de inicio">
                                     <!-- Agrego script para asignar fecha actual a FechaEntrada -->
                                     <script>
                                         document.addEventListener("DOMContentLoaded", (event) => {
@@ -107,21 +136,27 @@
                                         });
                                     </script>
                                 </div>
-                                <div class="col">
-                                    <label for="Hora" class="form-label">Hora</label>
+                                <div class="col-6 col-md-6">
+                                    <label for="Hora" class="form-label d-none d-md-inline">Hora</label>
                                     <input type="time" class="form-control" id="HoraEntrada" name="HoraEntrada"
-                                        required>
+                                        required placeholder="Hora de inicio">
 
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col d-flex align-items-center">
-                                    <label>Salida</label>
+                            <!-- Leyenda Salida -->
+                            <div class="row mt-3 mb-2">
+                                <div class="col text-start">
+                                    <div class="fw-semibold">Salida</div>
                                 </div>
-                                <div class="col">
-                                    <label for="Fecha" class="form-label">Fecha</label>
+                            </div>
+                            <div class="row g-2 align-items-end mb-3">
+                                <div class="col-12 d-none d-md-flex align-items-center">
+                                    <label class="mb-0">Salida</label>
+                                </div>
+                                <div class="col-6 col-md-6">
+                                    <label for="Fecha" class="form-label d-none d-md-inline">Fecha</label>
                                     <input type="date" class="form-control" id="FechaSalida" name="FechaSalida"
-                                        required>
+                                        required placeholder="Fecha de salida">
                                     <script>
                                         document.getElementById("FechaSalida").addEventListener("focus", (event) => {
                                             const FechaEntrada = document.getElementById("FechaEntrada");
@@ -129,9 +164,9 @@
                                         });
                                     </script>
                                 </div>
-                                <div class="col">
-                                    <label for="Hora" class="form-label">Hora</label>
-                                    <input type="time" class="form-control" id="HoraSalida" name="HoraSalida" required>
+                                <div class="col-6 col-md-6">
+                                    <label for="Hora" class="form-label d-none d-md-inline">Hora</label>
+                                    <input type="time" class="form-control" id="HoraSalida" name="HoraSalida" required placeholder="Hora de salida">
                                 </div>
                             </div>
                         </div>
