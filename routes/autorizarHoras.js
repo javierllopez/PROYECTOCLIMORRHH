@@ -31,17 +31,20 @@ router.get('/', logueado, async (req, res) => {
             novedadesR.GuardiasPasivas,
             novedadesR.IdSupervisor,
             novedadesR.IdMotivo,
+            novedadesR.IdReemplazo,
             novedadesR.IdEstado,
             novedadesR.ObservacionesEstado, 
             novedadesR.Inicio,
             novedadesR.Fin,
             motivos.Id, 
             motivos.Descripcion AS Motivo,
+            pReemplazo.ApellidoYNombre AS ReemplazoNombre,
             novedadesR.Observaciones
         FROM 
             novedadesR
             LEFT JOIN personal ON novedadesR.IdEmpleado = personal.Id
             LEFT JOIN motivos ON novedadesR.IdMotivo = motivos.Id
+            LEFT JOIN personal AS pReemplazo ON novedadesR.IdReemplazo = pReemplazo.Id
         WHERE 
             novedadesR.IdNovedadesE = ? 
             AND novedadesR.IdSupervisor = ?

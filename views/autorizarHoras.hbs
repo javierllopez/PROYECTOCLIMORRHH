@@ -28,8 +28,8 @@
                         <td class="d-none d-md-table-cell align-middle">{{this.Empleado}}</td>
                         <td class="d-none d-md-table-cell align-middle">{{FechaDiaSem this.Fecha}}</td>
                         <td>
-                            <div class="d-none d-md-table-cell align-middle">De: {{Hora this.Inicio}} a {{Hora
-                                this.Fin}}
+                                                        <div class="d-none d-md-table-cell align-middle">De: {{Hora this.Inicio}} a {{Hora
+                                                                this.Fin}}
                                 {{#if this.Hs50}} {{this.Hs50}} hs 50% {{/if}}
                                 {{#if this.Hs100}} {{this.Hs100}} hs 100% {{/if}}
                                 {{#ifmay this.GuardiasDiurnas 0}} {{formatoNumero this.GuardiasDiurnas}} guardia{{#ifmay
@@ -38,7 +38,18 @@
                                 {{#ifmay this.GuardiasNocturnas 0}} {{formatoNumero this.GuardiasNocturnas}}
                                 guardia{{#ifmay
                                 this.GuardiasNocturnas 1}}s{{/ifmay}} nocturna{{#ifmay this.GuardiasNocturna
-                                1}}s{{/ifmay}}{{/ifmay}}{{#ifeq this.IdEstado 2}}<br>
+                                                                1}}s{{/ifmay}}{{/ifmay}}
+                                                                {{!-- Extras solicitados: motivo, reemplazo y observaciones --}}
+                                                                {{#if this.IdMotivo}} - Motivo: {{this.Motivo}}{{/if}}
+                                                                {{#if this.IdReemplazo}}
+                                                                    {{#ifmay this.IdReemplazo 0}} - Reemplazo: {{this.ReemplazoNombre}}{{/ifmay}}
+                                                                {{/if}}
+                                                                {{#if this.Observaciones}}
+                                                                    {{#if this.Observaciones.length}}
+                                                                        - Obs.: {{this.Observaciones}}
+                                                                    {{/if}}
+                                                                {{/if}}
+                                                                {{#ifeq this.IdEstado 2}}<br>
                                 <strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
                                 {{#ifeq this.IdEstado 4}}<br>
                                 <strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
@@ -51,11 +62,22 @@
                                 {{#ifmay this.GuardiasDiurnas 0}} {{formatoNumero this.GuardiasDiurnas}} guardia{{#ifmay
                                 this.GuardiasDiurnas 1}}s{{/ifmay}} diurna{{#ifmay this.GuardiasDiurnas
                                 1}}s{{/ifmay}}{{/ifmay}}
-                                {{#ifmay this.GuardiasNocturnas 0}} {{formatoNumero this.GuardiasNocturnas}}
-                                guardia{{#ifmay
-                                this.GuardiasNocturnas 1}}s{{/ifmay}} nocturna{{#ifmay this.GuardiasNocturna
-                                1}}s{{/ifmay}}{{/ifmay}}{{#ifeq this.IdEstado 2}}<br>
-                                <strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
+                                                                {{#ifmay this.GuardiasNocturnas 0}} {{formatoNumero this.GuardiasNocturnas}}
+                                                                guardia{{#ifmay
+                                                                this.GuardiasNocturnas 1}}s{{/ifmay}} nocturna{{#ifmay this.GuardiasNocturna
+                                                                1}}s{{/ifmay}}{{/ifmay}}
+                                                                {{!-- Extras solicitados: motivo, reemplazo y observaciones --}}
+                                                                {{#if this.IdMotivo}} - Motivo: {{this.Motivo}}{{/if}}
+                                                                {{#if this.IdReemplazo}}
+                                                                    {{#ifmay this.IdReemplazo 0}} - Reemplazo: {{this.ReemplazoNombre}}{{/ifmay}}
+                                                                {{/if}}
+                                                                {{#if this.Observaciones}}
+                                                                    {{#if this.Observaciones.length}}
+                                                                        - Obs.: {{this.Observaciones}}
+                                                                    {{/if}}
+                                                                {{/if}}
+                                                                {{#ifeq this.IdEstado 2}}<br>
+                                                                <strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
                                 <hr class="my-1 border-secondary opacity-25">
                                 <div class="mt-1 d-flex align-items-center justify-content-between">
                                     <div class="small text-start">
