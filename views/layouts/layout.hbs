@@ -13,6 +13,15 @@
     <title>CLIMO S.A.</title>
     <link rel="stylesheet" type="text/css" href="/CSS/Estilos.css">
     <link rel="stylesheet" type="text/css" href="/CSS/sidebars.css">
+    <style>
+        @media (max-width: 767.98px) {
+            .badge-xs {
+                font-size: 0.6rem;
+                padding: 0.15rem 0.3rem;
+                line-height: 1;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -47,12 +56,16 @@
                             <i class="bi-house-door fs-5"></i>
                         </a>
                         <a class="nav-link py-3 text-center position-relative" href="/novedades" id="link-novedades-mobile" title="Mis Horas" data-bs-toggle="tooltip">
-                            <i class="bi-calendar3 fs-5"></i>
-                            <span id="badge-novedades-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark d-none"></span>
+                            <span class="position-relative d-inline-block">
+                                <i class="bi-calendar3 fs-5"></i>
+                                <span id="badge-novedades-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark d-none badge-xs"></span>
+                            </span>
                         </a>
                         <a class="nav-link py-3 text-center position-relative" href="/autorizarHoras" id="link-autorizar-horas-mobile" title="Autorizar Horas" data-bs-toggle="tooltip">
-                            <i class="bi-hand-thumbs-up fs-5"></i>
-                            <span id="badge-autorizar-horas-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none d-md-none"></span>
+                            <span class="position-relative d-inline-block">
+                                <i class="bi-hand-thumbs-up fs-5"></i>
+                                <span id="badge-autorizar-horas-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none d-md-none badge-xs"></span>
+                            </span>
                         </a>
                         <div class="mt-auto">
                             <div class="dropup">
