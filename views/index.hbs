@@ -323,9 +323,61 @@
 {{/ifeq}}
 
 {{#ifeq nivelUsuario 3}}
-<div id="usuario-div" class="alert alert-info text-center">
-    <h2>Bienvenido Usuario</h2>
-    <p>Esta es la vista exclusiva para usuarios.</p>
+<div id="usuario-div" class="container mt-3">
+    <!-- Mobile: encabezado destacado con datos personales -->
+    <div class="d-block d-md-none">
+        <div class="card shadow-sm border-0 overflow-hidden">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi-person-circle fs-5"></i>
+                    <span>Mi información</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <img src="/img/usuario.png" alt="Usuario" width="48" height="48" class="rounded-circle">
+                    <div>
+                        <div class="fw-bold fs-5">{{#if usuarioPerfil.ApellidoYNombre}}{{usuarioPerfil.ApellidoYNombre}}{{else}}{{usuario}}{{/if}}</div>
+                        <div class="small text-muted">Usuario final</div>
+                    </div>
+                </div>
+                <div class="row g-2 mt-2">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center">
+                            <i class="bi-diagram-3 me-2 text-secondary"></i>
+                            <div>
+                                <div class="text-uppercase small text-muted">Sector</div>
+                                <div class="fw-semibold">{{#if usuarioPerfil.Sector}}{{usuarioPerfil.Sector}}{{else}}Sin asignar{{/if}}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex align-items-center">
+                            <i class="bi-clock-history me-2 text-secondary"></i>
+                            <div>
+                                <div class="text-uppercase small text-muted">Turno</div>
+                                <div class="fw-semibold">{{#if usuarioPerfil.Turno}}{{usuarioPerfil.Turno}}{{else}}Sin asignar{{/if}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Desktop: podría ampliarse con más información si fuera necesario -->
+    <div class="d-none d-md-block">
+        <div class="alert alert-info shadow-sm d-flex align-items-center gap-3">
+            <img src="/img/usuario.png" alt="Usuario" width="48" height="48" class="rounded-circle">
+            <div>
+                <div class="fw-bold fs-4">{{#if usuarioPerfil.ApellidoYNombre}}{{usuarioPerfil.ApellidoYNombre}}{{else}}{{usuario}}{{/if}}</div>
+                <div class="mt-1">
+                    <span class="me-3"><span class="text-muted">Sector:</span> <span class="fw-semibold">{{#if usuarioPerfil.Sector}}{{usuarioPerfil.Sector}}{{else}}Sin asignar{{/if}}</span></span>
+                    <span><span class="text-muted">Turno:</span> <span class="fw-semibold">{{#if usuarioPerfil.Turno}}{{usuarioPerfil.Turno}}{{else}}Sin asignar{{/if}}</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {{/ifeq}}
 
