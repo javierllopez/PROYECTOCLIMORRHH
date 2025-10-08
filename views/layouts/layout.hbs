@@ -48,6 +48,61 @@
     {{/ifeq}}
 
     {{#ifeq pantalla "phone"}}
+      {{!-- Admin (nivel 1) --}}
+      {{#ifeq nivelUsuario 1}}
+      <div>
+          <!-- Navbar vertical fija para administrador (mobile) -->
+          <nav class="position-fixed top-0 start-0 h-100 bg-light border-end d-flex flex-column d-md-none" style="width:56px; z-index:1030;">
+              <a class="nav-link py-3 text-center" href="/" title="Inicio" data-bs-toggle="tooltip">
+                  <i class="bi-house-door fs-5"></i>
+              </a>
+              <a class="nav-link py-3 text-center position-relative" href="/novedades" id="link-novedades-mobile" title="Mis Horas" data-bs-toggle="tooltip">
+                  <span class="position-relative d-inline-block">
+                      <i class="bi-calendar3 fs-5"></i>
+                      <span id="badge-novedades-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark d-none badge-xs"></span>
+                  </span>
+              </a>
+              <a class="nav-link py-3 text-center" href="/misPagos" title="Mis Pagos" data-bs-toggle="tooltip">
+                  <i class="bi-receipt fs-5"></i>
+              </a>
+              <div class="mt-auto">
+                  <div class="dropup">
+                      <a class="nav-link py-3 text-center dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false" title="Cuenta">
+                          <i class="bi-person-circle fs-5"></i>
+                      </a>
+                      <ul class="dropdown-menu dropdown-menu-end text-small shadow">
+                          {{#if usuario}}<li class="dropdown-header">{{usuario}}</li>{{/if}}
+                          <li><a class="dropdown-item" href="/login/cambiarClave">Cambiar contraseña</a></li>
+                          <li><hr class="dropdown-divider"/></li>
+                          <li><a class="dropdown-item" href="/salir">Salir</a></li>
+                      </ul>
+                  </div>
+              </div>
+          </nav>
+          <main class="d-md-none" style="margin-left:56px;">
+              {{{body}}}
+          </main>
+      </div>
+      <script>
+          (function(){
+              const actualizarBadges = async () => {
+                  try {
+                      const r2 = await fetch('/novedades/pendientes', { headers: { 'Accept': 'application/json' }, cache: 'no-store', credentials: 'same-origin' });
+                      if (r2.ok) {
+                          const d2 = await r2.json();
+                          const cant2 = Number(d2.cantidad)||0;
+                          const bNov = document.getElementById('badge-novedades-mobile');
+                          if (bNov) { if (cant2>0){ bNov.textContent = cant2>99?'99+':String(cant2); bNov.classList.remove('d-none'); } else { bNov.classList.add('d-none'); } }
+                      }
+                  } catch(e) { /* noop */ }
+              };
+              if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', actualizarBadges); } else { actualizarBadges(); }
+              setInterval(actualizarBadges, 60000);
+          })();
+      </script>
+      {{/ifeq}}
+
+      {{!-- Supervisor (nivel 2) --}}
       {{#ifeq nivelUsuario 2}}
       <div>
           <!-- Navbar vertical fija para supervisores (mobile) -->
@@ -60,6 +115,9 @@
                       <i class="bi-calendar3 fs-5"></i>
                       <span id="badge-novedades-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark d-none badge-xs"></span>
                   </span>
+              </a>
+              <a class="nav-link py-3 text-center" href="/misPagos" title="Mis Pagos" data-bs-toggle="tooltip">
+                  <i class="bi-receipt fs-5"></i>
               </a>
               <a class="nav-link py-3 text-center position-relative" href="/autorizarHoras" id="link-autorizar-horas-mobile" title="Autorizar Horas" data-bs-toggle="tooltip">
                   <span class="position-relative d-inline-block">
@@ -109,57 +167,59 @@
               setInterval(actualizarBadges, 60000);
           })();
       </script>
-      {{else}}
-        {{#ifeq nivelUsuario 3}}
-        <div>
-            <!-- Navbar vertical fija para usuarios finales (mobile) -->
-            <nav class="position-fixed top-0 start-0 h-100 bg-light border-end d-flex flex-column d-md-none" style="width:56px; z-index:1030;">
-                <a class="nav-link py-3 text-center" href="/" title="Inicio" data-bs-toggle="tooltip">
-                    <i class="bi-house-door fs-5"></i>
-                </a>
-                <a class="nav-link py-3 text-center position-relative" href="/novedades" id="link-novedades-mobile" title="Mis Horas" data-bs-toggle="tooltip">
-                    <span class="position-relative d-inline-block">
-                        <i class="bi-calendar3 fs-5"></i>
-                        <span id="badge-novedades-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark d-none badge-xs"></span>
-                    </span>
-                </a>
-                <div class="mt-auto">
-                    <div class="dropup">
-                        <a class="nav-link py-3 text-center dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false" title="Cuenta">
-                            <i class="bi-person-circle fs-5"></i>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end text-small shadow">
-                            {{#if usuario}}<li class="dropdown-header">{{usuario}}</li>{{/if}}
-                            <li><a class="dropdown-item" href="/login/cambiarClave">Cambiar contraseña</a></li>
-                            <li><hr class="dropdown-divider"/></li>
-                            <li><a class="dropdown-item" href="/salir">Salir</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-            <main class="d-md-none" style="margin-left:56px;">
-                {{{body}}}
-            </main>
-        </div>
-        <script>
-            (function(){
-                const actualizarBadgeNovedades = async () => {
-                    try {
-                        const r = await fetch('/novedades/pendientes', { headers: { 'Accept': 'application/json' }, cache: 'no-store', credentials: 'same-origin' });
-                        if (!r.ok) return;
-                        const d = await r.json();
-                        const cant = Number(d.cantidad)||0;
-                        const bNov = document.getElementById('badge-novedades-mobile');
-                        if (bNov) { if (cant>0){ bNov.textContent = cant>99?'99+':String(cant); bNov.classList.remove('d-none'); } else { bNov.classList.add('d-none'); } }
-                    } catch(e) { /* noop */ }
-                };
-                if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', actualizarBadgeNovedades); } else { actualizarBadgeNovedades(); }
-                setInterval(actualizarBadgeNovedades, 60000);
-            })();
-        </script>
-        {{else}}
-            {{{body}}}
-        {{/ifeq}}
+      {{/ifeq}}
+
+      {{!-- Usuario final (nivel 3) --}}
+      {{#ifeq nivelUsuario 3}}
+      <div>
+          <!-- Navbar vertical fija para usuarios finales (mobile) -->
+          <nav class="position-fixed top-0 start-0 h-100 bg-light border-end d-flex flex-column d-md-none" style="width:56px; z-index:1030;">
+              <a class="nav-link py-3 text-center" href="/" title="Inicio" data-bs-toggle="tooltip">
+                  <i class="bi-house-door fs-5"></i>
+              </a>
+              <a class="nav-link py-3 text-center position-relative" href="/novedades" id="link-novedades-mobile" title="Mis Horas" data-bs-toggle="tooltip">
+                  <span class="position-relative d-inline-block">
+                      <i class="bi-calendar3 fs-5"></i>
+                      <span id="badge-novedades-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark d-none badge-xs"></span>
+                  </span>
+              </a>
+              <a class="nav-link py-3 text-center" href="/misPagos" title="Mis Pagos" data-bs-toggle="tooltip">
+                  <i class="bi-receipt fs-5"></i>
+              </a>
+              <div class="mt-auto">
+                  <div class="dropup">
+                      <a class="nav-link py-3 text-center dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false" title="Cuenta">
+                          <i class="bi-person-circle fs-5"></i>
+                      </a>
+                      <ul class="dropdown-menu dropdown-menu-end text-small shadow">
+                          {{#if usuario}}<li class="dropdown-header">{{usuario}}</li>{{/if}}
+                          <li><a class="dropdown-item" href="/login/cambiarClave">Cambiar contraseña</a></li>
+                          <li><hr class="dropdown-divider"/></li>
+                          <li><a class="dropdown-item" href="/salir">Salir</a></li>
+                      </ul>
+                  </div>
+              </div>
+          </nav>
+          <main class="d-md-none" style="margin-left:56px;">
+              {{{body}}}
+          </main>
+      </div>
+      <script>
+          (function(){
+              const actualizarBadgeNovedades = async () => {
+                  try {
+                      const r = await fetch('/novedades/pendientes', { headers: { 'Accept': 'application/json' }, cache: 'no-store', credentials: 'same-origin' });
+                      if (!r.ok) return;
+                      const d = await r.json();
+                      const cant = Number(d.cantidad)||0;
+                      const bNov = document.getElementById('badge-novedades-mobile');
+                      if (bNov) { if (cant>0){ bNov.textContent = cant>99?'99+':String(cant); bNov.classList.remove('d-none'); } else { bNov.classList.add('d-none'); } }
+                  } catch(e) { /* noop */ }
+              };
+              if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', actualizarBadgeNovedades); } else { actualizarBadgeNovedades(); }
+              setInterval(actualizarBadgeNovedades, 60000);
+          })();
+      </script>
       {{/ifeq}}
     {{/ifeq}}
 

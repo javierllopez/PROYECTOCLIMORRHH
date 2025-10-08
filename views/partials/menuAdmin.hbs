@@ -129,6 +129,16 @@
                     <span id="badge-novedades-desktop" class="badge rounded-pill bg-warning text-dark d-none"></span>
                 </a>
             </li>
+            <li>
+                <a href="/misPagos" class="nav-link link-body-emphasis d-flex align-items-center" id="link-misPagos-desktop">
+                    <span><i class="bi-receipt p-2"></i> Mis Pagos</span>
+                </a>
+            </li>
+            <li>
+                <a href="/misPagos" class="nav-link link-body-emphasis d-flex align-items-center" id="link-misPagos-desktop">
+                    <span><i class="bi-receipt p-2"></i> Mis Pagos</span>
+                </a>
+            </li>
         </ul>
         <hr>
         <div class="dropdown">
@@ -148,46 +158,56 @@
         </div>
     </div>
 </div>
-<!-- Contenido a mostrar en pantallas pequeñas -->
+<!-- Contenido a mostrar en pantallas pequeñas: menú vertical como en otras vistas -->
 <div class="d-block d-md-none">
-    <div class="d-flex">
-        <div class="row align-items-center">
-            <div class="col">
-                <a href="/" class="align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
-                    <img src="/img/DelBuenPastor.jpg" alt="" width="130" height="90" class="me-2">
-                </a>
-            </div>
-            <div class="col">
-                <div class="dropdown">
-                    <a href="#"
-                        class="d-flex align-items-center link-body-emphasis text-decoration-none dropdown-toggle"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                        <strong class="me-2">{{usuario}}</strong>
-                        <img src="/img/usuario.png" alt="" width="32" height="32" class="rounded-circle me-2">
+    <div>
+        <nav class="position-fixed top-0 start-0 h-100 bg-light border-end d-flex flex-column d-md-none" style="width:56px; z-index:1030;">
+            <a class="nav-link py-3 text-center" href="/" title="Inicio" data-bs-toggle="tooltip">
+                <i class="bi-house-door fs-5"></i>
+            </a>
+            <a class="nav-link py-3 text-center position-relative" href="/novedades" id="link-novedades-mobile" title="Mis Horas" data-bs-toggle="tooltip">
+                <span class="position-relative d-inline-block">
+                    <i class="bi-calendar3 fs-5"></i>
+                    <span id="badge-novedades-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark d-none"></span>
+                </span>
+            </a>
+            <a class="nav-link py-3 text-center" href="/misPagos" title="Mis Pagos" data-bs-toggle="tooltip">
+                <i class="bi-receipt fs-5"></i>
+            </a>
+            <div class="mt-auto">
+                <div class="dropup">
+                    <a class="nav-link py-3 text-center dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false" title="Cuenta">
+                        <i class="bi-person-circle fs-5"></i>
                     </a>
-                    <ul class="dropdown-menu text-small shadow">
+                    <ul class="dropdown-menu dropdown-menu-end text-small shadow">
+                        {{#if usuario}}<li class="dropdown-header">{{usuario}}</li>{{/if}}
                         <li><a class="dropdown-item" href="#">Editar perfil</a></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
+                        <li><hr class="dropdown-divider"/></li>
                         <li><a class="dropdown-item" href="/salir">Salir</a></li>
                     </ul>
                 </div>
             </div>
-        </div>
+        </nav>
+        <main class="d-md-none" style="margin-left:56px;">
+            <!-- El contenido de la vista se renderiza aquí desde el layout general -->
+        </main>
     </div>
-    <div class="row justify-content-center mt-2 p-2">
-        <div class="col-5 position-relative d-flex">
-            <a href="/novedades"
-                class="btn btn-primary w-100 h-100 d-flex justify-content-between align-items-center shadow position-relative"
-                id="link-novedades-mobile">
-                <span id="badge-novedades-mobile"
-                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark d-none"></span>
-                <i class="bi-calendar3 text-white display-4"></i>
-                <span class="text-white fs-6">Mis Horas</span>
-            </a>
-        </div>
-    </div>
+    <script>
+        (function(){
+            const actualizarBadgeNovedades = async () => {
+                try {
+                    const resp = await fetch('/novedades/pendientes', { headers: { 'Accept': 'application/json' }, cache: 'no-store', credentials: 'same-origin' });
+                    if (!resp.ok) return;
+                    const data = await resp.json();
+                    const cant = Number(data.cantidad)||0;
+                    const b = document.getElementById('badge-novedades-mobile');
+                    if (b) { if (cant>0){ b.textContent = cant>99? '99+': String(cant); b.classList.remove('d-none'); } else { b.classList.add('d-none'); } }
+                } catch(e){}
+            };
+            if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', actualizarBadgeNovedades); } else { actualizarBadgeNovedades(); }
+            setInterval(actualizarBadgeNovedades, 60000);
+        })();
+    </script>
 </div>
 <script>
     (function () {

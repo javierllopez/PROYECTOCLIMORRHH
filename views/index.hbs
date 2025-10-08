@@ -71,6 +71,12 @@
                     <div class="card-body">
                         <h5 class="card-title text-center">Evolución de horas (últimos 5 meses)</h5>
                         <canvas id="lineaHoras" style="max-width:100%; height:auto; cursor:pointer;"></canvas>
+                        <div class="text-center mt-3">
+                            <a class="btn btn-outline-primary btn-sm" href="/novedades"><i class="bi-calendar3 me-1"></i>Mis Horas</a>
+                        </div>
+                        <div class="text-center mt-2">
+                            <a class="btn btn-outline-secondary btn-sm" href="/misPagos"><i class="bi-receipt me-1"></i>Mis Pagos</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -318,7 +324,11 @@
         </div>
     </div>
 
-    <!-- Contenido adicional de la vista de supervisor (si fuera necesario) -->
+    <!-- Acceso rápido a Mis Horas y Mis Pagos -->
+    <div class="mt-3">
+        <a class="btn btn-primary me-2" href="/novedades"><i class="bi-calendar3 me-1"></i>Mis Horas</a>
+        <a class="btn btn-outline-primary" href="/misPagos"><i class="bi-receipt me-1"></i>Mis Pagos</a>
+    </div>
 </div>
 {{/ifeq}}
 
@@ -376,6 +386,10 @@
                     <span><span class="text-muted">Turno:</span> <span class="fw-semibold">{{#if usuarioPerfil.Turno}}{{usuarioPerfil.Turno}}{{else}}Sin asignar{{/if}}</span></span>
                 </div>
             </div>
+        </div>
+        <div class="mt-2">
+            <a class="btn btn-primary me-2" href="/novedades"><i class="bi-calendar3 me-1"></i>Mis Horas</a>
+            <a class="btn btn-outline-primary" href="/misPagos"><i class="bi-receipt me-1"></i>Mis Pagos</a>
         </div>
     </div>
 </div>
