@@ -1,17 +1,18 @@
 <div class="d-flex w-auto row flex-fill mx-2">
-    {{#ifeq nivelUsuario 2}}
+
     <style>
         /* Títulos de tablas en mobile para supervisores */
         @media (max-width: 767.98px) {
             .titulo-tabla-sup {
-                font-size: 1.5rem; /* tamaño grande uniforme */
+                font-size: 1.5rem;
+                /* tamaño grande uniforme */
                 line-height: 1.2;
                 margin-top: .5rem !important;
                 margin-bottom: .5rem !important;
             }
         }
     </style>
-    {{/ifeq}}
+
     <div class="row flex-row justify-content-between my-2">
         <div class="col flex-col">
             <div class="h1">Mis Horas</div>
@@ -35,46 +36,46 @@
         </div>
     </div>
     <div class="row row-flex my-2 gx-3" id="ValoresYTotales">
-        <div class="col-12 col-md-6 {{#ifeq nivelUsuario 2}}mb-4 mb-md-0{{/ifeq}}">
+        <div class="col-12 col-md-6 mb-4 mb-md-0">
             <div class="border rounded-3 overflow-hidden shadow-sm">
                 <div class="row bg-primary text-white">
                     <div class="col text-center">
-                        <h2 class="my-2 {{#ifeq nivelUsuario 2}}titulo-tabla-sup{{/ifeq}}">Valores actuales</h2>
+                        <h2 class="my-2">Valores actuales</h2>
                     </div>
                 </div>
                 <div class="row align-items-stretch">
                     <div class="col">
                         <table class="table table-sm mb-0" id="tablaValores">
-                        <thead class="text-center">
-                            <tr class="align-middle">
-                                <th>Categoría</th>
-                                {{#ifeq columnas.Horas50 true}}<th>Hs. 50%</th>{{/ifeq}}
-                                {{#ifeq columnas.Horas100 true}}<th>Hs. 100%</th>{{/ifeq}}
-                                {{#ifeq columnas.GuardiasDiurnas true}}<th>Guardias Diurnas</th>{{/ifeq}}
-                                {{#ifeq columnas.GuardiasNocturnas true}}<th>Guardias Nocturnas</th>{{/ifeq}}
-                                {{#ifeq columnas.GuardiasPasivas true}}<th>Guardias Pasivas</th>{{/ifeq}}
-                            </tr>
-                        </thead>
-                        <tbody class="text-center">
-                            {{#each nominaValores}}
-                            <tr>
-                                <td>{{this.Descripcion}}</td>
-                                {{#ifeq @root.columnas.Horas50 true}}<td>{{formatoMoneda this.ValorHora50}}</td>
-                                {{/ifeq}}
-                                {{#ifeq @root.columnas.Horas100 true}}<td>{{formatoMoneda this.ValorHora100}}</td>
-                                {{/ifeq}}
-                                {{#ifeq @root.columnas.GuardiasDiurnas true}}<td>{{formatoMoneda
-                                    this.ValorGuardiaDiurna}}</td>
-                                {{/ifeq}}
-                                {{#ifeq @root.columnas.GuardiasNocturnas true}}<td>{{formatoMoneda
-                                    this.ValorGuardiaNocturna}}</td>
-                                {{/ifeq}}
-                                {{#ifeq @root.columnas.GuardiasPasivas true}}<td>{{formatoMoneda
-                                    this.ValorGuardiaPasiva}}</td>
-                                {{/ifeq}}
-                            </tr>
-                            {{/each}}
-                        </tbody>
+                            <thead class="text-center">
+                                <tr class="align-middle">
+                                    <th>Categoría</th>
+                                    {{#ifeq columnas.Horas50 true}}<th>Hs. 50%</th>{{/ifeq}}
+                                    {{#ifeq columnas.Horas100 true}}<th>Hs. 100%</th>{{/ifeq}}
+                                    {{#ifeq columnas.GuardiasDiurnas true}}<th>Guardias Diurnas</th>{{/ifeq}}
+                                    {{#ifeq columnas.GuardiasNocturnas true}}<th>Guardias Nocturnas</th>{{/ifeq}}
+                                    {{#ifeq columnas.GuardiasPasivas true}}<th>Guardias Pasivas</th>{{/ifeq}}
+                                </tr>
+                            </thead>
+                            <tbody class="text-center">
+                                {{#each nominaValores}}
+                                <tr>
+                                    <td>{{this.Descripcion}}</td>
+                                    {{#ifeq @root.columnas.Horas50 true}}<td>{{formatoMoneda this.ValorHora50}}</td>
+                                    {{/ifeq}}
+                                    {{#ifeq @root.columnas.Horas100 true}}<td>{{formatoMoneda this.ValorHora100}}</td>
+                                    {{/ifeq}}
+                                    {{#ifeq @root.columnas.GuardiasDiurnas true}}<td>{{formatoMoneda
+                                        this.ValorGuardiaDiurna}}</td>
+                                    {{/ifeq}}
+                                    {{#ifeq @root.columnas.GuardiasNocturnas true}}<td>{{formatoMoneda
+                                        this.ValorGuardiaNocturna}}</td>
+                                    {{/ifeq}}
+                                    {{#ifeq @root.columnas.GuardiasPasivas true}}<td>{{formatoMoneda
+                                        this.ValorGuardiaPasiva}}</td>
+                                    {{/ifeq}}
+                                </tr>
+                                {{/each}}
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -84,147 +85,142 @@
             <div class="border rounded-3 overflow-hidden shadow-sm">
                 <div class="row bg-primary text-white">
                     <div class="col text-center">
-                        <h2 class="my-2 {{#ifeq nivelUsuario 2}}titulo-tabla-sup{{/ifeq}}">Totales</h2>
+                        <h2 class="my-2 titulo-tabla-sup">Totales</h2>
                     </div>
                 </div>
                 <div class="row align-items-stretch">
                     <div class="col">
                         <table class="table table-sm mb-0">
-                    {{#ifeq nivelUsuario 2}}
-                    <thead class="text-center d-table-header-group d-md-none">
-                        <th class="border-0">Estado</th>
-                        {{#ifeq columnas.Horas50 true}}<th class="border-0">Hs. 50%</th>{{/ifeq}}
-                        {{#ifeq columnas.Horas100 true}}<th class="border-0">Hs. 100%</th>{{/ifeq}}
-                        {{#ifeq columnas.GuardiasDiurnas true}}<th class="border-0">G. Diur.</th>{{/ifeq}}
-                        {{#ifeq columnas.GuardiasNocturnas true}}<th class="border-0">G. Noct.</th>{{/ifeq}}
-                        {{#ifeq columnas.GuardiasPasivas true}}<th class="border-0">G. Pas.</th>{{/ifeq}}
-                        <th class="border-0">Monto</th>
-                    </thead>
-                    {{/ifeq}}
-                    <thead class="text-center {{#ifeq nivelUsuario 2}}d-none d-md-table-header-group{{/ifeq}}">
-                        <th>Estado</th>
-                        {{#ifeq columnas.Horas50 true}}<th>Hs. 50%</th>{{/ifeq}}
-                        {{#ifeq columnas.Horas100 true}}<th>Hs. 100%</th>{{/ifeq}}
-                        {{#ifeq columnas.GuardiasDiurnas true}}<th>G. Diur.</th>{{/ifeq}}
-                        {{#ifeq columnas.GuardiasNocturnas true}}<th>G. Noct.</th>{{/ifeq}}
-                        {{#ifeq columnas.GuardiasPasivas true}}<th>G. Pas.</th>{{/ifeq}}
-                        <th>Monto</th>
-                    </thead>
-                    <tbody class="text-center">
-                        {{#ifmay totalesPendientes.totalMonto 0}}
-                        <tr>
-                            <td>Pendiente</td>
-                            {{#ifeq columnas.Horas50 true}}
-                            {{#ifmay totalesPendientes.totalMin50 0}} <td>{{minutosAHoras totalesPendientes.totalMin50}}
-                            </td> {{else}} <td>00:00</td> {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.Horas100 true}}
-                            {{#ifmay totalesPendientes.totalMin100 0}} <td>{{minutosAHoras
-                                totalesPendientes.totalMin100}}</td> {{else}} <td>00:00</td> {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.GuardiasDiurnas true}}
-                            {{#ifmay totalesPendientes.totalGuardiasDiurnas 0}} <td>
-                                {{formatoNumero totalesPendientes.totalGuardiasDiurnas}}</td>{{else}} <td>0</td>
-                            {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.GuardiasNocturnas true}}
-                            {{#ifmay totalesPendientes.totalGuardiasNocturnas 0}} <td>
-                                {{formatoNumero totalesPendientes.totalGuardiasNocturnas}}</td>{{else}} <td>0</td>
-                            {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.GuardiasPasivas true}}
-                            {{#ifmay totalesPendientes.totalGuardiasPasivas 0}} <td>
-                                {{formatoNumero totalesPendientes.totalGuardiasPasivas}}</td>{{else}} <td>0</td>
-                            {{/ifmay}}
-                            {{/ifeq}}
-                            <td>{{formatoMoneda totalesPendientes.totalMonto}}</td>
-                        </tr>
-                        {{/ifmay}}
-                        {{#ifmay totalesCancelados.totalMonto 0}}
-                        <tr>
-                            <td>Rechazados</td>
-                            {{#ifeq columnas.Horas50 true}}
-                            {{#ifmay totalesCancelados.totalMin50 0}} <td>{{minutosAHoras totalesCancelados.totalMin50}}
-                            </td> {{else}} <td>00:00</td> {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.Horas100 true}}
-                            {{#ifmay totalesCancelados.totalMin100 0}} <td>{{minutosAHoras
-                                totalesCancelados.totalMin100}}</td> {{else}} <td>00:00</td> {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.GuardiasDiurnas true}}
-                            {{#ifmay totalesCancelados.totalGuardiasDiurnas 0}} <td>
-                                {{formatoNumero totalesCancelados.totalGuardiasDiurnas}}</td>{{else}} <td>0</td>
-                            {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.GuardiasNocturnas true}}
-                            {{#ifmay totalesCancelados.totalGuardiasNocturnas 0}} <td>
-                                {{formatoNumero totalesCancelados.totalGuardiasNocturnas}}</td>{{else}} <td>0</td>
-                            {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.GuardiasPasivas true}}
-                            {{#ifmay totalesCancelados.totalGuardiasPasivas 0}} <td>
-                                {{formatoNumero totalesCancelados.totalGuardiasPasivas}}</td>{{else}} <td>0</td>
-                            {{/ifmay}}
-                            {{/ifeq}}
-                            <td>{{formatoMoneda totalesCancelados.totalMonto}}</td>
-                        </tr>
-                        {{/ifmay}}
-                        {{#ifmay totalesConfirmados.totalMonto 0}}
-                        <tr>
-                            <td>Confirmado</td>
-                            {{#ifeq columnas.Horas50 true}}
-                            {{#ifmay totalesConfirmados.totalMin50 0}} <td>{{minutosAHoras
-                                totalesConfirmados.totalMin50}}</td> {{else}} <td>00:00</td> {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.Horas100 true}}
-                            {{#ifmay totalesConfirmados.totalMin100 0}} <td>{{minutosAHoras
-                                totalesConfirmados.totalMin100}}</td> {{else}} <td>00:00</td> {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.GuardiasDiurnas true}}
-                            {{#ifmay totalesConfirmados.totalGuardiasDiurnas 0}} <td>
-                                {{totalesConfirmados.totalGuardiasDiurnas}}</td>{{else}} <td>0</td> {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.GuardiasNocturnas true}}
-                            {{#ifmay totalesConfirmados.totalGuardiasNocturnas 0}} <td>
-                                {{totalesConfirmados.totalGuardiasNocturnas}}</td>{{else}} <td>0</td> {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.GuardiasPasivas true}}
-                            {{#ifmay totalesConfirmados.totalGuardiasPasivas 0}} <td>
-                                {{totalesConfirmados.totalGuardiasPasivas}}</td>{{else}} <td>0</td> {{/ifmay}}
-                            {{/ifeq}}
-                            <td>{{formatoMoneda totalesConfirmados.totalMonto}}</td>
-                        </tr>
-                        {{/ifmay}}
-                        {{#ifmay totalesLiquidados.totalMonto 0}}
-                        <tr>
-                            <td>Liquidado</td>
-                            {{#ifeq columnas.Horas50 true}}
-                            {{#ifmay totalesLiquidados.totalMin50 0}} <td>{{minutosAHoras totalesLiquidados.totalMin50}}
-                            </td> {{else}} <td>00:00</td> {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.Horas100 true}}
-                            {{#ifmay totalesLiquidados.totalMin100 0}} <td>{{minutosAHoras
-                                totalesLiquidados.totalMin100}}</td> {{else}} <td>00:00</td> {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.GuardiasDiurnas true}}
-                            {{#ifmay totalesLiquidados.totalGuardiasDiurnas 0}} <td>
-                                {{formatoNumero totalesLiquidados.totalGuardiasDiurnas}}</td>{{else}} <td>0</td>
-                            {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.GuardiasNocturnas true}}
-                            {{#ifmay totalesLiquidados.totalGuardiasNocturnas 0}} <td>
-                                {{formatoNumero totalesLiquidados.totalGuardiasNocturnas}}</td>{{else}} <td>0</td>
-                            {{/ifmay}}
-                            {{/ifeq}}
-                            {{#ifeq columnas.GuardiasPasivas true}}
-                            {{#ifmay totalesLiquidados.totalGuardiasPasivas 0}} <td>
-                                {{formatoNumero totalesLiquidados.totalGuardiasPasivas}}</td>{{else}} <td>0</td>
-                            {{/ifmay}}
-                            {{/ifeq}}
-                            <td>{{formatoMoneda totalesLiquidados.totalMonto}}</td>
-                        </tr>
-                        {{/ifmay}}
-                    </tbody>
+                           <thead class="text-center d-table-header-group d-md-none">
+                                <th class="border-0">Estado</th>
+                                {{#ifeq columnas.Horas50 true}}<th class="border-0">Hs. 50%</th>{{/ifeq}}
+                                {{#ifeq columnas.Horas100 true}}<th class="border-0">Hs. 100%</th>{{/ifeq}}
+                                {{#ifeq columnas.GuardiasDiurnas true}}<th class="border-0">G. Diur.</th>{{/ifeq}}
+                                {{#ifeq columnas.GuardiasNocturnas true}}<th class="border-0">G. Noct.</th>{{/ifeq}}
+                                {{#ifeq columnas.GuardiasPasivas true}}<th class="border-0">G. Pas.</th>{{/ifeq}}
+                                <th class="border-0">Monto</th>
+                            </thead>
+                            <tbody class="text-center">
+                                {{#ifmay totalesPendientes.totalMonto 0}}
+                                <tr>
+                                    <td>Pendiente</td>
+                                    {{#ifeq columnas.Horas50 true}}
+                                    {{#ifmay totalesPendientes.totalMin50 0}} <td>{{minutosAHoras
+                                        totalesPendientes.totalMin50}}
+                                    </td> {{else}} <td>00:00</td> {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.Horas100 true}}
+                                    {{#ifmay totalesPendientes.totalMin100 0}} <td>{{minutosAHoras
+                                        totalesPendientes.totalMin100}}</td> {{else}} <td>00:00</td> {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.GuardiasDiurnas true}}
+                                    {{#ifmay totalesPendientes.totalGuardiasDiurnas 0}} <td>
+                                        {{formatoNumero totalesPendientes.totalGuardiasDiurnas}}</td>{{else}} <td>0</td>
+                                    {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.GuardiasNocturnas true}}
+                                    {{#ifmay totalesPendientes.totalGuardiasNocturnas 0}} <td>
+                                        {{formatoNumero totalesPendientes.totalGuardiasNocturnas}}</td>{{else}} <td>0
+                                    </td>
+                                    {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.GuardiasPasivas true}}
+                                    {{#ifmay totalesPendientes.totalGuardiasPasivas 0}} <td>
+                                        {{formatoNumero totalesPendientes.totalGuardiasPasivas}}</td>{{else}} <td>0</td>
+                                    {{/ifmay}}
+                                    {{/ifeq}}
+                                    <td>{{formatoMoneda totalesPendientes.totalMonto}}</td>
+                                </tr>
+                                {{/ifmay}}
+                                {{#ifmay totalesCancelados.totalMonto 0}}
+                                <tr>
+                                    <td>Rechazados</td>
+                                    {{#ifeq columnas.Horas50 true}}
+                                    {{#ifmay totalesCancelados.totalMin50 0}} <td>{{minutosAHoras
+                                        totalesCancelados.totalMin50}}
+                                    </td> {{else}} <td>00:00</td> {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.Horas100 true}}
+                                    {{#ifmay totalesCancelados.totalMin100 0}} <td>{{minutosAHoras
+                                        totalesCancelados.totalMin100}}</td> {{else}} <td>00:00</td> {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.GuardiasDiurnas true}}
+                                    {{#ifmay totalesCancelados.totalGuardiasDiurnas 0}} <td>
+                                        {{formatoNumero totalesCancelados.totalGuardiasDiurnas}}</td>{{else}} <td>0</td>
+                                    {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.GuardiasNocturnas true}}
+                                    {{#ifmay totalesCancelados.totalGuardiasNocturnas 0}} <td>
+                                        {{formatoNumero totalesCancelados.totalGuardiasNocturnas}}</td>{{else}} <td>0
+                                    </td>
+                                    {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.GuardiasPasivas true}}
+                                    {{#ifmay totalesCancelados.totalGuardiasPasivas 0}} <td>
+                                        {{formatoNumero totalesCancelados.totalGuardiasPasivas}}</td>{{else}} <td>0</td>
+                                    {{/ifmay}}
+                                    {{/ifeq}}
+                                    <td>{{formatoMoneda totalesCancelados.totalMonto}}</td>
+                                </tr>
+                                {{/ifmay}}
+                                {{#ifmay totalesConfirmados.totalMonto 0}}
+                                <tr>
+                                    <td>Confirmado</td>
+                                    {{#ifeq columnas.Horas50 true}}
+                                    {{#ifmay totalesConfirmados.totalMin50 0}} <td>{{minutosAHoras
+                                        totalesConfirmados.totalMin50}}</td> {{else}} <td>00:00</td> {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.Horas100 true}}
+                                    {{#ifmay totalesConfirmados.totalMin100 0}} <td>{{minutosAHoras
+                                        totalesConfirmados.totalMin100}}</td> {{else}} <td>00:00</td> {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.GuardiasDiurnas true}}
+                                    {{#ifmay totalesConfirmados.totalGuardiasDiurnas 0}} <td>
+                                        {{totalesConfirmados.totalGuardiasDiurnas}}</td>{{else}} <td>0</td> {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.GuardiasNocturnas true}}
+                                    {{#ifmay totalesConfirmados.totalGuardiasNocturnas 0}} <td>
+                                        {{totalesConfirmados.totalGuardiasNocturnas}}</td>{{else}} <td>0</td> {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.GuardiasPasivas true}}
+                                    {{#ifmay totalesConfirmados.totalGuardiasPasivas 0}} <td>
+                                        {{totalesConfirmados.totalGuardiasPasivas}}</td>{{else}} <td>0</td> {{/ifmay}}
+                                    {{/ifeq}}
+                                    <td>{{formatoMoneda totalesConfirmados.totalMonto}}</td>
+                                </tr>
+                                {{/ifmay}}
+                                {{#ifmay totalesLiquidados.totalMonto 0}}
+                                <tr>
+                                    <td>Liquidado</td>
+                                    {{#ifeq columnas.Horas50 true}}
+                                    {{#ifmay totalesLiquidados.totalMin50 0}} <td>{{minutosAHoras
+                                        totalesLiquidados.totalMin50}}
+                                    </td> {{else}} <td>00:00</td> {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.Horas100 true}}
+                                    {{#ifmay totalesLiquidados.totalMin100 0}} <td>{{minutosAHoras
+                                        totalesLiquidados.totalMin100}}</td> {{else}} <td>00:00</td> {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.GuardiasDiurnas true}}
+                                    {{#ifmay totalesLiquidados.totalGuardiasDiurnas 0}} <td>
+                                        {{formatoNumero totalesLiquidados.totalGuardiasDiurnas}}</td>{{else}} <td>0</td>
+                                    {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.GuardiasNocturnas true}}
+                                    {{#ifmay totalesLiquidados.totalGuardiasNocturnas 0}} <td>
+                                        {{formatoNumero totalesLiquidados.totalGuardiasNocturnas}}</td>{{else}} <td>0
+                                    </td>
+                                    {{/ifmay}}
+                                    {{/ifeq}}
+                                    {{#ifeq columnas.GuardiasPasivas true}}
+                                    {{#ifmay totalesLiquidados.totalGuardiasPasivas 0}} <td>
+                                        {{formatoNumero totalesLiquidados.totalGuardiasPasivas}}</td>{{else}} <td>0</td>
+                                    {{/ifmay}}
+                                    {{/ifeq}}
+                                    <td>{{formatoMoneda totalesLiquidados.totalMonto}}</td>
+                                </tr>
+                                {{/ifmay}}
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -253,10 +249,10 @@
                 <tr>
                     <td>{{FechaDiaSem this.Fecha}}</td>
                     <td>Sector: {{this.Sector}}
-                    <br>
-                    Nómina: {{this.Nomina}} - De: {{Hora this.Inicio}} a {{Hora this.Fin}}
-                    {{#ifeq this.Estado 2}}<br><strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
-                    {{#ifeq this.Estado 4}}<br><strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
+                        <br>
+                        Nómina: {{this.Nomina}} - De: {{Hora this.Inicio}} a {{Hora this.Fin}}
+                        {{#ifeq this.Estado 2}}<br><strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
+                        {{#ifeq this.Estado 4}}<br><strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
                     </td>
                     {{#ifeq @root.columnas.Horas50 true}}<td class="text-center">{{this.Hs50}}</td>{{/ifeq}}
                     {{#ifeq @root.columnas.Horas100 true}}<td class="text-center">{{this.Hs100}}</td>{{/ifeq}}
@@ -265,7 +261,7 @@
                     {{#ifeq @root.columnas.GuardiasNocturnas true}}<td class="text-center">{{this.GN}}</td>{{/ifeq}}
                     {{#ifeq @root.columnas.GuardiasPasivas true}}<td class="text-center">{{this.GP}}</td>{{/ifeq}}
                     <td class="text-end">{{formatoMoneda this.Monto}}</td>
-                                        <td>
+                    <td>
                         {{#ifeq this.Estado 1}}<img src="/img/estado1.png" alt="Ingresado" title="Ingresado" width="50"
                             height="10"> {{/ifeq}}
                         {{#ifeq this.Estado 2}}<img src="/img/estado2.png" alt="Rechazado Supervisor"
@@ -274,13 +270,14 @@
                             title="Aprobado Supervisor" width="50" height="10"> {{/ifeq}}
                         {{#ifeq this.Estado 4}}<img src="/img/estado4.png" alt="Rechazado Recursos Humanos"
                             title="Rechazado Recursos Humanos" width="50" height="10"> {{/ifeq}}
-                                                {{#ifeq this.Estado 5}}<img src="/img/estado5.png" alt="Aprobado RRHH" title="Aprobado RRHH" width="50"
-                                                        height="10"> {{/ifeq}}
-                                                {{#ifeq this.Estado 6}}
-                                                <div class="w-100 text-center">
-                                                    <i class="bi bi-check-circle-fill text-success fs-4" aria-label="Liquidado" title="Liquidado"></i>
-                                                </div>
-                                                {{/ifeq}}
+                        {{#ifeq this.Estado 5}}<img src="/img/estado5.png" alt="Aprobado RRHH" title="Aprobado RRHH"
+                            width="50" height="10"> {{/ifeq}}
+                        {{#ifeq this.Estado 6}}
+                        <div class="w-100 text-center">
+                            <i class="bi bi-check-circle-fill text-success fs-4" aria-label="Liquidado"
+                                title="Liquidado"></i>
+                        </div>
+                        {{/ifeq}}
                     </td>
                     <td class="text-center">
                         {{#ifmen this.Estado 3}}
@@ -363,11 +360,11 @@
             </tbody>
         </table>
     </div>
-    <div class="row flex-row d-md-none align-items-center {{#ifeq nivelUsuario 2}}mt-4{{/ifeq}}">
+    <div class="row flex-row d-md-none align-items-center mt-4">
         <div class="border rounded-3 overflow-hidden shadow-sm w-100">
             <div class="row bg-primary text-white">
                 <div class="col text-center">
-                    <h2 class="my-2 {{#ifeq nivelUsuario 2}}titulo-tabla-sup{{/ifeq}}">Detalle de horas</h2>
+                    <h2 class="my-2 titulo-tabla-sup">Detalle de horas</h2>
                 </div>
             </div>
             <div class="row">
@@ -375,121 +372,136 @@
                     <table class="table table-sm small mb-0">
                         <thead>
                             <th class="text-center">Detalle</th>
-                            <th class="text-center">Estado</th>
                             <th class="text-center">Acc.</th>
                         </thead>
 
                         <tbody>
-                {{#each novedades}}
-                <tr class="align-middle">
-                    <td class="text-center">
-                        Fecha: {{FechaDiaSem this.Fecha}} De: {{Hora this.Inicio}} a
-                        {{Hora this.Fin}} - {{this.Nomina}} Monto: {{formatoMoneda this.Monto}} {{#ifeq this.Estado
-                        2}}<br>
-                        <strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
-                        {{#ifeq this.Estado 4}}<br>
-                        <strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
-                    </td>
-                                        <td class="text-center">
-                        {{#ifeq this.Estado 1}}<img src="/img/estado1.png" alt="Ingresado" title="Ingresado" width="40"
-                            height="15"> {{/ifeq}}
-                        {{#ifeq this.Estado 2}}<img src="/img/estado2.png" alt="Rechazado Supervisor"
-                            title="Rechazado Supervisor" width="40" height="15"> {{/ifeq}}
-                        {{#ifeq this.Estado 3}}<img src="/img/estado3.png" alt="Aprobado Supervisor"
-                            title="Aprobado Supervisor" width="40" height="15"> {{/ifeq}}
-                        {{#ifeq this.Estado 4}}<img src="/img/estado4.png" alt="Rechazado Recursos Humanos"
-                            title="Rechazado Recursos Humanos" width="40" height="15"> {{/ifeq}}
-                                                {{#ifeq this.Estado 5}}<img src="/img/estado5.png" alt="Aprobado RRHH" title="Aprobado RRHH" width="40"
-                                                        height="15"> {{/ifeq}}
-                                                {{#ifeq this.Estado 6}}
-                                                <div class="w-100 text-center">
-                                                    <i class="bi bi-check-circle-fill text-success fs-4" aria-label="Liquidado" title="Liquidado"></i>
+                            {{#each novedades}}
+                            <tr class="align-middle">
+                                <td class="text-start">
+                                    Fecha: {{FechaDiaSem this.Fecha}} De: {{Hora this.Inicio}} a
+                                    {{Hora this.Fin}} - {{this.Nomina}} Monto: {{formatoMoneda this.Monto}} {{#ifeq
+                                    this.Estado
+                                    2}}<br>
+                                    <strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
+                                    {{#ifeq this.Estado 4}}<br>
+                                    <strong>{{this.ObservacionesEstado}}</strong>{{/ifeq}}
+                                    <hr class="my-1 border-secondary opacity-25">
+                                    <div class="mt-1 d-flex align-items-center justify-content-between">
+                                        <div class="small text-start">
+                                            <span class="fw-semibold">Estado:</span>
+                                            {{#ifeq this.Estado 1}}Ingresado{{/ifeq}}
+                                            {{#ifeq this.Estado 2}}Rechazado Supervisor{{/ifeq}}
+                                            {{#ifeq this.Estado 3}}Aprobado Supervisor{{/ifeq}}
+                                            {{#ifeq this.Estado 4}}Rechazado RRHH{{/ifeq}}
+                                            {{#ifeq this.Estado 5}}Aprobado RRHH{{/ifeq}}
+                                            {{#ifeq this.Estado 6}}Liquidado{{/ifeq}}
+                                        </div>
+                                        <div class="text-center">
+                                            {{#ifeq this.Estado 1}}<img src="/img/estado1.png" alt="Ingresado"
+                                                title="Ingresado" width="40" height="15"> {{/ifeq}}
+                                            {{#ifeq this.Estado 2}}<img src="/img/estado2.png"
+                                                alt="Rechazado Supervisor" title="Rechazado Supervisor" width="40"
+                                                height="15"> {{/ifeq}}
+                                            {{#ifeq this.Estado 3}}<img src="/img/estado3.png" alt="Aprobado Supervisor"
+                                                title="Aprobado Supervisor" width="40" height="15"> {{/ifeq}}
+                                            {{#ifeq this.Estado 4}}<img src="/img/estado4.png"
+                                                alt="Rechazado Recursos Humanos" title="Rechazado Recursos Humanos"
+                                                width="40" height="15"> {{/ifeq}}
+                                            {{#ifeq this.Estado 5}}<img src="/img/estado5.png" alt="Aprobado RRHH"
+                                                title="Aprobado RRHH" width="40" height="15"> {{/ifeq}}
+                                            {{#ifeq this.Estado 6}}
+                                            <i class="bi bi-check-circle-fill text-success fs-4" aria-label="Liquidado"
+                                                title="Liquidado"></i>
+                                            {{/ifeq}}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    {{#ifmen this.Estado 3}}
+                                    {{#if @root.botonGuardias}}
+                                    <a href="/novedades/EditarGuardias/{{this.IdNovedadesR}}"
+                                        class="btn btn-primary rounded-circle mt-2">
+                                        <i class="bi-pencil"></i> </a> {{/if}}
+                                    {{#if @root.botonHoras}}
+                                    <a href="/novedades/EditarHoras/{{this.IdNovedadesR}}"
+                                        class="btn btn-primary rounded-circle mt-2">
+                                        <i class="bi-pencil"></i> </a> {{/if}}
+                                    <a type="button" class="btn btn-danger rounded-circle mt-2" data-bs-toggle="modal"
+                                        data-bs-target="#exampleModal2{{this.IdNovedadesR}}">
+                                        <i class="bi-trash-fill"></i> </a>
+                                    <!-- Modal -->
+                                    <div class="modal fade" id="exampleModal2{{this.IdNovedadesR}}" tabindex="-1"
+                                        aria-labelledby="exampleModalLabel2" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h1 class="modal-title fs-5" id="exampleModalLabel">Atención</h1>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                        aria-label="Close"></button>
                                                 </div>
-                                                {{/ifeq}}
-                    </td>
-                    <td class="text-center">
-                        {{#ifmen this.Estado 3}}
-                        {{#if @root.botonGuardias}}
-                        <a href="/novedades/EditarGuardias/{{this.IdNovedadesR}}"
-                            class="btn btn-primary rounded-circle mt-2">
-                            <i class="bi-pencil"></i> </a> {{/if}}
-                        {{#if @root.botonHoras}}
-                        <a href="/novedades/EditarHoras/{{this.IdNovedadesR}}"
-                            class="btn btn-primary rounded-circle mt-2">
-                            <i class="bi-pencil"></i> </a> {{/if}}
-                        <a type="button" class="btn btn-danger rounded-circle mt-2" data-bs-toggle="modal"
-                            data-bs-target="#exampleModal2{{this.IdNovedadesR}}">
-                            <i class="bi-trash-fill"></i> </a>
-                        <!-- Modal -->
-                        <div class="modal fade" id="exampleModal2{{this.IdNovedadesR}}" tabindex="-1"
-                            aria-labelledby="exampleModalLabel2" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="exampleModalLabel">Atención</h1>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
+                                                <div class="modal-body">
+                                                    ¿Está seguro que desea borrar esta novedad {{FechaDiaSem
+                                                    this.Fecha}} {{#if
+                                                    @root.columnas.Horas50}}De: {{Hora
+                                                    this.Inicio}} a {{Hora this.Fin}} {{/if}}?
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary"
+                                                        data-bs-dismiss="modal">Cancelar</button>
+                                                    <a type="button" class="btn btn-primary"
+                                                        href="/novedades/borrar/{{this.IdNovedadesR}}">Aceptar</a>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="modal-body">
-                                        ¿Está seguro que desea borrar esta novedad {{FechaDiaSem this.Fecha}} {{#if
-                                        @root.columnas.Horas50}}De: {{Hora
-                                        this.Inicio}} a {{Hora this.Fin}} {{/if}}?
+                                    {{/ifmen}}
+                                    {{#ifeq this.Estado 4}}
+                                    {{#if @root.botonGuardias}}
+                                    <a href="/novedades/EditarGuardias/{{this.IdNovedadesR}}"
+                                        class="btn btn-primary rounded-circle mt-2">
+                                        <i class="bi-pencil"></i> </a> {{/if}}
+                                    {{#if @root.botonHoras}}
+                                    <a href="/novedades/EditarHoras/{{this.IdNovedadesR}}"
+                                        class="btn btn-primary rounded-circle mt-2">
+                                        <i class="bi-pencil"></i> </a> {{/if}}
+                                    <a type="button" class="btn btn-danger rounded-circle mt-2" data-bs-toggle="modal"
+                                        data-bs-target="#exampleModal2{{this.IdNovedadesR}}">
+                                        <i class="bi-trash-fill"></i> </a>
+                                    <!-- Modal -->
+                                    <div class="modal fade" id="exampleModal2{{this.IdNovedadesR}}" tabindex="-1"
+                                        aria-labelledby="exampleModalLabel2" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h1 class="modal-title fs-5" id="exampleModalLabel">Atención</h1>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                        aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    ¿Está seguro que desea borrar esta novedad {{FechaDiaSem
+                                                    this.Fecha}} {{#if
+                                                    @root.columnas.Horas50}}De: {{Hora
+                                                    this.Inicio}} a {{Hora this.Fin}} {{/if}}?
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary"
+                                                        data-bs-dismiss="modal">Cancelar</button>
+                                                    <a type="button" class="btn btn-primary"
+                                                        href="/novedades/borrar/{{this.IdNovedadesR}}">Aceptar</a>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Cancelar</button>
-                                        <a type="button" class="btn btn-primary"
-                                            href="/novedades/borrar/{{this.IdNovedadesR}}">Aceptar</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {{/ifmen}}
-                        {{#ifeq this.Estado 4}}
-                        {{#if @root.botonGuardias}}
-                        <a href="/novedades/EditarGuardias/{{this.IdNovedadesR}}"
-                            class="btn btn-primary rounded-circle mt-2">
-                            <i class="bi-pencil"></i> </a> {{/if}}
-                        {{#if @root.botonHoras}}
-                        <a href="/novedades/EditarHoras/{{this.IdNovedadesR}}"
-                            class="btn btn-primary rounded-circle mt-2">
-                            <i class="bi-pencil"></i> </a> {{/if}}
-                        <a type="button" class="btn btn-danger rounded-circle mt-2" data-bs-toggle="modal"
-                            data-bs-target="#exampleModal2{{this.IdNovedadesR}}">
-                            <i class="bi-trash-fill"></i> </a>
-                        <!-- Modal -->
-                        <div class="modal fade" id="exampleModal2{{this.IdNovedadesR}}" tabindex="-1"
-                            aria-labelledby="exampleModalLabel2" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="exampleModalLabel">Atención</h1>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        ¿Está seguro que desea borrar esta novedad {{FechaDiaSem this.Fecha}} {{#if
-                                        @root.columnas.Horas50}}De: {{Hora
-                                        this.Inicio}} a {{Hora this.Fin}} {{/if}}?
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Cancelar</button>
-                                        <a type="button" class="btn btn-primary"
-                                            href="/novedades/borrar/{{this.IdNovedadesR}}">Aceptar</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {{/ifeq}}
-                    </td>
-                </tr>
-                {{/each}}
+                                    {{/ifeq}}
+                                </td>
+                            </tr>
+                            {{/each}}
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
-    
+
 </div>
