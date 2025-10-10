@@ -1,0 +1,99 @@
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <i class="bi-calendar3-range me-2"></i>Consultar Liquidaciones por Período
+        </div>
+        <div class="card-body">
+          <form method="get" action="/liquidacionesPorPeriodo/resultado" class="row g-3">
+            <div class="col-12">
+              <label for="periodo" class="form-label">Período (mm/yyyy)</label>
+              <input type="text" class="form-control" id="periodo" name="periodo" placeholder="mm/yyyy" value="{{periodo}}" required pattern="^(0?[1-9]|1[0-2])\/(\d{4})$" inputmode="numeric" autocomplete="off" maxlength="7" autofocus />
+              <div class="form-text">Ejemplo: 08/2025</div>
+            </div>
+            <div class="col-12 d-flex justify-content-end">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi-search me-1"></i>Consultar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  (function(){
+    const input = document.getElementById('periodo');
+    if (!input) return;
+    const clampMes = (mm) => {
+      let n = parseInt(mm, 10);
+      if (isNaN(n)) return '';
+      if (n <= 0) n = 1;
+      if (n > 12) n = 12;
+      return String(n).padStart(2, '0');
+    };
+    const format = (raw) => {
+      // solo dígitos
+      const digits = (raw || '').replace(/\D+/g, '').slice(0, 6); // 2 para mes + 4 para año
+      const m = digits.slice(0, 2);
+      const y = digits.slice(2, 6);
+      let mes = m;
+      if (m.length === 2) mes = clampMes(m);
+      if (y.length) return mes + '/' + y;
+      return mes;
+    };
+    const mapDigitsToCaret = (formatted, digitsCount) => {
+      // devuelve el índice de caret en formatted después de consumir digitsCount dígitos
+      if (!digitsCount) return 0;
+      let count = 0;
+      for (let i = 0; i < formatted.length; i++) {
+        if (/\d/.test(formatted[i])) {
+          count++;
+          if (count === digitsCount) {
+            return i + 1; // caret después de ese dígito
+          }
+        }
+      }
+      return formatted.length;
+    };
+    const onInput = (e) => {
+      const el = e.target;
+      const start = el.selectionStart || 0;
+      const raw = el.value || '';
+      // cuántos dígitos había antes del caret en el valor sin formatear
+      const digitsBefore = raw.slice(0, start).replace(/\D+/g, '').length;
+      const val = format(raw);
+      el.value = val;
+      // reposicionar caret según cantidad de dígitos previos
+      let pos = mapDigitsToCaret(val, digitsBefore);
+      if (pos > val.length) pos = val.length;
+      el.setSelectionRange(pos, pos);
+    };
+    const onKeyDown = (e) => {
+      // permitir navegación/edición básica
+      const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'];
+      if (allowed.includes(e.key)) return;
+      // sólo dígitos
+      if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+    };
+    const onPaste = (e) => {
+      e.preventDefault();
+      const el = e.target;
+      const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+      const val = format(text);
+      el.value = val;
+      // caret al final luego del pegado normalizado
+      const end = el.value.length;
+      el.setSelectionRange(end, end);
+    };
+    input.addEventListener('keydown', onKeyDown);
+    input.addEventListener('input', onInput);
+    input.addEventListener('paste', onPaste);
+    // Formatear valor inicial si viene precargado
+    if (input.value) input.value = format(input.value);
+    // Enfocar al cargar y posicionar caret al final
+    try { input.focus(); const len = input.value.length; input.setSelectionRange(len, len); } catch(e){}
+  })();
+</script>

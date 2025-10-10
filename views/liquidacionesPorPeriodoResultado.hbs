@@ -1,0 +1,112 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Liquidación - {{periodoLargo}}</h4>
+        <div class="d-flex align-items-center gap-2 ms-auto">
+          <a href="/liquidacionesPorPeriodo" class="btn btn-primary rounded-circle" title="Volver" aria-label="Volver">
+            <i class="bi bi-arrow-left"></i>
+          </a>
+        </div>
+      </div>
+      {{#if areas.length}}
+        <!-- Pestañas por Área + Totales -->
+        <ul class="nav nav-tabs" id="tabsAreas" role="tablist">
+          {{#each areas}}
+            <li class="nav-item" role="presentation">
+              <button class="nav-link {{#ifeq @index 0}}active{{/ifeq}}" id="area-tab-{{@index}}" data-bs-toggle="tab" data-bs-target="#area-{{@index}}" type="button" role="tab" aria-controls="area-{{@index}}" aria-selected="{{#ifeq @index 0}}true{{else}}false{{/ifeq}}">
+                {{this.area}}
+              </button>
+            </li>
+          {{/each}}
+          <li class="nav-item ms-auto" role="presentation">
+            <button class="nav-link" id="totales-tab" data-bs-toggle="tab" data-bs-target="#totales" type="button" role="tab" aria-controls="totales" aria-selected="false">
+              Totales
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content pt-3" id="tabsAreasContent">
+          {{#each areas}}
+            <div class="tab-pane fade {{#ifeq @index 0}}show active{{/ifeq}}" id="area-{{@index}}" role="tabpanel" aria-labelledby="area-tab-{{@index}}">
+              {{#each this.grupos}}
+                <div class="card mb-3">
+                  <div class="card-header bg-light fw-bold">Sector: {{this.sectorNombre}}</div>
+                  <div class="card-body p-0">
+                    <div class="table-responsive">
+                      <table class="table table-sm table-striped align-middle mb-0">
+                        <thead class="table-light">
+                          <tr>
+                            <th style="width: 25%">Empleado</th>
+                            <th>Detalle</th>
+                            <th class="text-end" style="width: 12%">Monto</th>
+                            <th class="text-end" style="width: 10%">Vale</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {{#each this.items}}
+                            <tr>
+                              <td>{{this.apellidoYNombre}}</td>
+                              <td>{{this.detalle}}</td>
+                              <td class="text-end">{{formatoMoneda this.monto}}</td>
+                              <td class="text-end">{{this.vale}}</td>
+                            </tr>
+                          {{/each}}
+                          <tr class="table-secondary">
+                            <td colspan="2" class="text-end fw-bold">Subtotal sector</td>
+                            <td class="text-end fw-bold">{{formatoMoneda this.subtotal}}</td>
+                            <td></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              {{/each}}
+              <div class="card">
+                <div class="card-body d-flex justify-content-end">
+                  <div class="text-end">
+                    <span class="fw-bold me-2">Total Área {{area}}:</span>
+                    <span class="fw-bold">{{formatoMoneda subtotalArea}}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {{/each}}
+
+          <div class="tab-pane fade" id="totales" role="tabpanel" aria-labelledby="totales-tab">
+            <div class="card mb-3">
+              <div class="card-header bg-light fw-bold">Totales por Área</div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-sm table-striped align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Área</th>
+                        <th class="text-end" style="width: 15%">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {{#each totalesPorArea}}
+                        <tr>
+                          <td>{{this.area}}</td>
+                          <td class="text-end">{{formatoMoneda this.total}}</td>
+                        </tr>
+                      {{/each}}
+                      <tr class="table-secondary">
+                        <td class="text-end fw-bold">Total general</td>
+                        <td class="text-end fw-bold">{{formatoMoneda totalGeneral}}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {{else}}
+        <div class="alert alert-info">No se encontraron registros de liquidación para el período indicado.</div>
+      {{/if}}
+    </div>
+  </div>
+</div>
