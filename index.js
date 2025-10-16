@@ -11,6 +11,8 @@ const session = require("express-session");
 const helpers = require('./lib/misHelpers');
 const device = require('express-device');
 const dotenv = require('dotenv');
+// Cargar variables de entorno desde .env (en producción Heroku usa Config Vars)
+dotenv.config();
 
 
 
@@ -45,15 +47,13 @@ app.engine('.hbs', exphbs.engine({
 }));
 app.set('view engine','.hbs');
 
-// Inicializar variable de sesión
+// Inicializar variable de sesión usando clave segura desde .env
 app.use(session({
-    secret: 'your-secret-key',
+    secret: process.env.SESSION_SECRET || 'dev-change-this-secret',
     resave: false,
     saveUninitialized: true,
     cookie: { maxAge: 10 * 60 * 1000 } // 10 minutes
 }));
-
-dotenv.config();
 
 app.use(device.capture());
 app.use((req, res, next) => {

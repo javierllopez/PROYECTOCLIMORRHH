@@ -1,10 +1,11 @@
 {
   "name": "proyectoclimorrhh",
   "version": "1.0.0",
-  "description": "",
+  "description": "Sistema de gestión de recursos humanos para empresas argentinas, permite administrar empleados, horas extra, reportes y documentación de manera eficiente y segura.",
   "main": "index.js",
   "scripts": {
-    "test": "nodemon index.js"
+    "test": "nodemon index.js",
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
