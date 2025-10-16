@@ -52,11 +52,24 @@ app.engine('.hbs', exphbs.engine({
 app.set('view engine','.hbs');
 
 // Inicializar variable de sesión usando clave segura desde .env
+const esProduccion = process.env.NODE_ENV === 'production' || !!process.env.PORT;
+if (esProduccion) {
+    // Necesario en plataformas detrás de proxy (Heroku) para que "secure cookies" funcionen
+    app.set('trust proxy', 1);
+}
+
+const opcionesCookieSesion = {
+    maxAge: 10 * 60 * 1000, // 10 minutos
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: esProduccion, // sólo sobre HTTPS en producción
+};
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'dev-change-this-secret',
     resave: false,
     saveUninitialized: true,
-    cookie: { maxAge: 10 * 60 * 1000 } // 10 minutes
+    cookie: opcionesCookieSesion,
 }));
 
 app.use(device.capture());
