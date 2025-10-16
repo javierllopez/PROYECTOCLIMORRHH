@@ -27,6 +27,7 @@
     "express-session": "^1.18.0",
     "glob": "^11.0.2",
     "googleapis": "^158.0.0",
+    "helmet": "^8.1.0",
     "morgan": "^1.10.0",
     "multer": "^2.0.0",
     "mysql2": "^3.10.2",

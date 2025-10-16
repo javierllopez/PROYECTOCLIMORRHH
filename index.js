@@ -11,16 +11,21 @@ const session = require("express-session");
 const helpers = require('./lib/misHelpers');
 const device = require('express-device');
 const dotenv = require('dotenv');
+const helmet = require('helmet');
+
 // Cargar variables de entorno desde .env (en producción Heroku usa Config Vars)
 dotenv.config();
-
-
 
 const app = express()
 app.use(json.json());
 app.use(json.urlencoded({ extended: false }));
 app.use(morgan('dev'));
-
+// Seguridad HTTP headers
+app.use(helmet({
+    // Mantener políticas por defecto y desactivar CSP por ahora para no romper recursos de CDN
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+}));
 
 if (process.env.PORT) {
    const {database} = require('./clavesHeroku');    
@@ -28,7 +33,6 @@ if (process.env.PORT) {
     const {database} = require('./claves');    
 const bcrypt = require('bcrypt');
 }
-
 
 //Configuraciones
 const port = process.env.PORT||3000;
