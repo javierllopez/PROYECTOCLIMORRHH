@@ -73,8 +73,7 @@
                             <div id="spinner" class="spinner-border text-primary mt-2" role="status" style="display: none;">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
-                            <button type="button" class="btn btn-primary mt-2"
-                                onclick="window.location.href='/nominaValorizada'">Cancelar</button>
+                            <a href="/nominaValorizada" class="btn btn-primary mt-2">Cancelar</a>
                         </div>
                     </form>
                 </div>
@@ -82,46 +81,5 @@
         </div>
     </div>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const op1 = document.getElementById('GeneraSobreNominaAnterior');
-        const op2 = document.getElementById('NominaNueva');
-        const seccion = document.getElementById('seccion');
-
-        seccion.style.display = 'none';
-
-        function mostrarSeccion() {
-            if (op1.checked) {
-                seccion.style.display = 'block';
-            } else {
-                seccion.style.display = 'none';
-            }
-        }
-
-        op1.addEventListener('change', mostrarSeccion);
-        op2.addEventListener('change', mostrarSeccion);
-    })
-
-</script>
-
-<script>
-    const paquete = {{{ json Paquete }}};
-    if (paquete) {
-        const desde = document.getElementById('VigenteDesde');
-        const hasta = document.getElementById('VigenteHasta');
-        const aumento = document.getElementById('Aumento');
-        const idNominaBase = document.getElementById('IdNominaBase');
-
-        desde.value = paquete.VigenteDesde;
-        hasta.value = paquete.VigenteHasta;
-        aumento.value = paquete.Aumento;
-        idNominaBase.value = paquete.IdNominaBase;
-    }
-</script>
-<script>
-    document.querySelector('form').addEventListener('submit', function () {
-        document.getElementById('submitBtn').style.display = 'none';
-        document.getElementById('spinner').style.display = 'inline-block';
-    });
-</script>
+<template id="paquete-json">{{{ json Paquete }}}</template>
+<script src="/js/generar-nomina.js"></script>

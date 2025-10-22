@@ -72,13 +72,13 @@ router.get('/', logueado, async (req, res) => {
     };
     guardias.getTotalRegistros();
     var sql = guardias.getSQL();
-    var encabezadoHTML = guardias.getEncabezado();
-    var paginador = await guardias.getPaginador();
-    var funciones = guardias.getFunciones();
+    var encabezadoHTML = guardias.getEncabezadoCSP();
+    var paginador = await guardias.getPaginadorCSP();
+    var funciones = "";
  
     try {
         const [tabla] = await pool.query(sql);
-        return render(req,res,'guardias', {encabezadoHTML: encabezadoHTML, tabla: tabla, paginador: paginador, funciones: funciones, permiteBorrar: guardias.borrable , permiteEditar: guardias.editable});
+    return render(req,res,'guardias', {encabezadoHTML: encabezadoHTML, tabla: tabla, paginador: paginador, funciones: funciones, permiteBorrar: guardias.borrable , permiteEditar: guardias.editable});
     }
     catch(err) {
         console.log(err);

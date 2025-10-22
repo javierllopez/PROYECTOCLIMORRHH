@@ -82,8 +82,7 @@
                         </div>
                         <div class="card-footer text-center">
                             <button type="submit" class="btn btn-primary mt-2">Grabar</button>
-                            <button type="button" class="btn btn-primary mt-2"
-                                onclick="window.location.href='/categorias'">Cancelar</button>
+                            <a href="/categorias" class="btn btn-primary mt-2">Cancelar</a>
                         </div>
                     </form>
                 </div>
@@ -91,64 +90,7 @@
         </div>
     </div>
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        {{#if itemsHabilitados}} 
-            let items = {{{json itemsHabilitados}}};
-            for (let i= 0; i < items.length; i++) {
-                const item = items[i];
-                const table = document.getElementById('tablaItems');
-                const row = table.insertRow();
-                const cell1 = row.insertCell(0);
-                const cell2 = row.insertCell(1);
-                cell2.className = 'text-center';
-
-                cell1.textContent = item.itemDescripcion;
-                cell2.innerHTML = `<button type="button" class="btn btn-danger btn-sm rounded-circle" onclick="removeItem(${item.itemId}, this)"><i class="bi-trash-fill"></i></button>`;
-            }
-        
-        {{else}} let items = []; 
-        
-        {{/if}}
-        document.getElementById('Items').value = JSON.stringify(items);
-
-        document.getElementById('addItemButton').addEventListener('click', function() {
-            const select = document.getElementById('itemNominaSelect');
-            const selectedItem = select.options[select.selectedIndex];
-            const item = {itemId: selectedItem.value, itemDescripcion: selectedItem.text};
-
-            if (items.includes(item.itemId)) {
-                alert('El item ya está en la lista.');
-                return;
-            }
-
-            // Add the item to the list
-            items.push(item);
-
-            // Add the item to the table
-            const table = document.getElementById('tablaItems');
-            const row = table.insertRow();
-            const cell1 = row.insertCell(0);
-            const cell2 = row.insertCell(1);
-            cell2.className = 'text-center';
-
-            cell1.textContent = item.itemDescripcion;
-            cell2.innerHTML = `<button type="button" class="btn btn-danger btn-sm rounded-circle" onclick="removeItem(${item.itemId}, this)"><i class="bi-trash-fill"></i></button>`;
-            
-            document.getElementById('Items').value = JSON.stringify(items);
-            // Close the modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addItemModal'));
-            modal.hide();
-        });
-
-        window.removeItem = function(itemId, button) {
-            // Remove the item from the list
-            items = items.filter(item => item.itemId != itemId);
-
-            // Remove the row from the table
-            const row = button.parentNode.parentNode;
-            row.parentNode.removeChild(row);
-            document.getElementById('Items').value = JSON.stringify(items);
-        };
-    });
-</script>
+{{#if itemsHabilitados}}
+<template id="items-habilitados-json">{{{json itemsHabilitados}}}</template>
+{{/if}}
+<script src="/js/categoria.js"></script>

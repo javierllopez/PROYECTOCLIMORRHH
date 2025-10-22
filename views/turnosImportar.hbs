@@ -1,4 +1,4 @@
-<div class="container mt-5" style="max-width: 600px;">
+<div class="container mt-5 contenedor-importacion">
     <div class="card shadow border-0">
         <div class="card-header bg-primary text-white">
             <h3 class="card-title mb-0"><i class="bi bi-upload"></i> Importar Turnos desde Excel</h3>
@@ -34,7 +34,7 @@
 
             {{#if columnas}}
             <hr class="my-4">
-            <form id="formMapeoTurnos" action="/turnos/importar/ejecutar" method="POST">
+            <form id="formMapeoTurnos" class="form-mapeo-importacion" action="/turnos/importar/ejecutar" method="POST">
                 <input type="hidden" name="archivo" value="{{archivo}}">
                 <input type="hidden" name="tieneEncabezado" value="{{#if tieneEncabezado}}on{{/if}}">
                 <input type="hidden" name="modoImportacion" value="{{modoImportacion}}">
@@ -76,17 +76,4 @@
         </div>
     </div>
 </div>
-<script>
-    // Opcional: mostrar barra de progreso simulada
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('formMapeoTurnos');
-        if(form) {
-            form.addEventListener('submit', function() {
-                const progress = document.createElement('div');
-                progress.className = 'progress mt-4';
-                progress.innerHTML = '<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%">Importando...</div>';
-                form.parentNode.insertBefore(progress, form.nextSibling);
-            });
-        }
-    });
-</script>
+<script src="/js/importar-progress.js"></script>

@@ -68,13 +68,13 @@ router.get('/', logueado, async (req, res) => {
     };
     categorias.getTotalRegistros();
     var sql = categorias.getSQL();
-    var encabezadoHTML = categorias.getEncabezado();
-    var paginador = await categorias.getPaginador();
-    var funciones = categorias.getFunciones();
+    var encabezadoHTML = categorias.getEncabezadoCSP();
+    var paginador = await categorias.getPaginadorCSP();
+    var funciones = "";
  
     try {
         const [tabla] = await pool.query(sql);
-        return render(req,res,'categorias', {encabezadoHTML: encabezadoHTML, tabla: tabla, paginador: paginador, funciones: funciones, permiteBorrar: categorias.borrable , permiteEditar: categorias.editable});
+    return render(req,res,'categorias', {encabezadoHTML: encabezadoHTML, tabla: tabla, paginador: paginador, funciones: funciones, permiteBorrar: categorias.borrable , permiteEditar: categorias.editable});
     }
     catch(err) {
         console.log(err);

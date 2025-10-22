@@ -65,44 +65,4 @@
         </form>
     </div>
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', (event) => {
-        const selectElement = document.getElementById('motivo');
-        selectElement.addEventListener('change', (event) => {
-            const selectedOption = event.target.options[event.target.selectedIndex];
-            const observaciones = selectedOption.getAttribute('data-observaciones');
-            const reemplaza = selectedOption.getAttribute('data-reemplaza');
-            handleSelectChange(reemplaza, observaciones);
-        });
-
-        const form = document.getElementById('autorizarHorasForm');
-        form.addEventListener('submit', (event) => {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        });
-    });
-
-    function handleSelectChange(reemplaza, observaciones) {
-        const r = reemplaza;
-        const o = observaciones;
-        const reemplazaArea = document.getElementById('ReemplazaArea');
-        const observacionesArea = document.getElementById('ObservacionesArea');
-        if (r === '1') {
-            reemplazaArea.style.display = 'block';
-            document.getElementById('reemplazo').setAttribute('required', 'required');
-        } else {
-            reemplazaArea.style.display = 'none';
-            document.getElementById('reemplazo').removeAttribute('required');
-        }
-        if (o === '1') {
-            observacionesArea.style.display = 'block';
-            document.getElementById('observaciones').setAttribute('required', 'required');
-        } else {
-            observacionesArea.style.display = 'none';
-            document.getElementById('observaciones').removeAttribute('required');
-        }
-    }
-</script>
+<script src="/js/autorizar-horas-ok.js"></script>

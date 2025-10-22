@@ -182,6 +182,33 @@ router.get('/', logueado, async (req, res) => {
             }
             dashboard.graficoLineaHoras = graficoLineaHoras;
             dashboard.graficoLineaImportes = graficoLineaImportes;
+            // Fallback: si no hay etiquetas en históricos, tomar período actual de novedadesr (mínimos) y monto
+            if (!Array.isArray(dashboard.graficoLineaHoras.labels) || dashboard.graficoLineaHoras.labels.length === 0) {
+                try {
+                    const [rowE] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo FROM novedadese WHERE Actual = 1 LIMIT 1");
+                    if (rowE && rowE.length) {
+                        const idAct = rowE[0].Id;
+                        const per = String(rowE[0].Periodo);
+                        const [y, m] = per.split('-');
+                        const label = `${m}/${y}`;
+                        // Minutos al 50/100 actuales
+                        const [sRows] = await pool.query(
+                            `SELECT SUM(COALESCE(MinutosAl50,0) + COALESCE(MinutosGD,0)) AS Min50,
+                                    SUM(COALESCE(MinutosAl100,0) + COALESCE(MinutosGN,0)) AS Min100,
+                                    SUM(COALESCE(Monto,0)) AS Importe
+                             FROM novedadesr
+                             WHERE IdNovedadesE = ?`, [idAct]
+                        );
+                        const v50 = (sRows && sRows[0] && Number(sRows[0].Min50)) ? Number(sRows[0].Min50) : 0;
+                        const v100 = (sRows && sRows[0] && Number(sRows[0].Min100)) ? Number(sRows[0].Min100) : 0;
+                        const imp = (sRows && sRows[0] && Number(sRows[0].Importe)) ? Number(sRows[0].Importe) : 0;
+                        dashboard.graficoLineaHoras = { labels: [label], min50: [v50], min100: [v100], total: [v50 + v100] };
+                        dashboard.graficoLineaImportes = { labels: [label], importes: [imp] };
+                    }
+                } catch (e) {
+                    // si falla el fallback, mantener arrays vacíos
+                }
+            }
             // Defaults si no hubo período
             if (dashboard.empleadosConHoras == null) dashboard.empleadosConHoras = 0;
             if (dashboard.montoTotalPagar == null) dashboard.montoTotalPagar = 0;

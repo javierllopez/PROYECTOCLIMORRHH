@@ -57,26 +57,12 @@
                                         value="{{Hora novedadesR.Fin}}">
                                 </div>
                             </div>
-                            <script>
-                                document.addEventListener("DOMContentLoaded", function () {
-                                    const tipoGuardiaSelect = document.getElementById("TipoGuardia");
-                                    const partialGuardiaDetails = document.getElementById("partialGuardiaDetails");
-
-                                    tipoGuardiaSelect.addEventListener("change", function () {
-                                        if (tipoGuardiaSelect.value == "2") {
-                                            partialGuardiaDetails.style.display = "flex";
-                                        } else {
-                                            partialGuardiaDetails.style.display = "none";
-                                        }
-                                    });
-                                });
-                            </script>
+                            {{!-- Lógica movida a /js/editar-guardias.js --}}
 
                         </div>
                         <div class="card-footer text-center">
                             <button type="submit" class="btn btn-primary mt-2">Grabar</button>
-                            <button type="button" class="btn btn-primary mt-2"
-                                onclick="window.location.href='/novedades'">Cancelar</button>
+                            <a href="/novedades" class="btn btn-primary mt-2">Cancelar</a>
                         </div>
                     </form>
                     {{else}}
@@ -119,25 +105,11 @@
                                     <input type="time" class="form-control" id="HoraFin" name="HoraFin">
                                 </div>
                             </div>
-                            <script>
-                                document.addEventListener("DOMContentLoaded", function () {
-                                    const tipoGuardiaSelect = document.getElementById("TipoGuardia");
-                                    const partialGuardiaDetails = document.getElementById("partialGuardiaDetails");
-
-                                    tipoGuardiaSelect.addEventListener("change", function () {
-                                        if (tipoGuardiaSelect.value == "2") {
-                                            partialGuardiaDetails.style.display = "flex";
-                                        } else {
-                                            partialGuardiaDetails.style.display = "none";
-                                        }
-                                    });
-                                });
-                            </script>
+                            {{!-- Lógica movida a /js/editar-guardias.js --}}
                         </div>
                         <div class="card-footer text-center">
                             <button type="submit" class="btn btn-primary mt-2">Grabar</button>
-                            <button type="button" class="btn btn-primary mt-2"
-                                onclick="window.location.href='/novedades'">Cancelar</button>
+                            <a href="/novedades" class="btn btn-primary mt-2">Cancelar</a>
                         </div>
                     </form>
                     {{/if}}
@@ -146,3 +118,5 @@
         </div>
     </div>
 </div>
+
+<script src="/js/editar-guardias.js"></script>

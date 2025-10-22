@@ -74,13 +74,13 @@ router.get('/', logueado, async (req, res) => {
     };
     nomina.getTotalRegistros();
     var sql = nomina.getSQL();
-    var encabezadoHTML = nomina.getEncabezado();
-    var paginador = await nomina.getPaginador();
-    var funciones = nomina.getFunciones();
+    var encabezadoHTML = nomina.getEncabezadoCSP();
+    var paginador = await nomina.getPaginadorCSP();
+    var funciones = "";
  
     try {
         const [tabla, fields] = await pool.query(sql);
-        return render(req, res, 'itemsNomina', { encabezadoHTML: encabezadoHTML, tabla: tabla, paginador: paginador, funciones: funciones, permiteBorrar: nomina.borrable , permiteEditar: nomina.editable });
+    return render(req, res, 'itemsNomina', { encabezadoHTML: encabezadoHTML, tabla: tabla, paginador: paginador, funciones: funciones, permiteBorrar: nomina.borrable , permiteEditar: nomina.editable });
     }
     catch(err) {
         enviarMensaje(req,res, 'Items de nómina', err.message, 'danger');

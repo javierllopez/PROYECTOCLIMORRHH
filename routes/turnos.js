@@ -49,7 +49,7 @@ router.post('/paginar', logueado, async (req, res) => {
     const { pagina } = req.body;
     if (!req.session.turnos) {
         req.session.turnos = {};
-        req.session.turnos.estructura = turnos.exportarEestructura();
+        req.session.turnos.estructura = turnos.exportarEstructura();
     }else {
         turnos.importarEstructura(req.session.turnos.estructura);
     };
@@ -69,17 +69,14 @@ router.get('/', logueado, async (req, res) => {
     };
     turnos.getTotalRegistros();
     var sql = turnos.getSQL();
-    var encabezadoHTML = turnos.getEncabezado();
-    turnos.getTotalRegistros();
-    var sql = turnos.getSQL();
-    var encabezadoHTML = turnos.getEncabezado();
-    var paginador = await turnos.getPaginador();
-    var funciones = turnos.getFunciones();
+    var encabezadoHTML = turnos.getEncabezadoCSP();
+    var paginador = await turnos.getPaginadorCSP();
+    var funciones = "";
  
     try {
         const [tabla, fields] = await pool.query(sql);
 
-        return render(req, res, 'turnos', {encabezadoHTML: encabezadoHTML, tabla: tabla, paginador: paginador, funciones: funciones, permiteBorrar: turnos.borrable , permiteEditar: turnos.editable });
+    return render(req, res, 'turnos', {encabezadoHTML: encabezadoHTML, tabla: tabla, paginador: paginador, funciones: funciones, permiteBorrar: turnos.borrable , permiteEditar: turnos.editable });
     }
     catch(err) {
         enviarMensaje(req, res, 'Error en la base de datos', err.message, 'danger');

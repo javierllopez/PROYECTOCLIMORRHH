@@ -9,7 +9,7 @@
                     <form action="/novedadesPorPersonal/{{IdPersonal}}" method="GET">
                         <div class="mb-3">
                             <label for="idPersonal" class="form-label">Empleado</label>
-                            <select class="form-select" id="idPersonal" name="IdPersonal" required>
+                            <select class="form-select" id="idPersonal" name="IdPersonal" required autofocus>
                                 <option value="">Seleccione un empleado...</option>
                                 {{#each personal}}
                                     <option value="{{this.Id}}">{{this.ApellidoYNombre}}</option>
@@ -25,8 +25,3 @@
         </div>
     </div>
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('idPersonal').focus();
-    });
-</script>

@@ -1,14 +1,5 @@
 <div class="d-none d-md-block">
     <div class="d-flex flex-column flex-shrink-0 p-3 shadow-sm vh-100 fixed-top" style="width: 250px;">
-        <style>
-            /* Ajuste de tamaño para badges en el menú lateral */
-            #badge-novedades-desktop,
-            #badge-autorizar-horas-desktop {
-                font-size: 0.65rem;
-                padding: 0.2rem 0.35rem;
-                line-height: 1;
-            }
-        </style>
         <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
             <img src="/img/DelBuenPastor.jpg" alt="" width="80" height="60" class="me-2">
             <span class="fs-4">CLIMO S.A.</span>
@@ -48,49 +39,6 @@
                 <li><a class="dropdown-item" href="/salir">Salir</a></li>
             </ul>
         </div>
-        <script>
-            // Actualiza badges en escritorio si existen
-            document.addEventListener('DOMContentLoaded', () => {
-                const badgeNov = document.getElementById('badge-novedades-desktop');
-                const badgeAut = document.getElementById('badge-autorizar-horas-desktop');
-                const setBadge = (el, val) => {
-                    if (!el) return;
-                    const n = Number(val) || 0;
-                    if (n > 0) {
-                        el.textContent = n;
-                        el.classList.remove('d-none');
-                    } else {
-                        el.textContent = '';
-                        el.classList.add('d-none');
-                    }
-                };
-                const fetchNum = async (url) => {
-                    try {
-                        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-                        const data = await res.json().catch(() => null);
-                        if (typeof data === 'number') return data;
-                        if (data && typeof data === 'object') {
-                            for (const k of ['cantidad', 'pendientes', 'count', 'cantidadPendientes', 'total']) {
-                                if (data[k] != null) return Number(data[k]);
-                            }
-                            const nums = Object.values(data).filter(v => typeof v === 'number');
-                            if (nums.length) return nums[0];
-                        }
-                    } catch (e) { /* sin-op */ }
-                    return 0;
-                };
-                const update = async () => {
-                    const [noved, auto] = await Promise.all([
-                        fetchNum('/novedades/pendientes'),
-                        fetchNum('/autorizarHoras/pendientes')
-                    ]);
-                    setBadge(badgeNov, noved);
-                    setBadge(badgeAut, auto);
-                };
-                update();
-                setInterval(update, 60000);
-            });
-        </script>
     </div>
 </div>
 <!-- En mobile, la navbar se renderiza desde layout.hbs para todas las vistas -->

@@ -83,8 +83,7 @@
                         </div>
                         <div class="card-footer text-center">
                             <button type="submit" class="btn btn-primary mt-2">Grabar</button>
-                            <button type="button" class="btn btn-primary mt-2"
-                                onclick="window.location.href='/novedades'">Cancelar</button>
+                            <a href="/novedades" class="btn btn-primary mt-2">Cancelar</a>
                         </div>
                     </form>
                     {{else}}
@@ -124,17 +123,6 @@
                                     <label for="Fecha" class="form-label d-none d-md-inline">Fecha</label>
                                     <input type="date" class="form-control" id="FechaEntrada" name="FechaEntrada"
                                         required placeholder="Fecha de inicio">
-                                    <!-- Agrego script para asignar fecha actual a FechaEntrada -->
-                                    <script>
-                                        document.addEventListener("DOMContentLoaded", (event) => {
-                                            const Fecha = document.getElementById("FechaEntrada");
-                                            const ahora = new Date();
-                                            const year = ahora.getFullYear();
-                                            const month = String(ahora.getMonth() + 1).padStart(2, '0');
-                                            const day = String(ahora.getDate()).padStart(2, '0');
-                                            Fecha.value = `${year}-${month}-${day}`;
-                                        });
-                                    </script>
                                 </div>
                                 <div class="col-6 col-md-6">
                                     <label for="Hora" class="form-label d-none d-md-inline">Hora</label>
@@ -157,12 +145,6 @@
                                     <label for="Fecha" class="form-label d-none d-md-inline">Fecha</label>
                                     <input type="date" class="form-control" id="FechaSalida" name="FechaSalida"
                                         required placeholder="Fecha de salida">
-                                    <script>
-                                        document.getElementById("FechaSalida").addEventListener("focus", (event) => {
-                                            const FechaEntrada = document.getElementById("FechaEntrada");
-                                            event.target.value = FechaEntrada.value;
-                                        });
-                                    </script>
                                 </div>
                                 <div class="col-6 col-md-6">
                                     <label for="Hora" class="form-label d-none d-md-inline">Hora</label>
@@ -172,8 +154,7 @@
                         </div>
                         <div class="card-footer text-center">
                             <button type="submit" class="btn btn-primary mt-2">Grabar</button>
-                            <button type="button" class="btn btn-primary mt-2"
-                                onclick="window.location.href='/novedades'">Cancelar</button>
+                            <a href="/novedades" class="btn btn-primary mt-2">Cancelar</a>
                         </div>
                     </form>
                     {{/if}}
@@ -182,3 +163,5 @@
         </div>
     </div>
 </div>
+
+<script src="/js/editar-horas.js"></script>

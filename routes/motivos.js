@@ -70,13 +70,13 @@ router.get('/', logueado, async (req, res) => {
     };
     motivos.getTotalRegistros();
     var sql = motivos.getSQL();
-    var encabezadoHTML = motivos.getEncabezado();
-    var paginador = await motivos.getPaginador();
-    var funciones = motivos.getFunciones();
+    var encabezadoHTML = motivos.getEncabezadoCSP();
+    var paginador = await motivos.getPaginadorCSP();
+    var funciones = "";
  
     try {
         const [tabla, fields] = await pool.query(sql);
-        return render(req, res, 'motivos', { encabezadoHTML: encabezadoHTML, tabla: tabla, paginador: paginador, funciones: funciones, permiteBorrar: motivos.borrable , permiteEditar: motivos.editable });
+    return render(req, res, 'motivos', { encabezadoHTML: encabezadoHTML, tabla: tabla, paginador: paginador, funciones: funciones, permiteBorrar: motivos.borrable , permiteEditar: motivos.editable });
     }
     catch(err) {
         console.log(err);

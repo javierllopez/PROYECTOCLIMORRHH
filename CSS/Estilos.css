@@ -123,3 +123,61 @@
   line-height: 1 !important;
   aspect-ratio: 1 / 1;
 }
+
+/* Altura fija para gráficos Chart.js (evita colapso de height:auto) */
+.chart-responsive {
+  max-width: 100%;
+  height: 320px;
+}
+
+.contenedor-importacion {
+  max-width: 600px;
+}
+
+#badge-novedades-desktop,
+#badge-autorizar-horas-desktop {
+  font-size: 0.65rem;
+  padding: 0.2rem 0.35rem;
+  line-height: 1;
+}
+
+/* Overlay y blur reutilizables para procesos de importación */
+#import-overlay,
+.overlay-importacion {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.7);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(3px);
+}
+
+.blur-on-import {
+  filter: blur(3px);
+  pointer-events: none;
+  user-select: none;
+}
+
+@media (max-width: 767.98px) {
+  .titulo-tabla-sup {
+    font-size: 1.5rem;
+    line-height: 1.2;
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .badge-xs {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.3rem;
+    line-height: 1;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+}

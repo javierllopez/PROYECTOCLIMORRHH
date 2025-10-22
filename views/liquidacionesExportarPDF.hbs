@@ -12,7 +12,7 @@
             <div class="card mb-2">
               <div class="card-body d-flex justify-content-between align-items-center">
                 <div class="fw-semibold">Área {{this.area}}</div>
-                <button class="btn btn-primary btn-sm" onclick="descargar('{{this.url}}', '{{this.nombreArchivo}}')">
+                <button class="btn btn-primary btn-sm" data-export-url="{{this.url}}" data-export-name="{{this.nombreArchivo}}">
                   <i class="bi bi-download me-1"></i>Descargar
                 </button>
               </div>
@@ -24,39 +24,4 @@
   </div>
 </div>
 
-<script>
-  async function descargar(baseUrl, sugerido) {
-    try {
-      const nombre = (sugerido || '').trim();
-      // Traemos el PDF como blob
-      const resp = await fetch(baseUrl, { method: 'GET' });
-      if (!resp.ok) throw new Error('No se pudo generar el PDF.');
-      const blob = await resp.blob();
-
-      // Si está disponible el File System Access API en contexto seguro (HTTPS o localhost)
-      if (window.showSaveFilePicker && window.isSecureContext) {
-        const handle = await window.showSaveFilePicker({
-          suggestedName: nombre || 'liquidacion.pdf',
-          types: [{ description: 'Archivo PDF', accept: { 'application/pdf': ['.pdf'] } }]
-        });
-        const writable = await handle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-        return;
-      }
-
-      // Fallback: descarga tradicional (depende de la configuración del navegador)
-      const urlBlob = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = urlBlob;
-      a.download = nombre || 'liquidacion.pdf';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(urlBlob);
-    } catch (e) {
-      console.error(e);
-      alert('No fue posible descargar el PDF. Intentá nuevamente.');
-    }
-  }
-</script>
+<script src="/js/liquidaciones-exportar.js"></script>

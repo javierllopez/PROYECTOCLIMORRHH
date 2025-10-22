@@ -131,10 +131,10 @@ router.get('/', logueado, async (req, res) => {
         } else {
             idNomina = parseInt(nominavaloresr.tag);
         }
-        const sqlNominaValoresr = nominavaloresr.getSQL();
-        const encabezadoHTMLNominaValoresr = nominavaloresr.getEncabezado();
-        const paginadorNominaValoresr = await nominavaloresr.getPaginador();
-        const funcionesNominaValoresr = nominavaloresr.getFunciones();
+    const sqlNominaValoresr = nominavaloresr.getSQL();
+    const encabezadoHTMLNominaValoresr = nominavaloresr.getEncabezadoCSP();
+    const paginadorNominaValoresr = await nominavaloresr.getPaginadorCSP();
+    const funcionesNominaValoresr = "";
         const [tablaNominaValoresr] = await pool.query(sqlNominaValoresr);
 
         // Detectar si hay ítems de nómina sin correlativo en nominavaloresr para el período seleccionado

@@ -37,8 +37,7 @@
                         <div class="form-group">
                             <label for="fechaNacimiento">Fecha de Nacimiento:</label>
                             <input type="date" class="form-control" id="fechaNacimiento" name="fechaNacimiento" required
-                                {{#if personal}} value="{{FechaIso personal.FechaNacimiento}}" {{/if}}
-                                onchange="validateAge()">
+                                {{#if personal}} value="{{FechaIso personal.FechaNacimiento}}" {{/if}}>
                         </div>
                     </div>
                     <div class="col-3">
@@ -79,7 +78,7 @@
                     <div class="col-4">
                         <div class="form-group">
                             <label for="idCategoria">Categoría:</label>
-                            <select class="form-select" id="idCategoria" name="idCategoria" required onchange="alertarCategoriaSinNomina()">
+                            <select class="form-select" id="idCategoria" name="idCategoria" required>
                                 <option value="">Seleccione una categoría</option>
                                 {{#each categorias}}
                                 <option value="{{this.Id}}" data-nomina="{{this.IdNomina}}" {{#ifeq @root.personal.IdCategoria this.Id}} selected {{/ifeq}}>{{this.Descripcion}}</option>
@@ -122,8 +121,7 @@
             </div>
             <div class="card-footer text-center">
                 <button type="submit" class="btn btn-primary" id="btnGrabar">Grabar</button>
-                <button type="button" class="btn btn-primary"
-                    onclick="window.location.href='/personal'">Cancelar</button>
+                <a href="/personal" class="btn btn-primary">Cancelar</a>
             </div>
         </form>
     </div>
@@ -154,53 +152,4 @@
     </div>
   </div>
 </div>
-<script>
-    function validateAge() {
-        const fechaNacimiento = document.getElementById('fechaNacimiento').value;
-        const birthDate = new Date(fechaNacimiento);
-        const today = new Date();
-        const age = today.getFullYear() - birthDate.getFullYear();
-        const monthDifference = today.getMonth() - birthDate.getMonth();
-
-        if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-
-        if (age < 18) {
-            alert('El empleado debe ser mayor de 18 años.');
-            document.getElementById('fechaNacimiento').value = '';
-        }
-    }
-    function alertarCategoriaSinNomina() {
-        const select = document.getElementById('idCategoria');
-        const selectedOption = select.options[select.selectedIndex];
-        const idNomina = selectedOption.getAttribute('data-nomina');
-        if (!idNomina) {
-            alert('La categoría seleccionada no tiene una nómina asociada.' + idNomina);
-        }
-    }
-    document.getElementById('btnGrabar').addEventListener('click', function(event) {
-        const selectCategoria = document.getElementById('idCategoria');
-        const selectedOption = selectCategoria.options[selectCategoria.selectedIndex];
-        const idNomina = selectedOption.getAttribute('data-nomina');
-        if (!idNomina) {
-            event.preventDefault();
-            const modal = new bootstrap.Modal(document.getElementById('modalNomina'));
-            modal.show();
-        }
-    });
-
-    document.getElementById('btnConfirmarNomina').addEventListener('click', function() {
-        const combo = document.getElementById('comboNomina');
-        const idNominaSeleccionada = combo.value;
-        if (!idNominaSeleccionada) {
-            alert('Debe seleccionar una nómina.');
-            return;
-        }
-        document.getElementById('idNominaSeleccionada').value = idNominaSeleccionada;
-        // Cerrar modal y enviar formulario
-        const modal = bootstrap.Modal.getInstance(document.getElementById('modalNomina'));
-        modal.hide();
-        document.querySelector('form').submit();
-    });
-</script>
+<script src="/js/personal-editar.js"></script>

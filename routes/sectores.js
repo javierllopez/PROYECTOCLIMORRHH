@@ -73,14 +73,14 @@ router.get('/', logueado, async (req, res) => {
     };
     sectores.getTotalRegistros();
     var sql = sectores.getSQL();
-    var encabezadoHTML = sectores.getEncabezado();
-    var paginador = await sectores.getPaginador();
-    var funciones = sectores.getFunciones();
+    var encabezadoHTML = sectores.getEncabezadoCSP();
+    var paginador = await sectores.getPaginadorCSP();
+    var funciones = "";
  
     try {
         const [tabla] = await pool.query(sql);
 
-        return render(req,res,'sectores',{encabezadoHTML: encabezadoHTML, tabla: tabla, paginador: paginador, funciones: funciones, permiteBorrar: sectores.borrable , permiteEditar: sectores.editable });
+    return render(req,res,'sectores',{encabezadoHTML: encabezadoHTML, tabla: tabla, paginador: paginador, funciones: funciones, permiteBorrar: sectores.borrable , permiteEditar: sectores.editable });
 
     }
     catch(err) {

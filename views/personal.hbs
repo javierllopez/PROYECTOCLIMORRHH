@@ -9,7 +9,8 @@
                     <div class="container p-2">
                         <a href="/personal/agregar" class="btn btn-primary rounded-circle me-2"> <i
                                 class="bi-plus h3"></i> </a>
-                        <a href="/personal/importar" class="btn btn-success rounded-circle ms-2" title="Importar desde Excel">
+                        <a href="/personal/importar" class="btn btn-success rounded-circle ms-2"
+                            title="Importar desde Excel">
                             <i class="bi bi-upload h3"></i>
                         </a>
                     </div>
@@ -35,13 +36,15 @@
                             </td>
                             <td class="text-center">
                                 {{#if @root.permiteEditar}}
-                                <a type="button" class="btn btn-primary rounded-circle" href="/personal/editar/{{this.Id}}" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editar datos del colaborador">
-                                    <i class="bi-pencil-fill"></i> 
+                                <a type="button" class="btn btn-primary rounded-circle"
+                                    href="/personal/editar/{{this.Id}}" data-bs-toggle="tooltip" data-bs-placement="top"
+                                    data-bs-title="Editar datos del colaborador">
+                                    <i class="bi-pencil-fill"></i>
                                 </a>
                                 {{/if}}
                                 {{#if @root.permiteBorrar}}
-                                <a type="button" class="btn btn-danger rounded-circle"
-                                    href="/personal/baja/{{this.Id}}" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Dar de baja">
+                                <a type="button" class="btn btn-danger rounded-circle" href="/personal/baja/{{this.Id}}"
+                                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Dar de baja">
                                     <i class="bi-trash-fill"></i> </a>
                                 {{/if}}
                             </td>
@@ -53,9 +56,8 @@
         </div>
     </div>
 </div>
+<div class="paginador-container" data-tabla="personal" data-ruta="/personal">
     {{{paginador}}}
+</div>
 
-
-
-
-    {{{funciones}}}
+{{{funciones}}}

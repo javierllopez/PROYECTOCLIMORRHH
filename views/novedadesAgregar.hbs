@@ -112,8 +112,7 @@
                             <div class="col-md-4">
                                 <label for="TipoGuardia" class="form-label fw-semibold"><i class="bi bi-ui-checks"></i>
                                     Tipo de guardia</label>
-                                <select class="form-select form-select-sm" id="TipoGuardia" name="TipoGuardia"
-                                    onchange="manejarTipoGuardia(this)">
+                                <select class="form-select form-select-sm" id="TipoGuardia" name="TipoGuardia">
                                     <option value="" selected disabled>Seleccione una opción</option>
                                     <option value="1">Completa</option>
                                     <option value="2">Parcial</option>
@@ -150,57 +149,5 @@
         </div>
     </div>
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        document.getElementById('MotivoExtra').addEventListener('change', function () {
-            const selectedOption = this.options[this.selectedIndex];
-            const reemplazo = selectedOption.getAttribute('data-Reemplazo');
-            const descripcion = selectedOption.getAttribute('data-Observaciones');
-            document.getElementById('ReemplazoExtra').style.display = reemplazo == '1' ? 'block' : 'none';
-            if (document.getElementById('ReemplazoExtra').style.display !== 'none') {
-                document.getElementById('IdEmpleadoReemplazoExtra').required = true;
-            } else {
-                document.getElementById('IdEmpleadoReemplazoExtra').required = false;
-            }
-            document.getElementById('ObservacionesExtra').style.display = descripcion == '1' ? 'block' : 'none';
-            if (document.getElementById('ObservacionesExtra').style.display !== 'none') {
-                document.getElementById('DescripcionObligatoriaExtra').required = true;
-            } else {
-                document.getElementById('DescripcionObligatoriaExtra').required = false;
-            }
-        });
-        document.getElementById('Nomina').addEventListener('change', function () {
-            const selectedOption = this.options[this.selectedIndex];
-            const horas = selectedOption.getAttribute('data-horas') === '1';
-            const guardias = selectedOption.getAttribute('data-guardias') === '1';
-            // Mostrar u ocultar secciones
-            const horasSection = document.getElementById('Horas');
-            const guardiasSection = document.getElementById('Guardias');
-            horasSection.style.display = horas ? 'block' : 'none';
-            guardiasSection.style.display = guardias ? 'block' : 'none';
-            // Configurar campos requeridos para "Horas"
-            document.getElementById('FechaHoras').required = horas;
-            document.getElementById('HoraInicio').required = horas;
-            document.getElementById('HoraFin').required = horas;
-            // Configurar campos requeridos para "Guardias"
-            document.getElementById('FechaGuardia').required = guardias;
-            document.getElementById('GuardiaRealizada').required = guardias;
-            document.getElementById('TipoGuardia').required = guardias;
-            // Establecer el tipo de novedad
-            document.getElementById('TipoNovedad').value = horas ? 'Horas' : guardias ? 'Guardias' : '';
-        });
-        document.getElementById('TipoGuardia').addEventListener('change', function () {
-            const value = this.value;
-            const isVisible = value == '2'; // Parcial
-            document.getElementById('GuardiaParcial').style.display = isVisible ? 'block' : 'none';
-            document.getElementById('InicioGuardiaParcial').required = isVisible;
-            document.getElementById('FinGuardiaParcial').required = isVisible;
-        });
-    });
-    function manejarTipoGuardia(select) {
-        const selectedOption = select.options[select.selectedIndex];
-        const value = selectedOption.value;
-        document.getElementById('GuardiaParcial').style.display = value == '2' ? 'block' : 'none';
-    }
-</script>
+<script src="/js/novedades-agregar.js"></script>
 {{! NOTA: Para íconos Bootstrap, asegúrate de tener Bootstrap Icons incluidos en tu layout }}

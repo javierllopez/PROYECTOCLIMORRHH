@@ -25,7 +25,7 @@
               <td class="text-center">{{minutosAHoras this}}</td>
             {{/each}}
             <td class="text-center" style="min-width:160px; width:160px;">
-              <canvas class="sparkline" data-puntos='{{json this.minutos}}' height="40"></canvas>
+              <canvas class="sparkline" data-puntos='{{json this.minutos}}' data-color="#0d6efd" data-background="rgba(13,110,253,0.10)" height="40"></canvas>
             </td>
           </tr>
         {{/each}}
@@ -36,7 +36,7 @@
               <td class="text-center">{{minutosAHoras this}}</td>
             {{/each}}
             <td class="text-center" style="min-width:160px; width:160px;">
-              <canvas class="sparkline" data-puntos='{{json totalFila.minutos}}' height="40"></canvas>
+              <canvas class="sparkline" data-puntos='{{json totalFila.minutos}}' data-color="#0d6efd" data-background="rgba(13,110,253,0.10)" height="40"></canvas>
             </td>
           </tr>
         {{/if}}
@@ -48,28 +48,4 @@
   {{/if}}
 </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function(){
-    try {
-      var canvases = document.querySelectorAll('canvas.sparkline');
-      if (!canvases || !canvases.length || typeof Chart === 'undefined') return;
-      canvases.forEach(function(cv){
-        var puntos = [];
-        try { puntos = JSON.parse(cv.getAttribute('data-puntos')||'[]') || []; } catch(e) { puntos = []; }
-        var chart = new Chart(cv.getContext('2d'), {
-          type: 'line',
-          data: {
-            labels: puntos.map((_,i) => i+1),
-            datasets: [{ data: puntos, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.10)', tension: 0.3, fill: true, pointRadius: 0 }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: { enabled: false } },
-            scales: { x: { display: false }, y: { display: false } }
-          }
-        });
-      });
-    } catch (e) {}
-  });
-</script>
+<script src="/js/sparklines-sectores.js"></script>

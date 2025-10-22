@@ -20,10 +20,25 @@ const app = express()
 app.use(json.json());
 app.use(json.urlencoded({ extended: false }));
 app.use(morgan('dev'));
+
 // Seguridad HTTP headers
+const cspDirectives = {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+    styleSrc: ["'self'", 'https://cdn.jsdelivr.net', "'unsafe-inline'"],
+    fontSrc: ["'self'", 'https://cdn.jsdelivr.net', 'data:'],
+    imgSrc: ["'self'", 'data:'],
+    connectSrc: ["'self'"],
+    objectSrc: ["'none'"],
+    baseUri: ["'self'"],
+    frameAncestors: ["'self'"],
+    scriptSrcAttr: ["'none'"]
+};
+
 app.use(helmet({
-    // Mantener políticas por defecto y desactivar CSP por ahora para no romper recursos de CDN
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+        directives: cspDirectives,
+    },
     crossOriginEmbedderPolicy: false,
 }));
 
@@ -39,6 +54,8 @@ const port = process.env.PORT||3000;
 app.set('port',process.env.PORT||3000);
 
 app.set('views',path.join(__dirname,"views"));
+// Servir assets estáticos
+app.use('/CSS', express.static(path.join(__dirname, 'CSS')));
 app.use(express.static('public'));
 // Registrar partial
 app.engine('.hbs', exphbs.engine({

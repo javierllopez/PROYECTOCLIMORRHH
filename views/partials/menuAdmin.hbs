@@ -192,42 +192,4 @@
             <!-- El contenido de la vista se renderiza aquí desde el layout general -->
         </main>
     </div>
-    <script>
-        (function(){
-            const actualizarBadgeNovedades = async () => {
-                try {
-                    const resp = await fetch('/novedades/pendientes', { headers: { 'Accept': 'application/json' }, cache: 'no-store', credentials: 'same-origin' });
-                    if (!resp.ok) return;
-                    const data = await resp.json();
-                    const cant = Number(data.cantidad)||0;
-                    const b = document.getElementById('badge-novedades-mobile');
-                    if (b) { if (cant>0){ b.textContent = cant>99? '99+': String(cant); b.classList.remove('d-none'); } else { b.classList.add('d-none'); } }
-                } catch(e){}
-            };
-            if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', actualizarBadgeNovedades); } else { actualizarBadgeNovedades(); }
-            setInterval(actualizarBadgeNovedades, 60000);
-        })();
-    </script>
 </div>
-<script>
-    (function () {
-        const actualizarBadgeNovedades = async () => {
-            try {
-                const resp = await fetch('/novedades/pendientes', { headers: { 'Accept': 'application/json' }, cache: 'no-store', credentials: 'same-origin' });
-                if (!resp.ok) return;
-                const data = await resp.json();
-                const cantidad = Number(data.cantidad) || 0;
-                const desk = document.getElementById('badge-novedades-desktop');
-                const mob = document.getElementById('badge-novedades-mobile');
-                const toggle = (el) => {
-                    if (!el) return;
-                    if (cantidad > 0) { el.textContent = cantidad > 99 ? '99+' : String(cantidad); el.classList.remove('d-none'); }
-                    else { el.classList.add('d-none'); }
-                };
-                toggle(desk); toggle(mob);
-            } catch (e) { /* noop */ }
-        };
-        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', actualizarBadgeNovedades); else actualizarBadgeNovedades();
-        setInterval(actualizarBadgeNovedades, 60000);
-    })();
-</script>

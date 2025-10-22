@@ -326,6 +326,64 @@ class Tabla {
         return encabezado;
     }
 
+    /**
+     * Genera el encabezado sin inline JS (compatible con CSP) usando data-attributes y clases.
+     * Estructura: <tr class="encabezado-container" data-tabla="<tabla>" data-ruta="/<ruta>"> ... </tr>
+     * - Orden: <a href="#" class="ordenar-<tabla>" data-campo="i">icono</a>
+     * - Filtro: dropdown Bootstrap; botón aplicar tiene clase "aplicar-filtro-<tabla>" y data-campo
+     */
+    getEncabezadoCSP() {
+        let encabezado = "<tr class='g-1 encabezado-container' data-tabla='" + this.nombre + "' data-ruta='/" + this.rutaConsulta + "'>";
+
+        for (let i = 0; i < this.titulos.length; i++) {
+            if (this.visible[i]) {
+                encabezado += "<th class='border bg-light align-middle " + (this.visible_sm[i] == false ? "d-none d-lg-table-cell'" : "'") + " style='width: " + this.ancho[i] + "'>";
+                encabezado += "<div class='row g-0 justify-content-between'>";
+                encabezado += "<div class='col-md-auto mx-0'>" + this.titulos[i] + "</div>";
+                encabezado += "<div class='col-md-auto mx-0 d-flex gap-2 align-items-center'>";
+                // Ordenar
+                encabezado += "<a class='link-dark link-underline-opacity-0 ordenar-" + this.nombre + "' href='#' data-campo='" + i + "'>";
+                if (this.orden[i] == "ASC") {
+                    encabezado += "<i class='bi-chevron-up'></i>";
+                } else if (this.orden[i] == "DESC") {
+                    encabezado += "<i class='bi-chevron-down'></i>";
+                } else {
+                    encabezado += "<i class='bi-chevron-bar-expand'></i>";
+                }
+                encabezado += "</a>";
+                // Filtro con dropdown correcto
+                encabezado += "<div class='dropdown d-inline-block'>";
+                encabezado += "<a class='link-dark link-underline-opacity-0 dropdown-toggle' href='#' data-bs-toggle='dropdown' aria-expanded='false'>";
+                if (this.filtro[i] != "") {
+                    encabezado += "<i class='bi-funnel-fill'></i>";
+                } else {
+                    encabezado += "<i class='bi-funnel'></i>";
+                }
+                encabezado += "</a>";
+                encabezado += "<form class='dropdown-menu p-3'>";
+                encabezado += "<div class='d-grid gap-2'>";
+                encabezado += "<label class='form-label'>Filtro por " + this.titulos[i] + "</label>";
+                encabezado += "<input type='text' class='form-control input-filtro-" + this.nombre + "' placeholder='Buscar' value='" + (this.filtro[i] || "") + "'>";
+                encabezado += "<div class='d-flex gap-2'>";
+                encabezado += "<button class='btn btn-primary btn-sm aplicar-filtro-" + this.nombre + "' type='button' data-campo='" + i + "'>Filtrar</button>";
+                encabezado += "<button class='btn btn-outline-secondary btn-sm limpiar-filtro-" + this.nombre + "' type='button' data-campo='" + i + "'>Limpiar</button>";
+                encabezado += "</div>";
+                encabezado += "</div>";
+                encabezado += "</form>";
+                encabezado += "</div>"; // fin dropdown
+                encabezado += "</div>"; // fin toolbar derecha
+                encabezado += "</div>"; // fin row
+                encabezado += "</th>";
+            }
+        }
+
+        if (this.editable || this.borrable) {
+            encabezado += "<th class='border bg-light text-center'>Acciones</th>";
+        }
+        encabezado += "</tr>";
+        return encabezado;
+    }
+
     async getPaginador() {
         let totalRegistros = await this.getTotalRegistros();
         let totalPaginas = Math.ceil(totalRegistros / this.registrosPorPagina);
@@ -380,6 +438,72 @@ class Tabla {
         }
         return paginador;
 
+    }
+
+    /**
+     * Genera el paginador compatible con CSP (sin javascript: ni onclick inline).
+     * - Usa enlaces con href="#" y data-page para indicar la página destino.
+     * - Agrega la clase "paginar-<nombre_tabla>" a cada link navegable.
+     * - Para móviles, usa un <a href="/">Atrás</a> en lugar de onclick.
+     * Importante: para que funcione hay que manejar los clics con un listener delegado
+     * que haga POST a /<rutaConsulta>/paginar con { pagina, tabla } y luego recargue.
+     */
+    async getPaginadorCSP() {
+        let totalRegistros = await this.getTotalRegistros();
+        let totalPaginas = Math.ceil(totalRegistros / this.registrosPorPagina);
+        let paginador = "";
+        const paginasPorSegmento = 5;
+        let segmentoActual = Math.floor((this.paginaActual - 1) / paginasPorSegmento);
+        let inicioSegmento = segmentoActual * paginasPorSegmento + 1;
+        let finSegmento = Math.min(inicioSegmento + paginasPorSegmento - 1, totalPaginas);
+
+        if (totalPaginas > 1) {
+            paginador += "<div class='position-absolute bottom-0 start-50 translate-middle'>";
+            paginador += "<nav aria-label='Page navigation example'>\n";
+            paginador += "\t<ul class='pagination justify-content-center'>\n";
+
+            // Anterior
+            if (this.paginaActual == 1) {
+                paginador += "\t\t<li class='page-item disabled'><a class='page-link' href='#' tabindex='-1' aria-disabled='true'>Anterior</a></li>\n";
+            } else {
+                paginador += "\t\t<li class='page-item'><a class='page-link paginar-" + this.nombre + "' href='#' data-page='" + (this.paginaActual - 1) + "'>Anterior</a></li>\n";
+            }
+
+            // Botón para segmento anterior
+            if (inicioSegmento > 1) {
+                paginador += "\t\t<li class='page-item'><a class='page-link paginar-" + this.nombre + "' href='#' data-page='" + (inicioSegmento - 1) + "'>...</a></li>\n";
+            }
+
+            // Páginas del segmento actual
+            for (let i = inicioSegmento; i <= finSegmento; i++) {
+                if (i == this.paginaActual) {
+                    paginador += "\t\t<li class='page-item active' aria-current='page'><a class='page-link' href='#'>" + i + "</a></li>\n";
+                } else {
+                    paginador += "\t\t<li class='page-item'><a class='page-link paginar-" + this.nombre + "' href='#' data-page='" + i + "'>" + i + "</a></li>\n";
+                }
+            }
+
+            // Botón para segmento siguiente
+            if (finSegmento < totalPaginas) {
+                paginador += "\t\t<li class='page-item'><a class='page-link paginar-" + this.nombre + "' href='#' data-page='" + (finSegmento + 1) + "'>...</a></li>\n";
+            }
+
+            // Siguiente
+            if (this.paginaActual == totalPaginas) {
+                paginador += "\t\t<li class='page-item disabled'><a class='page-link' href='#' tabindex='-1' aria-disabled='true'>Siguiente</a></li>\n";
+            } else {
+                paginador += "\t\t<li class='page-item'><a class='page-link paginar-" + this.nombre + "' href='#' data-page='" + (this.paginaActual + 1) + "'>Siguiente</a></li>\n";
+            }
+
+            paginador += "\t</ul>\n";
+            paginador += "</nav>\n";
+            paginador += "</div>";
+            // Botón atrás (móvil) sin onclick inline
+            paginador += "<div class='d-lg-none text-center mt-3'>";
+            paginador += "<a class='btn btn-primary h1' href='/'> <i class='bi-box-arrow-left h1 me-2'></i>Atrás</a>";
+            paginador += "</div>";
+        }
+        return paginador;
     }
 
     getFunciones(home = '') {

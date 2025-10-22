@@ -86,13 +86,13 @@ router.get('/', logueado, async (req, res) => {
     personal.aplicarFiltroGeneral(filtroBaja);
     personal.getTotalRegistros();
     var sql = personal.getSQL();
-    var encabezadoHTML = personal.getEncabezado();
-    var paginador = await personal.getPaginador();
-    var funciones = personal.getFunciones();
+    var encabezadoHTML = personal.getEncabezadoCSP();
+    var paginador = await personal.getPaginadorCSP();
+    var funciones = "";
  
     try {
         const [tabla, fields] = await pool.query(sql);
-        return render(req, res, 'personal', { encabezadoHTML: encabezadoHTML, tabla: tabla, paginador: paginador, funciones: funciones, permiteBorrar: personal.borrable , permiteEditar: personal.editable });
+    return render(req, res, 'personal', { encabezadoHTML: encabezadoHTML, tabla: tabla, paginador: paginador, funciones: funciones, permiteBorrar: personal.borrable , permiteEditar: personal.editable });
     }
     catch(err) {
         console.log(err);
