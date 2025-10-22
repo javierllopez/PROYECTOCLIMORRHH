@@ -13,8 +13,14 @@ const device = require('express-device');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
 
-// Cargar variables de entorno desde .env (en producción Heroku usa Config Vars)
-dotenv.config();
+const esProduccion = process.env.NODE_ENV === 'production' || Boolean(process.env.PORT);
+
+if (!esProduccion) {
+    // En desarrollo cargamos variables desde .env
+    dotenv.config();
+} else {
+    console.log('Entorno producción detectado: se usan variables de entorno de Heroku para la base de datos');
+}
 
 const app = express()
 app.use(json.json());
@@ -42,13 +48,6 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false,
 }));
 
-if (process.env.PORT) {
-   const {database} = require('./clavesHeroku');    
-}else {
-    const {database} = require('./claves');    
-const bcrypt = require('bcrypt');
-}
-
 //Configuraciones
 const port = process.env.PORT||3000;
 app.set('port',process.env.PORT||3000);
@@ -69,7 +68,6 @@ app.engine('.hbs', exphbs.engine({
 app.set('view engine','.hbs');
 
 // Inicializar variable de sesión usando clave segura desde .env
-const esProduccion = process.env.NODE_ENV === 'production' || !!process.env.PORT;
 if (esProduccion) {
     // Necesario en plataformas detrás de proxy (Heroku) para que "secure cookies" funcionen
     app.set('trust proxy', 1);

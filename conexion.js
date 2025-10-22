@@ -1,9 +1,33 @@
 const mysql = require('mysql2/promise');
-const {database} = require('./claves');
 
+const esProduccion = process.env.NODE_ENV === 'production' || Boolean(process.env.PORT);
+
+const leerConfigDesdeEntorno = () => ({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER || process.env.DB_USUARIO,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME || process.env.DB_NOMBRE,
+    port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306
+});
+
+let configuracionBaseDatos = leerConfigDesdeEntorno();
+
+const faltanDatosConexion = (config) => !config.host || !config.user || !config.database;
+
+if (esProduccion) {
+    if (faltanDatosConexion(configuracionBaseDatos)) {
+        throw new Error('Faltan variables de entorno DB_* para la conexión MySQL en producción');
+    }
+} else if (faltanDatosConexion(configuracionBaseDatos)) {
+    const { database } = require('./claves');
+    configuracionBaseDatos = {
+        ...database,
+        port: database.port ? Number(database.port) : 3306
+    };
+}
 
 const pool = mysql.createPool({
-    ...database,
+    ...configuracionBaseDatos,
     timezone: 'Z' // UTC
 });
 
