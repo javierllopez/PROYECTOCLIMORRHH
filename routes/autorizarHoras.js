@@ -15,7 +15,7 @@ router.all('*', logueado, (req, res, next) => {
 });
 
 router.get('/', logueado, async (req, res) => {
-    const sqlNovedadesE = "SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo, Observaciones, Actual, NovedadesHasta FROM novedadesE WHERE Actual = 1";
+    const sqlNovedadesE = "SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo, Observaciones, Actual, NovedadesHasta FROM novedadese WHERE Actual = 1";
     const sqlNovedadesR = `
         SELECT 
             novedadesr.Id as IdNovedadesR, 
@@ -78,7 +78,7 @@ router.get('/pendientes', logueado, async (req, res) => {
         const idNovedadesE = rowsE[0].Id;
         const sqlCuenta = `
             SELECT COUNT(*) AS cantidad
-            FROM novedadesR
+            FROM novedadesr
             WHERE IdNovedadesE = ? AND IdSupervisor = ? AND IdEstado IN (1,4)
         `;
         const [rowsC] = await pool.query(sqlCuenta, [idNovedadesE, req.session.idUsuario]);

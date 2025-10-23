@@ -47,7 +47,7 @@ router.get('/', logueado, async (req, res) => {
         personal2.Id as IdReemplazo,
         personal2.ApellidoYNombre as Reemplazo,
         novedadesr.Observaciones as Observaciones,
-        novedadesR.CreadoPorAdmin as CreadoPorAdmin
+        novedadesr.CreadoPorAdmin as CreadoPorAdmin
         FROM novedadesr
         INNER JOIN personal ON novedadesr.IdEmpleado = personal.Id
         INNER JOIN sectores ON novedadesr.IdSector = sectores.Id
