@@ -18,39 +18,39 @@ router.get('/', logueado, async (req, res) => {
     const sqlNovedadesE = "SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo, Observaciones, Actual, NovedadesHasta FROM novedadesE WHERE Actual = 1";
     const sqlNovedadesR = `
         SELECT 
-            novedadesR.Id as IdNovedadesR, 
-            novedadesR.IdNovedadesE, 
-            novedadesR.IdEmpleado, 
+            novedadesr.Id as IdNovedadesR, 
+            novedadesr.IdNovedadesE, 
+            novedadesr.IdEmpleado, 
             personal.Id as IdPersonal, 
             personal.ApellidoYNombre AS Empleado,
-            DATE_FORMAT(novedadesR.Fecha, '%Y-%m-%d') AS Fecha,
-            novedadesR.Hs50,
-            novedadesR.Hs100,
-            novedadesR.GuardiasDiurnas,
-            novedadesR.GuardiasNocturnas,
-            novedadesR.GuardiasPasivas,
-            novedadesR.IdSupervisor,
-            novedadesR.IdMotivo,
-            novedadesR.IdReemplazo,
-            novedadesR.IdEstado,
-            novedadesR.ObservacionesEstado, 
-            novedadesR.Inicio,
-            novedadesR.Fin,
+            DATE_FORMAT(novedadesr.Fecha, '%Y-%m-%d') AS Fecha,
+            novedadesr.Hs50,
+            novedadesr.Hs100,
+            novedadesr.GuardiasDiurnas,
+            novedadesr.GuardiasNocturnas,
+            novedadesr.GuardiasPasivas,
+            novedadesr.IdSupervisor,
+            novedadesr.IdMotivo,
+            novedadesr.IdReemplazo,
+            novedadesr.IdEstado,
+            novedadesr.ObservacionesEstado, 
+            novedadesr.Inicio,
+            novedadesr.Fin,
             motivos.Id, 
             motivos.Descripcion AS Motivo,
             pReemplazo.ApellidoYNombre AS ReemplazoNombre,
-            novedadesR.Observaciones
+            novedadesr.Observaciones
         FROM 
-            novedadesR
-            LEFT JOIN personal ON novedadesR.IdEmpleado = personal.Id
-            LEFT JOIN motivos ON novedadesR.IdMotivo = motivos.Id
-            LEFT JOIN personal AS pReemplazo ON novedadesR.IdReemplazo = pReemplazo.Id
+            novedadesr
+            LEFT JOIN personal ON novedadesr.IdEmpleado = personal.Id
+            LEFT JOIN motivos ON novedadesr.IdMotivo = motivos.Id
+            LEFT JOIN personal AS pReemplazo ON novedadesr.IdReemplazo = pReemplazo.Id
         WHERE 
-            novedadesR.IdNovedadesE = ? 
-            AND novedadesR.IdSupervisor = ?
+            novedadesr.IdNovedadesE = ? 
+            AND novedadesr.IdSupervisor = ?
         ORDER BY
             personal.ApellidoYNombre, 
-            novedadesR.Fecha
+            novedadesr.Fecha
     `;
 
     try {
@@ -70,7 +70,7 @@ router.get('/', logueado, async (req, res) => {
 // Endpoint JSON: cantidad de novedades pendientes de autorización para el supervisor logueado
 router.get('/pendientes', logueado, async (req, res) => {
     try {
-        const sqlNovedadesE = "SELECT Id FROM novedadesE WHERE Actual = 1";
+        const sqlNovedadesE = "SELECT Id FROM novedadese WHERE Actual = 1";
         const [rowsE] = await pool.query(sqlNovedadesE);
         if (!rowsE.length) {
             return res.json({ cantidad: 0 });
@@ -91,7 +91,7 @@ router.get('/pendientes', logueado, async (req, res) => {
 });
 router.get('/OK/:Id', logueado, async (req, res) => {
     const {Id} = req.params;
-    const sqlNovedad = "SELECT Id, IdEmpleado, IdNomina, DATE_FORMAT(Fecha, '%Y-%m-%d') AS Fecha, Inicio, Fin, Hs50, Hs100, GuardiasDiurnas, GuardiasNocturnas, IdEstado, ObservacionesEstado, Observaciones FROM novedadesR WHERE Id = ?";
+    const sqlNovedad = "SELECT Id, IdEmpleado, IdNomina, DATE_FORMAT(Fecha, '%Y-%m-%d') AS Fecha, Inicio, Fin, Hs50, Hs100, GuardiasDiurnas, GuardiasNocturnas, IdEstado, ObservacionesEstado, Observaciones FROM novedadesr WHERE Id = ?";
     const sqlPersonalActual = 'SELECT Id, ApellidoYNombre FROM personal WHERE Id = ?';
     const sqlPersonal = 'SELECT Id, ApellidoYNombre FROM personal ORDER BY ApellidoYNombre';
     const sqlMotivos = 'SELECT * FROM motivos';
@@ -131,7 +131,7 @@ router.get('/OK/:Id', logueado, async (req, res) => {
 //Rechazo de la novedad - carga del formulario
 router.get('/NO/:Id', logueado, async (req, res) => {
     const {Id} = req.params;
-    const sqlNovedad = "SELECT Id, IdEmpleado, IdNomina, DATE_FORMAT(Fecha, '%Y-%m-%d') AS Fecha, Inicio, Fin, Hs50, Hs100, GuardiasDiurnas, GuardiasNocturnas, IdEstado, ObservacionesEstado, Observaciones FROM novedadesR WHERE Id = ?";
+    const sqlNovedad = "SELECT Id, IdEmpleado, IdNomina, DATE_FORMAT(Fecha, '%Y-%m-%d') AS Fecha, Inicio, Fin, Hs50, Hs100, GuardiasDiurnas, GuardiasNocturnas, IdEstado, ObservacionesEstado, Observaciones FROM novedadesr WHERE Id = ?";
     const sqlPersonalActual = 'SELECT Id, ApellidoYNombre FROM personal WHERE Id = ?';
     const sqlNomina = 'SELECT * FROM nomina WHERE Id = ?';
 
@@ -171,7 +171,7 @@ router.post('/NO/:Id', logueado, async (req, res) => {
 
     let textoObservaciones = "Rechazado por supervisor. Motivo del rechazo: " + observaciones;
 
-    const sqlAutorizarNovedad = 'UPDATE novedadesR SET IdEstado = 2, ObservacionesEstado = ? WHERE Id = ?';
+    const sqlAutorizarNovedad = 'UPDATE novedadesr SET IdEstado = 2, ObservacionesEstado = ? WHERE Id = ?';
 
     try
     {
@@ -191,7 +191,7 @@ router.post('/OK/:Id', logueado, async (req, res) => {
     const {Id} = req.params;
     const { motivo, reemplazo, observaciones } = req.body;
 
-    const sqlAutorizarNovedad = 'UPDATE novedadesR SET IdEstado = 3, IdMotivo = ?, IdReemplazo = ?, Observaciones = ? WHERE Id = ?';
+    const sqlAutorizarNovedad = 'UPDATE novedadesr SET IdEstado = 3, IdMotivo = ?, IdReemplazo = ?, Observaciones = ? WHERE Id = ?';
 
     try
     {
@@ -209,12 +209,12 @@ router.post('/OK/:Id', logueado, async (req, res) => {
 router.get('/deshacer/:Id', logueado, async (req, res) => {
     const {Id} = req.params;
     // Bloquear si está liquidado
-    const [rows] = await pool.query('SELECT IdEstado FROM novedadesR WHERE Id = ?', [Id]);
+    const [rows] = await pool.query('SELECT IdEstado FROM novedadesr WHERE Id = ?', [Id]);
     if (rows.length && rows[0].IdEstado === 6) {
         enviarMensaje(req, res, 'Atención', 'No se puede deshacer una novedad liquidada.', 'warning');
         return res.redirect('/autorizarHoras');
     }
-    const sqlNovedad = 'UPDATE novedadesR SET IdEstado = 1, IdMotivo = NULL, IdReemplazo = NULL, ObservacionesEstado = NULL WHERE Id = ?';
+    const sqlNovedad = 'UPDATE novedadesr SET IdEstado = 1, IdMotivo = NULL, IdReemplazo = NULL, ObservacionesEstado = NULL WHERE Id = ?';
 
     try {
         await pool.query(sqlNovedad, [Id]);
