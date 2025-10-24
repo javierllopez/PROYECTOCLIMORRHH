@@ -1,0 +1,47 @@
+<div class="container my-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-8 col-xl-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <div class="d-flex align-items-center">
+            <i class="bi-cloud-upload-fill me-2"></i>
+            <h5 class="mb-0">Importar novedades</h5>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="text-muted">Seleccioná el archivo de Excel con las novedades que deseás sumar al período actual. Asegurate de utilizar la plantilla oficial para evitar errores de formato.</p>
+          <form action="/novedades/importar" method="POST" enctype="multipart/form-data" class="mt-3">
+            <div class="mb-3">
+              <label for="archivoNovedades" class="form-label">Archivo de novedades</label>
+              <input class="form-control" type="file" id="archivoNovedades" name="archivoNovedades" accept=".xlsx,.xls" required>
+              <div class="form-text">Formatos admitidos: .xlsx y .xls. Tamaño máximo: 5 MB.</div>
+            </div>
+
+            <div class="bg-light border rounded p-3 mb-3">
+              <h6 class="fw-semibold mb-2">Recomendaciones</h6>
+              <ul class="small mb-0">
+                <li>El archivo debe incluir las columnas definidas en la plantilla de importación.</li>
+                <li>Verificá que las fechas y horas estén expresadas en formato 24 hs.</li>
+                <li>Confirmá que el período coincida con la liquidación en curso.</li>
+              </ul>
+            </div>
+
+            <div class="form-check form-switch mb-4">
+              <input class="form-check-input" type="checkbox" role="switch" id="sobrescribir" name="sobrescribir">
+              <label class="form-check-label" for="sobrescribir">Sobrescribir novedades existentes del período actual</label>
+            </div>
+
+            <div class="row g-2">
+              <div class="col-12 col-sm-6">
+                <a href="/novedadesTodas" class="btn btn-outline-secondary w-100">Volver</a>
+              </div>
+              <div class="col-12 col-sm-6">
+                <button type="submit" class="btn btn-primary w-100">Aceptar</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -276,6 +276,7 @@ router.get('/importar', logueado, (req, res) => {
         { campo: 'Nombres', label: 'Nombres' },
         { campo: 'FechaNacimiento', label: 'Fecha de Nacimiento' },
         { campo: 'FechaIngreso', label: 'Fecha de Ingreso' },
+        { campo: 'FechaBaja', label: 'Fecha de Baja' },
         { campo: 'CUIL', label: 'CUIL' },
         { campo: 'DNI', label: 'DNI' },
         { campo: 'IdSector', label: 'IdSector' },
@@ -295,6 +296,7 @@ router.post('/importar/preparar', logueado, upload.single('archivoExcel'), async
         { campo: 'Nombres', label: 'Nombres' },
         { campo: 'FechaNacimiento', label: 'Fecha de Nacimiento' },
         { campo: 'FechaIngreso', label: 'Fecha de Ingreso' },
+        { campo: 'FechaBaja', label: 'Fecha de Baja' },
         { campo: 'CUIL', label: 'CUIL' },
         { campo: 'DNI', label: 'DNI' },
         { campo: 'IdSector', label: 'IdSector' },
@@ -324,26 +326,102 @@ router.post('/importar/preparar', logueado, upload.single('archivoExcel'), async
 router.post('/importar/ejecutar', logueado, async (req, res) => {
     const { archivo, tieneEncabezado, modoImportacion } = req.body;
     const mapeo = req.body;
-    const campos = [ 'Legajo', 'Apellido', 'Nombres', 'FechaNacimiento', 'FechaIngreso', 'CUIL', 'DNI', 'IdSector', 'IdCategoria', 'IdTurno', 'CorreoElectronico', 'Nivel' ];
+    const campos = [ 'Legajo', 'Apellido', 'Nombres', 'FechaNacimiento', 'FechaIngreso', 'FechaBaja', 'CUIL', 'DNI', 'IdSector', 'IdCategoria', 'IdTurno', 'CorreoElectronico', 'Nivel' ];
     const ExcelJS = require('exceljs');
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile('uploads/' + archivo);
     const worksheet = workbook.worksheets[0];
+
+    const tieneEncabezadoActivo = tieneEncabezado === 'on';
+    const normalizarHeader = (valor) => {
+        if (valor === undefined || valor === null) {
+            return '';
+        }
+        if (valor instanceof Date) {
+            return valor.toISOString();
+        }
+        if (typeof valor === 'object' && valor.text) {
+            return String(valor.text).trim();
+        }
+        return String(valor).trim();
+    };
+
+    const extraerValorCelda = (valor) => {
+        if (valor === undefined || valor === null) {
+            return null;
+        }
+        if (valor instanceof Date) {
+            return valor;
+        }
+        if (typeof valor === 'object') {
+            if (valor.text !== undefined) {
+                return String(valor.text).trim();
+            }
+            if (Array.isArray(valor.richText)) {
+                return valor.richText.map(part => part.text).join('').trim();
+            }
+            if (valor.result !== undefined && valor.result !== null) {
+                return valor.result;
+            }
+        }
+        if (typeof valor === 'string') {
+            return valor.trim();
+        }
+        return valor;
+    };
+
+    const headerMap = new Map();
+    if (tieneEncabezadoActivo) {
+        worksheet.getRow(1).eachCell((cell, colNumber) => {
+            const etiqueta = normalizarHeader(cell.value);
+            const original = cell.value === undefined || cell.value === null ? '' : String(cell.value);
+            if (!headerMap.has(original)) {
+                headerMap.set(original, colNumber);
+            }
+            if (!headerMap.has(etiqueta)) {
+                headerMap.set(etiqueta, colNumber);
+            }
+        });
+    } else {
+        const primeraFila = worksheet.getRow(1);
+        primeraFila.eachCell((cell, colNumber) => {
+            const etiqueta = `Columna ${colNumber}`;
+            headerMap.set(etiqueta, colNumber);
+        });
+    }
+
+    const obtenerIndiceColumna = (seleccion) => {
+        if (seleccion === undefined || seleccion === null || seleccion === '') {
+            return null;
+        }
+        const clave = String(seleccion).trim();
+        return headerMap.get(clave) || null;
+    };
+
     let rows = [];
     worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-        if (tieneEncabezado === 'on' && rowNumber === 1) return;
+        if (tieneEncabezadoActivo && rowNumber === 1) {
+            return;
+        }
         let obj = {};
         campos.forEach(c => {
-            const colIndex = worksheet.getRow(1).values.indexOf(mapeo[c]);
-            obj[c] = row.getCell(colIndex).value;
+            const colIndex = obtenerIndiceColumna(mapeo[c]);
+            if (!colIndex) {
+                obj[c] = null;
+                return;
+            }
+            const valor = extraerValorCelda(row.getCell(colIndex).value);
+            obj[c] = valor;
         });
         rows.push(obj);
     });
+
     let insertados = 0;
     let ignorados = 0;
-    const sqlInsertPersonal = 'INSERT INTO personal (Legajo, Apellido, Nombres, FechaNacimiento, FechaIngreso, CUIL, DNI, IdSector, IdCategoria, IdTurno, CorreoElectronico, nivel, idUsuario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const sqlInsertPersonal = 'INSERT INTO personal (Legajo, Apellido, Nombres, FechaNacimiento, FechaIngreso, FechaBaja, CUIL, DNI, IdSector, IdCategoria, IdTurno, CorreoElectronico, nivel, idUsuario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
     const sqlInsertUsuario = 'INSERT INTO usuarios (Usuario, Clave, Activo, Nivel, CorreoElectronico, primerAcceso) VALUES (?, ?, ?, ?, ?, ?)';
+    const sqlExisteLegajo = 'SELECT Id FROM personal WHERE Legajo = ? LIMIT 1';
     const sqlFindSector = 'SELECT Id FROM sectores WHERE Descripcion = ? LIMIT 1';
     const sqlInsertSector = "INSERT INTO sectores (Descripcion) VALUES ('NO DEFINIDO')";
     const sqlFindCategoria = 'SELECT Id FROM categorias WHERE Descripcion = ? LIMIT 1';
@@ -361,6 +439,13 @@ router.post('/importar/ejecutar', logueado, async (req, res) => {
         }
         for (let row of rows) {
             try {
+                // Verificar si ya existe el legajo cargado
+                const [existeLegajo] = await conn.query(sqlExisteLegajo, [row.Legajo]);
+                if (existeLegajo.length > 0) {
+                    ignorados++;
+                    continue;
+                }
+
                 // Buscar o crear sector
                 let [sector] = await conn.query(sqlFindSector, [row.IdSector]);
                 let idSector;
@@ -403,17 +488,34 @@ router.post('/importar/ejecutar', logueado, async (req, res) => {
                 // Cast fechas a formato YYYY-MM-DD
                 let fechaNacimiento = row.FechaNacimiento ? new Date(row.FechaNacimiento) : null;
                 let fechaIngreso = row.FechaIngreso ? new Date(row.FechaIngreso) : null;
+                let fechaBaja = row.FechaBaja ? new Date(row.FechaBaja) : null;
                 let fechaNacimientoSql = fechaNacimiento && !isNaN(fechaNacimiento) ? fechaNacimiento.toISOString().slice(0,10) : null;
                 let fechaIngresoSql = fechaIngreso && !isNaN(fechaIngreso) ? fechaIngreso.toISOString().slice(0,10) : null;
-                // Insertar en usuarios primero
-                const hashedPassword = await bcrypt.hash(row.DNI.toString(), 10);
-                const [usuarioResult] = await conn.query(sqlInsertUsuario, [row.DNI, hashedPassword, true, row.Nivel, row.CorreoElectronico, true]);
-                const idUsuario = usuarioResult.insertId;
-                // Insertar en personal usando el idUsuario generado
-                await conn.query(sqlInsertPersonal, [row.Legajo, row.Apellido, row.Nombres, fechaNacimientoSql, fechaIngresoSql, row.CUIL, row.DNI, idSector, idCategoria, idTurno, row.CorreoElectronico, row.Nivel, idUsuario]);
+                let fechaBajaSql = fechaBaja && !isNaN(fechaBaja) ? fechaBaja.toISOString().slice(0,10) : null;
+
+                const correoNormalizado = (() => {
+                    if (row.CorreoElectronico === undefined || row.CorreoElectronico === null) {
+                        return null;
+                    }
+                    const valor = String(row.CorreoElectronico).trim();
+                    return valor.length ? valor : null;
+                })();
+
+                let idUsuario = null;
+                if (!fechaBajaSql) {
+                    if (row.DNI === undefined || row.DNI === null || row.DNI === '') {
+                        throw new Error('El DNI es obligatorio para generar el usuario.');
+                    }
+                    const hashedPassword = await bcrypt.hash(row.DNI.toString(), 10);
+                    const [usuarioResult] = await conn.query(sqlInsertUsuario, [row.DNI, hashedPassword, true, row.Nivel, correoNormalizado, true]);
+                    idUsuario = usuarioResult.insertId;
+                }
+
+                await conn.query(sqlInsertPersonal, [row.Legajo, row.Apellido, row.Nombres, fechaNacimientoSql, fechaIngresoSql, fechaBajaSql, row.CUIL, row.DNI, idSector, idCategoria, idTurno, correoNormalizado, row.Nivel, idUsuario]);
                 insertados++;
             } catch (err) {
                 ignorados++;
+                console.log(`Error al insertar fila: ${err.message}`);
                 // Puedes loguear el error y la fila aquí si lo deseas
             }
         }

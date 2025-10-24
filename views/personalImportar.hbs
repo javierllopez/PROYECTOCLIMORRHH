@@ -81,6 +81,15 @@
                       </select>
                   </div>
                   <div class="mb-3">
+                      <label class="form-label">FechaBaja (opcional)</label>
+                      <select class="form-select" name="FechaBaja">
+                          <option value="">(No mapear)</option>
+                          {{#each columnas}}
+                          <option value="{{this}}">{{this}}</option>
+                          {{/each}}
+                      </select>
+                  </div>
+                  <div class="mb-3">
                       <label class="form-label">CUIL</label>
                       <select class="form-select" name="CUIL" required>
                           {{#each columnas}}
@@ -121,8 +130,9 @@
                       </select>
                   </div>
                   <div class="mb-3">
-                      <label class="form-label">CorreoElectronico</label>
-                      <select class="form-select" name="CorreoElectronico" required>
+                      <label class="form-label">CorreoElectrónico (opcional)</label>
+                      <select class="form-select" name="CorreoElectronico">
+                          <option value="">(No mapear)</option>
                           {{#each columnas}}
                           <option value="{{this}}">{{this}}</option>
                           {{/each}}

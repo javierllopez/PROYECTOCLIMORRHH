@@ -109,6 +109,7 @@ app.use("/itemsNomina",require('./routes/itemsNomina'));
 app.use("/nominaValorizada",require('./routes/nominaValorizada'));
 app.use("/personal",require('./routes/personal'));
 app.use("/salir",require('./routes/salir'));
+app.use('/novedades/importar', require('./routes/novedadesImportar'));
 app.use("/novedades",require('./routes/novedades'));
 app.use("/liquidaciones",require('./routes/crearLiquidacion'));
 app.use("/autorizarHoras",require('./routes/autorizarHoras'));
