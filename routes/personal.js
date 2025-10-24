@@ -417,11 +417,15 @@ router.post('/importar/ejecutar', logueado, async (req, res) => {
     });
 
     let insertados = 0;
+    let actualizados = 0;
     let ignorados = 0;
+    const legajosIgnorados = [];
     const sqlInsertPersonal = 'INSERT INTO personal (Legajo, Apellido, Nombres, FechaNacimiento, FechaIngreso, FechaBaja, CUIL, DNI, IdSector, IdCategoria, IdTurno, CorreoElectronico, nivel, idUsuario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
     const sqlInsertUsuario = 'INSERT INTO usuarios (Usuario, Clave, Activo, Nivel, CorreoElectronico, primerAcceso) VALUES (?, ?, ?, ?, ?, ?)';
-    const sqlExisteLegajo = 'SELECT Id FROM personal WHERE Legajo = ? LIMIT 1';
+    const sqlExisteLegajo = 'SELECT Id, idUsuario FROM personal WHERE Legajo = ? LIMIT 1';
+    const sqlUpdatePersonal = 'UPDATE personal SET Apellido = ?, Nombres = ?, FechaNacimiento = ?, FechaIngreso = ?, FechaBaja = ?, CUIL = ?, DNI = ?, IdSector = ?, IdCategoria = ?, IdTurno = ?, CorreoElectronico = ?, nivel = ? WHERE Legajo = ?';
+    const sqlUpdateUsuario = 'UPDATE usuarios SET CorreoElectronico = ?, Nivel = ?, Activo = ? WHERE Id = ?';
     const sqlFindSector = 'SELECT Id FROM sectores WHERE Descripcion = ? LIMIT 1';
     const sqlInsertSector = "INSERT INTO sectores (Descripcion) VALUES ('NO DEFINIDO')";
     const sqlFindCategoria = 'SELECT Id FROM categorias WHERE Descripcion = ? LIMIT 1';
@@ -438,11 +442,26 @@ router.post('/importar/ejecutar', logueado, async (req, res) => {
             await conn.query('ALTER TABLE usuarios AUTO_INCREMENT = 1');
         }
         for (let row of rows) {
+            const legajo = row.Legajo;
+            const legajoTexto = legajo !== undefined && legajo !== null && legajo !== '' ? String(legajo) : '(sin legajo)';
             try {
-                // Verificar si ya existe el legajo cargado
-                const [existeLegajo] = await conn.query(sqlExisteLegajo, [row.Legajo]);
-                if (existeLegajo.length > 0) {
+                if (legajo === undefined || legajo === null || legajo === '') {
                     ignorados++;
+                    legajosIgnorados.push(legajoTexto);
+                    continue;
+                }
+
+                let fechaNacimiento = row.FechaNacimiento ? new Date(row.FechaNacimiento) : null;
+                let fechaIngreso = row.FechaIngreso ? new Date(row.FechaIngreso) : null;
+                let fechaBaja = row.FechaBaja ? new Date(row.FechaBaja) : null;
+                let fechaNacimientoSql = fechaNacimiento && !isNaN(fechaNacimiento) ? fechaNacimiento.toISOString().slice(0,10) : null;
+                let fechaIngresoSql = fechaIngreso && !isNaN(fechaIngreso) ? fechaIngreso.toISOString().slice(0,10) : null;
+                let fechaBajaSql = fechaBaja && !isNaN(fechaBaja) ? fechaBaja.toISOString().slice(0,10) : null;
+
+                const [existeLegajo] = await conn.query(sqlExisteLegajo, [legajo]);
+                if (existeLegajo.length > 0 && !fechaBajaSql) {
+                    ignorados++;
+                    legajosIgnorados.push(legajoTexto);
                     continue;
                 }
 
@@ -485,13 +504,6 @@ router.post('/importar/ejecutar', logueado, async (req, res) => {
                     }
                     idTurno = def[0].Id;
                 }
-                // Cast fechas a formato YYYY-MM-DD
-                let fechaNacimiento = row.FechaNacimiento ? new Date(row.FechaNacimiento) : null;
-                let fechaIngreso = row.FechaIngreso ? new Date(row.FechaIngreso) : null;
-                let fechaBaja = row.FechaBaja ? new Date(row.FechaBaja) : null;
-                let fechaNacimientoSql = fechaNacimiento && !isNaN(fechaNacimiento) ? fechaNacimiento.toISOString().slice(0,10) : null;
-                let fechaIngresoSql = fechaIngreso && !isNaN(fechaIngreso) ? fechaIngreso.toISOString().slice(0,10) : null;
-                let fechaBajaSql = fechaBaja && !isNaN(fechaBaja) ? fechaBaja.toISOString().slice(0,10) : null;
 
                 const correoNormalizado = (() => {
                     if (row.CorreoElectronico === undefined || row.CorreoElectronico === null) {
@@ -501,26 +513,40 @@ router.post('/importar/ejecutar', logueado, async (req, res) => {
                     return valor.length ? valor : null;
                 })();
 
+                const correoParaUsuario = correoNormalizado || '';
+
+                if (existeLegajo.length > 0) {
+                    const registroActual = existeLegajo[0];
+                    await conn.query(sqlUpdatePersonal, [row.Apellido, row.Nombres, fechaNacimientoSql, fechaIngresoSql, fechaBajaSql, row.CUIL, row.DNI, idSector, idCategoria, idTurno, correoNormalizado, row.Nivel, legajo]);
+                    if (registroActual.idUsuario) {
+                        await conn.query(sqlUpdateUsuario, [correoParaUsuario, row.Nivel, 0, registroActual.idUsuario]);
+                    }
+                    actualizados++;
+                    continue;
+                }
+
                 let idUsuario = null;
                 if (!fechaBajaSql) {
                     if (row.DNI === undefined || row.DNI === null || row.DNI === '') {
                         throw new Error('El DNI es obligatorio para generar el usuario.');
                     }
                     const hashedPassword = await bcrypt.hash(row.DNI.toString(), 10);
-                    const [usuarioResult] = await conn.query(sqlInsertUsuario, [row.DNI, hashedPassword, true, row.Nivel, correoNormalizado, true]);
+                    const [usuarioResult] = await conn.query(sqlInsertUsuario, [row.DNI, hashedPassword, true, row.Nivel, correoParaUsuario, true]);
                     idUsuario = usuarioResult.insertId;
                 }
 
-                await conn.query(sqlInsertPersonal, [row.Legajo, row.Apellido, row.Nombres, fechaNacimientoSql, fechaIngresoSql, fechaBajaSql, row.CUIL, row.DNI, idSector, idCategoria, idTurno, correoNormalizado, row.Nivel, idUsuario]);
+                await conn.query(sqlInsertPersonal, [legajo, row.Apellido, row.Nombres, fechaNacimientoSql, fechaIngresoSql, fechaBajaSql, row.CUIL, row.DNI, idSector, idCategoria, idTurno, correoNormalizado, row.Nivel, idUsuario]);
                 insertados++;
             } catch (err) {
                 ignorados++;
+                legajosIgnorados.push(legajoTexto);
                 console.log(`Error al insertar fila: ${err.message}`);
                 // Puedes loguear el error y la fila aquí si lo deseas
             }
         }
         await conn.commit();
-        render(req, res, 'personal', { Mensaje: { title: 'Importación finalizada', text: `Se importaron ${insertados} registros. Se ignoraron ${ignorados} registros con error.`, icon: 'info' } });
+        const detalleIgnorados = legajosIgnorados.length ? legajosIgnorados.join(', ') : 'Ninguno';
+        render(req, res, 'personal', { Mensaje: { title: 'Importación finalizada', text: `Se importaron ${insertados} registros nuevos. Se actualizaron ${actualizados} registros existentes. Se ignoraron ${ignorados} registros. Legajos ignorados: ${detalleIgnorados}.`, icon: 'info' } });
     } catch (err) {
         await conn.rollback();
         render(req, res, 'personal', { Mensaje: { title: 'Error', text: err.message, icon: 'error' } });
