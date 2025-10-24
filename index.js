@@ -34,7 +34,7 @@ const cspDirectives = {
     styleSrc: ["'self'", 'https://cdn.jsdelivr.net', "'unsafe-inline'"],
     fontSrc: ["'self'", 'https://cdn.jsdelivr.net', 'data:'],
     imgSrc: ["'self'", 'data:'],
-    connectSrc: ["'self'"],
+    connectSrc: ["'self'", 'https://cdn.jsdelivr.net'],
     objectSrc: ["'none'"],
     baseUri: ["'self'"],
     frameAncestors: ["'self'"],

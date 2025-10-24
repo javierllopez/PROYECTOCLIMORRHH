@@ -1,45 +1,57 @@
-<div class="container d-flex justify-content-center align-items-center vh-100">
-    <div class="card w-50">
-        <div class="card-header bg-primary text-white text-center">
-            {{#if primeraVez}}
-            <h3>Cambiar Clave</h3>
-            {{else}}
-            <h3>Datos de Usuario</h3>
-            {{/if}}
-        </div>
-        <div class="card-body">
-            <form action="/login/cambiarClave" method="POST">
-                <input type="hidden" name="Id" value="{{Id}}">
-                <input type="hidden" name="primeraVez" value="{{primeraVez}}">
-                {{#if primeraVez}}
-                <p>Al ingresar por primera vez al sistema debe cambiar el nombre de usuario y la contraseña asignadas
-                    por defecto</p>
-                {{/if}}
-                <div class="form-group mt-2">
-                    <label for="nuevoUsuario">nombre de usuario</label>
-                    <input type="text" class="form-control" id="nuevoUsuario" name="nuevoUsuario" value="{{UsuarioActual}}" required>
+<div class="container d-flex justify-content-center align-items-center min-vh-100 py-4 py-md-0">
+    <div class="row justify-content-center w-100">
+        <div class="col-12 col-md-8 col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white text-center">
+                    {{#if primeraVez}}
+                    <h3>Cambiar Clave</h3>
+                    {{else}}
+                    <h3>Datos de Usuario</h3>
+                    {{/if}}
                 </div>
-                <div class="form-group mt-2">
-                    <label for="correoElectronico">Correo Electrónico</label>
-                    <input type="email" class="form-control" id="correoElectronico" name="correoElectronico" value="{{CorreoElectronico}}">
+                <div class="card-body">
+                    <form action="/login/cambiarClave" method="POST">
+                        <input type="hidden" name="Id" value="{{Id}}">
+                        <input type="hidden" name="primeraVez" value="{{primeraVez}}">
+                        {{#if primeraVez}}
+                        <p>Al ingresar por primera vez al sistema debe cambiar el nombre de usuario y la contraseña
+                            asignadas
+                            por defecto</p>
+                        {{/if}}
+                        <div class="form-group mt-2">
+                            <label for="nuevoUsuario">nombre de usuario</label>
+                            <input type="text" class="form-control" id="nuevoUsuario" name="nuevoUsuario"
+                                value="{{UsuarioActual}}" required>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="correoElectronico">Correo Electrónico</label>
+                            <input type="email" class="form-control" id="correoElectronico" name="correoElectronico"
+                                value="{{CorreoElectronico}}">
+                        </div>
+                        {{#unless primeraVez}}
+                        <label for="claveActual">Clave actual</label>
+                        <input type="password" class="form-control" id="claveActual" name="claveActual" required>
+                        {{/unless}}
+                        <div class="form-group mt-2">
+                            <label for="newPassword">Nueva Clave</label>
+                            <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="confirmPassword">Confirmar Nueva Clave</label>
+                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
+                                required>
+                        </div>
+                        <div class="row g-2 mt-3">
+                            <div class="col-12 col-sm-6">
+                                <a href="/" class="btn btn-secondary w-100">Volver a Inicio</a>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <button type="submit" class="btn btn-primary w-100">Cambiar Clave</button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-                {{#unless primeraVez}}
-                    <label for="claveActual">Clave actual</label>
-                    <input type="password" class="form-control" id="claveActual" name="claveActual" required>
-                {{/unless}}
-                <div class="form-group mt-2">
-                    <label for="newPassword">Nueva Clave</label>
-                    <input type="password" class="form-control" id="newPassword" name="newPassword" required>
-                </div>
-                <div class="form-group mt-2">
-                    <label for="confirmPassword">Confirmar Nueva Clave</label>
-                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
-                </div>
-                <div class="text-center">
-                    <a href="/" class="btn btn-secondary btn-block mt-2 me-2">Volver a Inicio</a>
-                    <button type="submit" class="btn btn-primary btn-block mt-2">Cambiar Clave</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
