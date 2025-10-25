@@ -1,0 +1,69 @@
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Importación de personal</h5>
+          <div id="estado">
+            <div class="d-flex align-items-center">
+              <div class="spinner-border text-primary me-3" role="status" aria-hidden="true"></div>
+              <div>
+                <p class="mb-1">Procesando archivo... Esto puede tardar unos minutos.</p>
+                <small class="text-muted">Podés dejar esta pestaña abierta. Se actualizará automáticamente.</small>
+              </div>
+            </div>
+          </div>
+
+          <div id="resultado" class="d-none mt-3">
+            <div class="alert alert-info" role="alert">
+              <div id="mensajeFinal"></div>
+            </div>
+            <a href="/personal" class="btn btn-primary">Volver a Personal</a>
+          </div>
+
+          <div id="error" class="d-none mt-3">
+            <div class="alert alert-danger" role="alert">
+              <div id="mensajeError"></div>
+            </div>
+            <a href="/personal/importar" class="btn btn-outline-secondary">Volver a Importar</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const trabajoId = '{{trabajoId}}';
+  const estadoEl = document.getElementById('estado');
+  const resEl = document.getElementById('resultado');
+  const msgEl = document.getElementById('mensajeFinal');
+  const errBox = document.getElementById('error');
+  const errMsg = document.getElementById('mensajeError');
+
+  async function poll() {
+    try {
+      const r = await fetch(`/personal/importar/estado/${trabajoId}.json`, { cache: 'no-store' });
+      if (!r.ok) throw new Error('No se pudo consultar el estado.');
+      const data = await r.json();
+      if (data.estado === 'terminado') {
+        estadoEl.classList.add('d-none');
+        resEl.classList.remove('d-none');
+        msgEl.textContent = data.mensaje || 'Proceso finalizado.';
+        return;
+      }
+      if (data.estado === 'error') {
+        estadoEl.classList.add('d-none');
+        errBox.classList.remove('d-none');
+        errMsg.textContent = data.error || 'Ocurrió un error durante la importación.';
+        return;
+      }
+      setTimeout(poll, 2000);
+    } catch (e) {
+      setTimeout(poll, 3000);
+    }
+  }
+  poll();
+})();
+</script>

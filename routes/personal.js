@@ -268,6 +268,46 @@ const multer = require('multer');
 const ExcelJS = require('exceljs');
 const upload = multer({ dest: 'uploads/' });
 
+// ---- Importación en background para evitar H12 (timeout de 30s en Heroku)
+const { randomUUID } = require('crypto');
+const fs = require('fs').promises;
+
+const trabajosImportacion = new Map(); // id -> estado del trabajo
+
+function crearTrabajo() {
+    const id = randomUUID();
+    const trabajo = {
+        id,
+        estado: 'pendiente', // pendiente | procesando | terminado | error
+        insertados: 0,
+        actualizados: 0,
+        ignorados: 0,
+        legajosIgnorados: [],
+        mensaje: null,
+        error: null,
+        iniciadoEn: Date.now(),
+        finalizadoEn: null,
+    };
+    trabajosImportacion.set(id, trabajo);
+    return trabajo;
+}
+
+function actualizarTrabajo(id, patch) {
+    const t = trabajosImportacion.get(id);
+    if (t) Object.assign(t, patch);
+    return trabajosImportacion.get(id);
+}
+
+// Limpieza de trabajos viejos (1 hora de retención)
+setInterval(() => {
+    const ahora = Date.now();
+    for (const [id, t] of trabajosImportacion) {
+        if (t.finalizadoEn && (ahora - t.finalizadoEn) > 60 * 60 * 1000) {
+            trabajosImportacion.delete(id);
+        }
+    }
+}, 10 * 60 * 1000);
+
 // Página para seleccionar archivo y mapear campos
 router.get('/importar', logueado, (req, res) => {
     const campos = [
@@ -324,130 +364,159 @@ router.post('/importar/preparar', logueado, upload.single('archivoExcel'), async
 
 // Realiza la importación
 router.post('/importar/ejecutar', logueado, async (req, res) => {
-    const { archivo, tieneEncabezado, modoImportacion } = req.body;
-    const mapeo = req.body;
+    const { archivo, tieneEncabezado, modoImportacion, ...mapeo } = req.body;
+    if (!archivo) {
+        return render(req, res, 'personal', { Mensaje: { title: 'Error', text: 'No se recibió el archivo a procesar.', icon: 'error' } });
+    }
+
+    const trabajo = crearTrabajo();
+    actualizarTrabajo(trabajo.id, { estado: 'procesando' });
+
+    setImmediate(() => {
+        procesarImportacionPersonal({
+            archivo,
+            tieneEncabezado: tieneEncabezado === 'on',
+            modoImportacion: modoImportacion || 'agregar',
+            mapeo,
+            trabajoId: trabajo.id,
+        }).catch(err => {
+            actualizarTrabajo(trabajo.id, { estado: 'error', error: err.message, finalizadoEn: Date.now() });
+        });
+    });
+
+    return res.redirect(`/personal/importar/estado/${trabajo.id}`);
+});
+
+// Vista de estado (HTML) con polling
+router.get('/importar/estado/:id', logueado, (req, res) => {
+    const { id } = req.params;
+    const trabajo = trabajosImportacion.get(id);
+    if (!trabajo) {
+        return render(req, res, 'personal', { Mensaje: { title: 'Error', text: 'No se encontró el proceso de importación.', icon: 'error' } });
+    }
+    return render(req, res, 'personalImportarEstado', { trabajoId: id });
+});
+
+// Endpoint JSON para polling de estado
+router.get('/importar/estado/:id.json', logueado, (req, res) => {
+    const { id } = req.params;
+    const trabajo = trabajosImportacion.get(id);
+    if (!trabajo) return res.status(404).json({ error: 'No existe el trabajo' });
+    return res.json({
+        id: trabajo.id,
+        estado: trabajo.estado,
+        insertados: trabajo.insertados,
+        actualizados: trabajo.actualizados,
+        ignorados: trabajo.ignorados,
+        legajosIgnorados: trabajo.legajosIgnorados,
+        mensaje: trabajo.mensaje,
+        error: trabajo.error,
+        finalizado: trabajo.estado === 'terminado' || trabajo.estado === 'error'
+    });
+});
+
+// Función que realiza la importación en background
+async function procesarImportacionPersonal({ archivo, tieneEncabezado, modoImportacion, mapeo, trabajoId }) {
     const campos = [ 'Legajo', 'Apellido', 'Nombres', 'FechaNacimiento', 'FechaIngreso', 'FechaBaja', 'CUIL', 'DNI', 'IdSector', 'IdCategoria', 'IdTurno', 'CorreoElectronico', 'Nivel' ];
     const ExcelJS = require('exceljs');
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.readFile('uploads/' + archivo);
-    const worksheet = workbook.worksheets[0];
+    const rutaArchivo = 'uploads/' + archivo;
 
-    const tieneEncabezadoActivo = tieneEncabezado === 'on';
     const normalizarHeader = (valor) => {
-        if (valor === undefined || valor === null) {
-            return '';
-        }
-        if (valor instanceof Date) {
-            return valor.toISOString();
-        }
-        if (typeof valor === 'object' && valor.text) {
-            return String(valor.text).trim();
-        }
+        if (valor === undefined || valor === null) return '';
+        if (valor instanceof Date) return valor.toISOString();
+        if (typeof valor === 'object' && valor.text) return String(valor.text).trim();
         return String(valor).trim();
     };
-
     const extraerValorCelda = (valor) => {
-        if (valor === undefined || valor === null) {
-            return null;
-        }
-        if (valor instanceof Date) {
-            return valor;
-        }
+        if (valor === undefined || valor === null) return null;
+        if (valor instanceof Date) return valor;
         if (typeof valor === 'object') {
-            if (valor.text !== undefined) {
-                return String(valor.text).trim();
-            }
-            if (Array.isArray(valor.richText)) {
-                return valor.richText.map(part => part.text).join('').trim();
-            }
-            if (valor.result !== undefined && valor.result !== null) {
-                return valor.result;
-            }
+            if (valor.text !== undefined) return String(valor.text).trim();
+            if (Array.isArray(valor.richText)) return valor.richText.map(part => part.text).join('').trim();
+            if (valor.result !== undefined && valor.result !== null) return valor.result;
         }
-        if (typeof valor === 'string') {
-            return valor.trim();
-        }
+        if (typeof valor === 'string') return valor.trim();
         return valor;
     };
 
-    const headerMap = new Map();
-    if (tieneEncabezadoActivo) {
-        worksheet.getRow(1).eachCell((cell, colNumber) => {
-            const etiqueta = normalizarHeader(cell.value);
-            const original = cell.value === undefined || cell.value === null ? '' : String(cell.value);
-            if (!headerMap.has(original)) {
-                headerMap.set(original, colNumber);
-            }
-            if (!headerMap.has(etiqueta)) {
-                headerMap.set(etiqueta, colNumber);
-            }
-        });
-    } else {
-        const primeraFila = worksheet.getRow(1);
-        primeraFila.eachCell((cell, colNumber) => {
-            const etiqueta = `Columna ${colNumber}`;
-            headerMap.set(etiqueta, colNumber);
-        });
-    }
-
-    const obtenerIndiceColumna = (seleccion) => {
-        if (seleccion === undefined || seleccion === null || seleccion === '') {
-            return null;
-        }
-        const clave = String(seleccion).trim();
-        return headerMap.get(clave) || null;
-    };
-
-    let rows = [];
-    worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-        if (tieneEncabezadoActivo && rowNumber === 1) {
-            return;
-        }
-        let obj = {};
-        campos.forEach(c => {
-            const colIndex = obtenerIndiceColumna(mapeo[c]);
-            if (!colIndex) {
-                obj[c] = null;
-                return;
-            }
-            const valor = extraerValorCelda(row.getCell(colIndex).value);
-            obj[c] = valor;
-        });
-        rows.push(obj);
-    });
-
-    let insertados = 0;
-    let actualizados = 0;
-    let ignorados = 0;
-    const legajosIgnorados = [];
-    const sqlInsertPersonal = 'INSERT INTO personal (Legajo, Apellido, Nombres, FechaNacimiento, FechaIngreso, FechaBaja, CUIL, DNI, IdSector, IdCategoria, IdTurno, CorreoElectronico, nivel, idUsuario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-
-    const sqlInsertUsuario = 'INSERT INTO usuarios (Usuario, Clave, Activo, Nivel, CorreoElectronico, primerAcceso) VALUES (?, ?, ?, ?, ?, ?)';
-    const sqlExisteLegajo = 'SELECT Id, idUsuario FROM personal WHERE Legajo = ? LIMIT 1';
-    const sqlUpdatePersonal = 'UPDATE personal SET Apellido = ?, Nombres = ?, FechaNacimiento = ?, FechaIngreso = ?, FechaBaja = ?, CUIL = ?, DNI = ?, IdSector = ?, IdCategoria = ?, IdTurno = ?, CorreoElectronico = ?, nivel = ? WHERE Legajo = ?';
-    const sqlUpdateUsuario = 'UPDATE usuarios SET CorreoElectronico = ?, Nivel = ?, Activo = ? WHERE Id = ?';
-    const sqlFindSector = 'SELECT Id FROM sectores WHERE Descripcion = ? LIMIT 1';
-    const sqlInsertSector = "INSERT INTO sectores (Descripcion) VALUES ('NO DEFINIDO')";
-    const sqlFindCategoria = 'SELECT Id FROM categorias WHERE Descripcion = ? LIMIT 1';
-    const sqlInsertCategoria = "INSERT INTO categorias (Descripcion, Area) VALUES ('NO DEFINIDO', 1)";
-    const sqlFindTurno = 'SELECT Id FROM turnos WHERE Descripcion = ? LIMIT 1';
-    const sqlInsertTurno = "INSERT INTO turnos (Descripcion, Tipo) VALUES ('NO DEFINIDO', 'Semana Hábil')";
-    let conn = await pool.getConnection();
-    const bcrypt = require('bcrypt');
+    let conn;
     try {
+        await workbook.xlsx.readFile(rutaArchivo);
+        const worksheet = workbook.worksheets[0];
+
+        // Mapeo de encabezados
+        const headerMap = new Map();
+        if (tieneEncabezado) {
+            worksheet.getRow(1).eachCell((cell, colNumber) => {
+                const etiqueta = normalizarHeader(cell.value);
+                const original = cell.value === undefined || cell.value === null ? '' : String(cell.value);
+                if (!headerMap.has(original)) headerMap.set(original, colNumber);
+                if (!headerMap.has(etiqueta)) headerMap.set(etiqueta, colNumber);
+            });
+        } else {
+            const primeraFila = worksheet.getRow(1);
+            primeraFila.eachCell((cell, colNumber) => headerMap.set(`Columna ${colNumber}`, colNumber));
+        }
+
+        const obtenerIndiceColumna = (seleccion) => {
+            if (seleccion === undefined || seleccion === null || seleccion === '') return null;
+            const clave = String(seleccion).trim();
+            return headerMap.get(clave) || null;
+        };
+
+        // Parseo de filas
+        const rows = [];
+        worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+            if (tieneEncabezado && rowNumber === 1) return;
+            let obj = {};
+            campos.forEach(c => {
+                const colIndex = obtenerIndiceColumna(mapeo[c]);
+                if (!colIndex) {
+                    obj[c] = null;
+                    return;
+                }
+                const valor = extraerValorCelda(row.getCell(colIndex).value);
+                obj[c] = valor;
+            });
+            rows.push(obj);
+        });
+
+        // SQLs
+        const sqlInsertPersonal = 'INSERT INTO personal (Legajo, Apellido, Nombres, FechaNacimiento, FechaIngreso, FechaBaja, CUIL, DNI, IdSector, IdCategoria, IdTurno, CorreoElectronico, nivel, idUsuario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        const sqlInsertUsuario = 'INSERT INTO usuarios (Usuario, Clave, Activo, Nivel, CorreoElectronico, primerAcceso) VALUES (?, ?, ?, ?, ?, ?)';
+        const sqlExisteLegajo = 'SELECT Id, idUsuario FROM personal WHERE Legajo = ? LIMIT 1';
+        const sqlUpdatePersonal = 'UPDATE personal SET Apellido = ?, Nombres = ?, FechaNacimiento = ?, FechaIngreso = ?, FechaBaja = ?, CUIL = ?, DNI = ?, IdSector = ?, IdCategoria = ?, IdTurno = ?, CorreoElectronico = ?, nivel = ? WHERE Legajo = ?';
+        const sqlUpdateUsuario = 'UPDATE usuarios SET CorreoElectronico = ?, Nivel = ?, Activo = ? WHERE Id = ?';
+        const sqlFindSector = 'SELECT Id FROM sectores WHERE Descripcion = ? LIMIT 1';
+        const sqlInsertSector = "INSERT INTO sectores (Descripcion) VALUES ('NO DEFINIDO')";
+        const sqlFindCategoria = 'SELECT Id FROM categorias WHERE Descripcion = ? LIMIT 1';
+        const sqlInsertCategoria = "INSERT INTO categorias (Descripcion, Area) VALUES ('NO DEFINIDO', 1)";
+        const sqlFindTurno = 'SELECT Id FROM turnos WHERE Descripcion = ? LIMIT 1';
+        const sqlInsertTurno = "INSERT INTO turnos (Descripcion, Tipo) VALUES ('NO DEFINIDO', 'Semana Hábil')";
+
+        conn = await pool.getConnection();
         if (modoImportacion === 'sobreescribir') {
             await conn.query('DELETE FROM personal');
             await conn.query('ALTER TABLE personal AUTO_INCREMENT = 1');
             await conn.query('DELETE FROM usuarios');
             await conn.query('ALTER TABLE usuarios AUTO_INCREMENT = 1');
         }
-        for (let row of rows) {
+
+        let insertados = 0;
+        let actualizados = 0;
+        let ignorados = 0;
+        const legajosIgnorados = [];
+        const bcrypt = require('bcrypt');
+
+        for (const row of rows) {
             const legajo = row.Legajo;
             const legajoTexto = legajo !== undefined && legajo !== null && legajo !== '' ? String(legajo) : '(sin legajo)';
             try {
                 if (legajo === undefined || legajo === null || legajo === '') {
                     ignorados++;
                     legajosIgnorados.push(legajoTexto);
+                    actualizarTrabajo(trabajoId, { ignorados, legajosIgnorados: [...legajosIgnorados] });
                     continue;
                 }
 
@@ -462,10 +531,11 @@ router.post('/importar/ejecutar', logueado, async (req, res) => {
                 if (existeLegajo.length > 0 && !fechaBajaSql) {
                     ignorados++;
                     legajosIgnorados.push(legajoTexto);
+                    actualizarTrabajo(trabajoId, { ignorados, legajosIgnorados: [...legajosIgnorados] });
                     continue;
                 }
 
-                // Buscar o crear sector
+                // Sector
                 let [sector] = await conn.query(sqlFindSector, [row.IdSector]);
                 let idSector;
                 if (sector.length > 0) {
@@ -478,7 +548,7 @@ router.post('/importar/ejecutar', logueado, async (req, res) => {
                     }
                     idSector = def[0].Id;
                 }
-                // Buscar o crear categoría
+                // Categoría
                 let [categoria] = await conn.query(sqlFindCategoria, [row.IdCategoria]);
                 let idCategoria;
                 if (categoria.length > 0) {
@@ -491,7 +561,7 @@ router.post('/importar/ejecutar', logueado, async (req, res) => {
                     }
                     idCategoria = def[0].Id;
                 }
-                // Buscar o crear turno
+                // Turno
                 let [turno] = await conn.query(sqlFindTurno, [row.IdTurno]);
                 let idTurno;
                 if (turno.length > 0) {
@@ -506,13 +576,10 @@ router.post('/importar/ejecutar', logueado, async (req, res) => {
                 }
 
                 const correoNormalizado = (() => {
-                    if (row.CorreoElectronico === undefined || row.CorreoElectronico === null) {
-                        return null;
-                    }
+                    if (row.CorreoElectronico === undefined || row.CorreoElectronico === null) return null;
                     const valor = String(row.CorreoElectronico).trim();
                     return valor.length ? valor : null;
                 })();
-
                 const correoParaUsuario = correoNormalizado || '';
 
                 if (existeLegajo.length > 0) {
@@ -522,6 +589,7 @@ router.post('/importar/ejecutar', logueado, async (req, res) => {
                         await conn.query(sqlUpdateUsuario, [correoParaUsuario, row.Nivel, 0, registroActual.idUsuario]);
                     }
                     actualizados++;
+                    actualizarTrabajo(trabajoId, { actualizados });
                     continue;
                 }
 
@@ -537,23 +605,33 @@ router.post('/importar/ejecutar', logueado, async (req, res) => {
 
                 await conn.query(sqlInsertPersonal, [legajo, row.Apellido, row.Nombres, fechaNacimientoSql, fechaIngresoSql, fechaBajaSql, row.CUIL, row.DNI, idSector, idCategoria, idTurno, correoNormalizado, row.Nivel, idUsuario]);
                 insertados++;
+                actualizarTrabajo(trabajoId, { insertados });
             } catch (err) {
                 ignorados++;
                 legajosIgnorados.push(legajoTexto);
-                console.log(`Error al insertar fila: ${err.message}`);
-                // Puedes loguear el error y la fila aquí si lo deseas
+                actualizarTrabajo(trabajoId, { ignorados, legajosIgnorados: [...legajosIgnorados] });
+                console.log(`Error al insertar fila (legajo ${legajoTexto}): ${err.message}`);
             }
         }
-        await conn.commit();
+
         const detalleIgnorados = legajosIgnorados.length ? legajosIgnorados.join(', ') : 'Ninguno';
-        render(req, res, 'personal', { Mensaje: { title: 'Importación finalizada', text: `Se importaron ${insertados} registros nuevos. Se actualizaron ${actualizados} registros existentes. Se ignoraron ${ignorados} registros. Legajos ignorados: ${detalleIgnorados}.`, icon: 'info' } });
+        const mensaje = `Se importaron ${insertados} registros nuevos. Se actualizaron ${actualizados} registros existentes. Se ignoraron ${ignorados} registros. Legajos ignorados: ${detalleIgnorados}.`;
+        actualizarTrabajo(trabajoId, {
+            estado: 'terminado',
+            insertados,
+            actualizados,
+            ignorados,
+            legajosIgnorados,
+            mensaje,
+            finalizadoEn: Date.now(),
+        });
     } catch (err) {
-        await conn.rollback();
-        render(req, res, 'personal', { Mensaje: { title: 'Error', text: err.message, icon: 'error' } });
+        actualizarTrabajo(trabajoId, { estado: 'error', error: err.message, finalizadoEn: Date.now() });
     } finally {
-        conn.release();
+        if (conn) conn.release();
+        try { await fs.unlink(rutaArchivo); } catch {}
     }
-});
+}
 // =================== FIN RUTAS DE IMPORTACIÓN DESDE EXCEL ===================
 
 module.exports = router;
