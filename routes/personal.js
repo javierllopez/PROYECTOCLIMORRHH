@@ -209,8 +209,6 @@ router.post('/editar', logueado, async (req, res) => {
     const sqlDeleteNominaHabilitada = 'DELETE FROM nominahabilitada WHERE IdEmpleado = ?';
     const sqlUsuarios = 'UPDATE usuarios SET CorreoElectronico = ?, nivel = ? WHERE Id = ?';
     const conn = await pool.getConnection();
-    console.log('IdUsuario', IdUsuario);
-    console.log('Nivel', nivel);
     try {
         await conn.beginTransaction();
         await conn.query(sqlUsuarios, [correoElectronico, nivel, IdUsuario]);
