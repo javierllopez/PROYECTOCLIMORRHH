@@ -91,6 +91,8 @@ app.use(device.capture());
 app.use((req, res, next) => {
     res.locals.isDesktop = req.device.type === 'desktop';
     res.locals.isMobile = req.device.type === 'phone';
+    // Título dinámico según entorno
+    res.locals.tituloAplicacion = 'CLIMO S.A.' + (esProduccion ? '' : ' - entorno de desarrollo');
     next();
 });
 
