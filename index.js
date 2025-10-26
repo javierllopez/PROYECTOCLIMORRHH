@@ -8,6 +8,8 @@ const  json  = require('body-parser');
 const path = require('path');
 const exphbs = require('express-handlebars');
 const session = require("express-session");
+const MySQLStore = require('express-mysql-session')(session);
+const { pool } = require('./conexion');
 const helpers = require('./lib/misHelpers');
 const device = require('express-device');
 const dotenv = require('dotenv');
@@ -56,6 +58,15 @@ app.set('views',path.join(__dirname,"views"));
 // Servir assets estáticos
 app.use('/CSS', express.static(path.join(__dirname, 'CSS')));
 app.use(express.static('public'));
+
+// Respuestas rápidas para bots: favicon y robots
+// Evita 404 ruidosos en logs sin afectar la app
+app.get('/favicon.ico', (_req, res) => res.status(204).end());
+app.get(['/robots.txt', '/login/robots.txt'], (_req, res) => {
+    res.type('text/plain').send('User-agent: *\nDisallow: /');
+});
+// Sitemap bajo /login consultado por bots
+app.get('/login/sitemap.xml', (_req, res) => res.status(204).end());
 // Registrar partial
 app.engine('.hbs', exphbs.engine({
     defaultLayout: "layout",
@@ -80,10 +91,21 @@ const opcionesCookieSesion = {
     secure: esProduccion, // sólo sobre HTTPS en producción
 };
 
+// Store de sesiones en MySQL para producción y desarrollo
+// Usa el pool centralizado desde ./conexion (timezone UTC, pooling, etc.)
+const opcionesStore = {
+    // Si la tabla no existe, la crea automáticamente
+    createDatabaseTable: true,
+    // Mantener nombres por defecto para compatibilidad rápida
+    // Si se desea, se puede personalizar el esquema a snake_case en otra iteración
+};
+const sessionStore = new MySQLStore(opcionesStore, pool);
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'dev-change-this-secret',
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // evita filas vacías en la tabla de sesiones
+    store: sessionStore,
     cookie: opcionesCookieSesion,
 }));
 
