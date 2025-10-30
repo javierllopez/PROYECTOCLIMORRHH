@@ -16,7 +16,7 @@
                     <!-- If Id is defined, we are editing a sector -->
                     <form action="/categorias/editar/{{#if Id}}{{Id}}{{/if}}" method="POST" class="form-group">
                         
-                        <input type="hidden" name="Items" id="Items">
+                        <input type="hidden" name="Items" id="Items" value='{{#if itemsHabilitados}}{{{json itemsHabilitados}}}{{/if}}'>
                         <div class="card-body">
                             <label for="Descripcion" class="form-label">Descripción</label>
                             <input type="text" class="form-control" id="Descripcion" name="Descripcion"
@@ -75,8 +75,20 @@
                                     </tr>
                                 </thead>
                                 <tbody id="tablaItems">
-                                    <!-- Acá vienen los registros de la tabla de items -->
-
+                                    {{#if itemsHabilitados}}
+                                        {{#each itemsHabilitados}}
+                                            <tr>
+                                                <td>{{this.itemDescripcion}}</td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-danger btn-sm rounded-circle eliminar-item" data-id="{{this.itemId}}" title="Eliminar">
+                                                        <i class="bi-trash-fill"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        {{/each}}
+                                    {{else}}
+                                        <!-- Sin items cargados aún -->
+                                    {{/if}}
                                 </tbody>
                             </table>
                         </div>

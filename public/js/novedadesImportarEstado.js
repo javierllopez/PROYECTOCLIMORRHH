@@ -23,7 +23,18 @@
 
     async function poll(){
       try {
-        var r = await fetch('/novedades/importar/estado/' + encodeURIComponent(trabajoId) + '.json', { cache: 'no-store' });
+        var r = await fetch('/novedades/importar/api/estado/' + encodeURIComponent(trabajoId), {
+          cache: 'no-store',
+          credentials: 'same-origin'
+        });
+        console.log('Respuesta estado importación novedades:', r.url, r.status);
+        // Si hubo redirección (sesión o permisos), corto el polling
+        if (r.redirected || (r.status >= 300 && r.status < 400)) {
+          if (estadoEl) estadoEl.classList.add('d-none');
+          if (errBox) errBox.classList.remove('d-none');
+          if (errMsg) errMsg.textContent = 'La solicitud fue redirigida. Posible sesión vencida o permisos insuficientes.';
+          return;
+        }
         if (r.status === 401) {
           // sesión expirada
           if (estadoEl) estadoEl.classList.add('d-none');
@@ -38,7 +49,12 @@
           return;
         }
         var ct = r.headers.get('content-type') || '';
-        if(!r.ok || ct.indexOf('application/json') === -1) throw new Error('No se pudo consultar el estado.');
+        if(!r.ok || ct.indexOf('application/json') === -1) {
+          if (estadoEl) estadoEl.classList.add('d-none');
+          if (errBox) errBox.classList.remove('d-none');
+          if (errMsg) errMsg.textContent = 'No se pudo consultar el estado (respuesta no JSON).';
+          return;
+        }
         var data = await r.json();
         if (data.estado === 'terminado') {
           if (estadoEl) estadoEl.classList.add('d-none');
@@ -95,6 +111,7 @@
         }
         setTimeout(poll, 2000);
       } catch (e) {
+        // Error de red: reintento simple
         setTimeout(poll, 3000);
       }
     }

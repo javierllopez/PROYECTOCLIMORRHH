@@ -7,7 +7,7 @@
 
   {{#if hayDatos}}
   <div class="table-responsive">
-    <table class="table table-striped table-hover align-middle">
+    <table class="table table-striped table-hover align-middle table-sm small tabla-evolucion-sectores">
       <thead class="table-light">
         <tr>
           <th>Sector</th>
@@ -24,8 +24,8 @@
             {{#each this.importes}}
               <td class="text-center">{{formatoMoneda this}}</td>
             {{/each}}
-            <td class="text-center" style="min-width:160px; width:160px;">
-              <canvas class="sparkline" data-puntos='{{json this.importes}}' data-color="#198754" data-background="rgba(25,135,84,0.10)" height="40"></canvas>
+            <td class="text-center celda-sparkline">
+              <canvas class="sparkline" data-puntos='{{json this.importes}}' data-color="#198754" data-background="rgba(25,135,84,0.10)" height="24"></canvas>
             </td>
           </tr>
         {{/each}}
@@ -37,8 +37,8 @@
           {{#each totalesImportes}}
             <td class="text-center">{{formatoMoneda this}}</td>
           {{/each}}
-          <td class="text-center" style="min-width:160px; width:160px;">
-            <canvas class="sparkline" data-puntos='{{json totalesImportes}}' data-color="#198754" data-background="rgba(25,135,84,0.10)" height="40"></canvas>
+          <td class="text-center celda-sparkline">
+            <canvas class="sparkline" data-puntos='{{json totalesImportes}}' data-color="#198754" data-background="rgba(25,135,84,0.10)" height="24"></canvas>
           </td>
         </tr>
       </tfoot>

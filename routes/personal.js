@@ -395,7 +395,24 @@ router.get('/importar/estado/:id', logueado, (req, res) => {
     return render(req, res, 'personalImportarEstado', { trabajoId: id });
 });
 
-// Endpoint JSON para polling de estado
+// Endpoint API JSON para polling de estado (ruta específica para evitar conflictos con la HTML)
+router.get('/importar/api/estado/:id', logueado, (req, res) => {
+    const { id } = req.params;
+    const trabajo = trabajosImportacion.get(id);
+    if (!trabajo) return res.status(404).json({ error: 'No existe el trabajo' });
+    return res.json({
+        id: trabajo.id,
+        estado: trabajo.estado,
+        insertados: trabajo.insertados,
+        actualizados: trabajo.actualizados,
+        ignorados: trabajo.ignorados,
+        legajosIgnorados: trabajo.legajosIgnorados,
+        mensaje: trabajo.mensaje,
+        error: trabajo.error,
+        finalizado: trabajo.estado === 'terminado' || trabajo.estado === 'error'
+    });
+});
+// (Opcional) Mantener alias legacy por compatibilidad hasta migrar todo el frontend
 router.get('/importar/estado/:id.json', logueado, (req, res) => {
     const { id } = req.params;
     const trabajo = trabajosImportacion.get(id);

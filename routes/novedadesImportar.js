@@ -40,8 +40,14 @@ function requiereAdmin(req, res, next) {
 }
 
 function requiereAdminJson(req, res, next) {
-  if (!req.session || !req.session.usuario) return res.status(401).json({ error: 'no-autorizado' });
-  if (!nivelesPermitidos.includes(req.session.nivelUsuario)) return res.status(403).json({ error: 'sin-permiso' });
+  if (!req.session || !req.session.usuario) {
+    console.log('No hay sesión o usuario en requiereAdminJson');
+    return res.status(401).json({ error: 'no-autorizado' });
+  }
+  if (!nivelesPermitidos.includes(req.session.nivelUsuario)) {
+    console.log('Usuario no autorizado en requiereAdminJson');
+    return res.status(403).json({ error: 'sin-permiso' });
+  }
   return next();
 }
 
@@ -136,14 +142,48 @@ router.get('/estado/:id', requiereAdmin, (req, res) => {
     enviarMensaje(req, res, 'Importación de novedades', 'No se encontró el proceso solicitado.', 'error');
     return res.redirect('/novedades/importar');
   }
+  console.log(' Consulta estado trabajo ruta /estado/:id:', id, t.estado);
   return render(req, res, 'novedadesImportarEstado', { trabajoId: id });
 });
 
-// Endpoint JSON para polling
+// Endpoint API JSON para polling (nuevo path dedicado)
+router.get('/api/estado/:id', requiereAdminJson, (req, res) => {
+  const { id } = req.params;
+  const t = trabajos.get(id);
+  if (!t) return res.status(404).json({ error: 'Trabajo no encontrado' });
+  console.log(' Consulta estado trabajo (API): /api/estado/:id', id, t.estado);
+  return res.json({
+    id: t.id,
+    estado: t.estado,
+    columnas: t.columnas,
+    totalFilas: t.totalFilas,
+    procesadas: t.procesadas,
+    vacias: t.vacias,
+    errores: t.errores,
+    liqsEncontradas: t.liqsEncontradas,
+    liqsCreadas: t.liqsCreadas,
+    personasEncontradas: t.personasEncontradas,
+    personasNoEncontradas: t.personasNoEncontradas,
+    preparadas: t.preparadas,
+    insertadosHistorico: t.insertadosHistorico,
+    omitidosPorMotivo: t.omitidosPorMotivo,
+    horas50Validas: t.horas50Validas,
+    horas50Invalidas: t.horas50Invalidas,
+    horas100Validas: t.horas100Validas,
+    horas100Invalidas: t.horas100Invalidas,
+    ejemploFilas: t.ejemploFilas,
+    mensaje: t.mensaje,
+    error: t.error,
+    finalizado: t.estado === 'terminado' || t.estado === 'error'
+  });
+});
+
+// Endpoint JSON legacy (alias temporal para compatibilidad)
 router.get('/estado/:id.json', requiereAdminJson, (req, res) => {
   const { id } = req.params;
   const t = trabajos.get(id);
   if (!t) return res.status(404).json({ error: 'Trabajo no encontrado' });
+  console.log(' Consulta estado trabajo (legacy): /estado/:id.json', id, t.estado);
   return res.json({
     id: t.id,
     estado: t.estado,
@@ -236,6 +276,15 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
     const omitidosPorMotivo = {};
     const ejemplo = [];
 
+    // Helpers para ceder el event loop periódicamente y evitar bloquear Express
+    const yieldEventLoop = () => new Promise((res) => setImmediate(res));
+    async function maybeYield(rowNumber) {
+      if (rowNumber % 200 === 0) {
+        actualizarTrabajo(trabajoId, { totalFilas: total, procesadas, vacias, errores });
+        await yieldEventLoop();
+      }
+    }
+
     // Identificar índice de columnas clave
     const idxPeriodo = (() => {
       const i = headers.findIndex(h => h.toLowerCase() === 'periodo' || h.toLowerCase() === 'período');
@@ -296,8 +345,9 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
       const cacheSector = new Map();  // descripcion -> { Id, IdSupervisor }
       const cacheMotivo = new Map();  // descripcion -> Id
 
-      const sqlSelNovedadesE = 'SELECT Id FROM novedadese WHERE YEAR(Periodo)=? AND MONTH(Periodo)=? LIMIT 1';
-      const sqlInsNovedadesE = 'INSERT INTO novedadese (Periodo, Observaciones, Actual) VALUES (?, ?, 0)';
+  const sqlSelNovedadesE = 'SELECT Id FROM novedadese WHERE YEAR(Periodo)=? AND MONTH(Periodo)=? LIMIT 1';
+  // Al crear un período, también seteamos NovedadesHasta con el último día del mes de Periodo
+  const sqlInsNovedadesE = 'INSERT INTO novedadese (Periodo, Observaciones, Actual, NovedadesHasta) VALUES (?, ?, 0, LAST_DAY(?))';
       const sqlSelPersonal = 'SELECT Id, IdTurno, IdCategoria FROM personal WHERE Legajo = ? LIMIT 1';
       const sqlSelSector = 'SELECT Id, IdSupervisor FROM sectores WHERE Descripcion = ? LIMIT 1';
       const sqlSelMotivo = 'SELECT Id FROM motivos WHERE Descripcion = ? LIMIT 1';
@@ -311,26 +361,7 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
         IdNomina, IdTurno, IdCategoria, IdEstado, ObservacionesEstado, IdSupervisor, MinutosAl50, MinutosAl100, MinutosGD, MinutosGN, IdMotivo
       ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
-      ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-        if (rowNumber === 1) return; // saltar encabezado
-        total++;
-        try {
-          const obj = {};
-          row.eachCell((cell, colNumber) => {
-            const key = headers[colNumber - 1] || `Columna ${colNumber}`;
-            obj[key] = extraerValorCelda(cell.value);
-          });
-          const esVacia = Object.values(obj).every(v => v === null || v === '' || v === undefined);
-          if (esVacia) {
-            vacias++;
-          } else {
-            procesadas++;
-            if (ejemplo.length < 5) ejemplo.push(obj);
-          }
-        } catch (e) {
-          errores++;
-        }
-      });
+      // Eliminamos el primer recorrido bloqueante; contamos dentro del bucle principal
 
       // Utilidades de parseo
       const toDateSql = (valor) => {
@@ -380,14 +411,36 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
         return { str: null, min: null };
       };
 
-      // Segundo recorrido: tratamiento (separado para simplificar manejo async)
+      // Recorrido principal: conteo + tratamiento con yields periódicos
       for (let rowNumber = 2; rowNumber <= ws.rowCount; rowNumber++) {
         const row = ws.getRow(rowNumber);
         if (!row || row.cellCount === 0) continue;
+        // Conteo total y detección de fila vacía
+        total++;
+        let esVacia = true;
+        for (let c = 1; c <= row.cellCount; c++) {
+          const v = extraerValorCelda(row.getCell(c)?.value);
+          if (!(v === null || v === '' || v === undefined)) { esVacia = false; break; }
+        }
+        if (esVacia) {
+          vacias++;
+          await maybeYield(rowNumber);
+          continue;
+        } else {
+          procesadas++;
+          if (ejemplo.length < 5) {
+            const objEj = {};
+            for (let c = 1; c <= row.cellCount; c++) {
+              const key = headers[c - 1] || `Columna ${c}`;
+              objEj[key] = extraerValorCelda(row.getCell(c)?.value);
+            }
+            ejemplo.push(objEj);
+          }
+        }
         // Obtener Periodo y Legajo por índice para robustez
         const valorPeriodo = extraerValorCelda(row.getCell(idxPeriodo + 1)?.value);
         const periodoSql = toPeriodoSql(valorPeriodo);
-        if (!periodoSql) { errores++; omitidosPorMotivo['periodo inválido'] = (omitidosPorMotivo['periodo inválido'] || 0) + 1; continue; }
+  if (!periodoSql) { errores++; omitidosPorMotivo['periodo inválido'] = (omitidosPorMotivo['periodo inválido'] || 0) + 1; await maybeYield(rowNumber); continue; }
 
         const key = periodoSql.slice(0, 7); // YYYY-MM
         let idNovedadesE = cachePeriodo.get(key);
@@ -401,7 +454,8 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
             liqsEncontradas++;
           } else {
             const obs = `Novedades del período ${key.slice(5, 7)}/${key.slice(0, 4)}`;
-            const [ins] = await conn.query(sqlInsNovedadesE, [periodoSql, obs]);
+            // Pasamos periodoSql dos veces: para Periodo y para calcular LAST_DAY(Periodo)
+            const [ins] = await conn.query(sqlInsNovedadesE, [periodoSql, obs, periodoSql]);
             idNovedadesE = ins.insertId;
             cachePeriodo.set(key, idNovedadesE);
             liqsCreadas++;
@@ -438,7 +492,7 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
         }
 
         // Si no hay empleado válido, no se puede continuar con inserción
-        if (!idPersonal) { errores++; continue; }
+  if (!idPersonal) { errores++; await maybeYield(rowNumber); continue; }
 
         // Area
         const areaRaw = extraerValorCelda(row.getCell(idxArea + 1)?.value);
@@ -493,7 +547,7 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
         // Fecha
         const fechaVal = extraerValorCelda(row.getCell(idxFecha + 1)?.value);
         const fechaSql = toDateSql(fechaVal);
-        if (!fechaSql) { errores++; omitidosPorMotivo['fecha inválida'] = (omitidosPorMotivo['fecha inválida'] || 0) + 1; continue; }
+  if (!fechaSql) { errores++; omitidosPorMotivo['fecha inválida'] = (omitidosPorMotivo['fecha inválida'] || 0) + 1; await maybeYield(rowNumber); continue; }
 
         // Horas 50/100 y minutos
         const vHs50 = extraerValorCelda(row.getCell(idxHs50 + 1)?.value);
@@ -544,7 +598,7 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
         // IdTurno / IdCategoria desde personal
         const idTurno = idTurnoPers != null ? idTurnoPers : null;
         const idCategoria = idCategoriaPers != null ? idCategoriaPers : null;
-        if (idTurno == null || idCategoria == null) { errores++; omitidosPorMotivo['datos empleado incompletos'] = (omitidosPorMotivo['datos empleado incompletos'] || 0) + 1; continue; }
+  if (idTurno == null || idCategoria == null) { errores++; omitidosPorMotivo['datos empleado incompletos'] = (omitidosPorMotivo['datos empleado incompletos'] || 0) + 1; await maybeYield(rowNumber); continue; }
 
         // Insertar en historico
         const valores = [
@@ -575,8 +629,6 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
         try {
 
           await conn.query(sqlInsHistorico, valores);
-          console.log(' --- INSERCIÓN HISTÓRICO --- ');
-          console.log('Valores:', valores);
           insertadosHistorico++;
         } catch (e) {
           // Si por restricciones NOT NULL de algún campo ignorado fallara, lo contamos como omitido
@@ -588,7 +640,7 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
         }
         preparadas++;
 
-        if (preparadas % 50 === 0) {
+        if (preparadas % 100 === 0) {
           actualizarTrabajo(trabajoId, {
             totalFilas: total,
             procesadas,
@@ -604,6 +656,7 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
             horas100Validas,
             horas100Invalidas
           });
+          await yieldEventLoop();
         }
       }
 

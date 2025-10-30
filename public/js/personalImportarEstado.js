@@ -15,7 +15,16 @@
 
     async function poll() {
       try {
-        var r = await fetch('/personal/importar/estado/' + encodeURIComponent(trabajoId) + '.json', { cache: 'no-store' });
+        var r = await fetch('/personal/importar/api/estado/' + encodeURIComponent(trabajoId), {
+          cache: 'no-store',
+          credentials: 'same-origin'
+        });
+        if (r.redirected) {
+          if (estadoEl) estadoEl.classList.add('d-none');
+          if (errBox) errBox.classList.remove('d-none');
+          if (errMsg) errMsg.textContent = 'La sesión cambió o hubo una redirección inesperada. Iniciá sesión nuevamente.';
+          return;
+        }
         if (!r.ok) throw new Error('No se pudo consultar el estado.');
         var data = await r.json();
         if (data.estado === 'terminado') {

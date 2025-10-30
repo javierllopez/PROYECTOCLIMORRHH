@@ -7,7 +7,7 @@
 
   {{#if hayDatos}}
   <div class="table-responsive">
-    <table class="table table-striped table-hover align-middle">
+    <table class="table table-striped table-hover align-middle table-sm small tabla-evolucion-sectores">
       <thead class="table-light">
         <tr>
           <th>Sector</th>
@@ -24,8 +24,8 @@
             {{#each this.minutos}}
               <td class="text-center">{{minutosAHoras this}}</td>
             {{/each}}
-            <td class="text-center" style="min-width:160px; width:160px;">
-              <canvas class="sparkline" data-puntos='{{json this.minutos}}' data-color="#0d6efd" data-background="rgba(13,110,253,0.10)" height="40"></canvas>
+            <td class="text-center celda-sparkline">
+              <canvas class="sparkline" data-puntos='{{json this.minutos}}' data-color="#0d6efd" data-background="rgba(13,110,253,0.10)" height="24"></canvas>
             </td>
           </tr>
         {{/each}}
@@ -35,8 +35,8 @@
             {{#each totalFila.minutos}}
               <td class="text-center">{{minutosAHoras this}}</td>
             {{/each}}
-            <td class="text-center" style="min-width:160px; width:160px;">
-              <canvas class="sparkline" data-puntos='{{json totalFila.minutos}}' data-color="#0d6efd" data-background="rgba(13,110,253,0.10)" height="40"></canvas>
+            <td class="text-center celda-sparkline">
+              <canvas class="sparkline" data-puntos='{{json totalFila.minutos}}' data-color="#0d6efd" data-background="rgba(13,110,253,0.10)" height="24"></canvas>
             </td>
           </tr>
         {{/if}}

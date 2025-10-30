@@ -181,3 +181,44 @@
     overflow-x: hidden;
   }
 }
+
+/* Tabla evolución por sector compacta (evitar scroll horizontal) */
+.table.tabla-evolucion-sectores {
+  font-size: 0.75rem; /* aún más compacto */
+}
+.tabla-evolucion-sectores tbody td {
+  font-size: 0.70rem; /* celdas un poco más chicas que el default de la tabla */
+}
+.table.tabla-evolucion-sectores td:not(:first-child),
+.table.tabla-evolucion-sectores th:not(:first-child) {
+  white-space: nowrap; /* evita que se apilen números; el nombre de sector sí puede envolver */
+  padding: .15rem .25rem; /* más compacto */
+}
+.table.tabla-evolucion-sectores td:first-child,
+.table.tabla-evolucion-sectores th:first-child {
+  padding: .25rem .4rem; /* mantiene legibilidad del nombre de sector */
+}
+
+/* Última columna (sparkline) aún más compacta */
+.table.tabla-evolucion-sectores td:last-child,
+.table.tabla-evolucion-sectores th:last-child {
+  padding: .15rem .2rem;
+}
+
+/* Control fino del ancho del sparkline */
+.tabla-evolucion-sectores td.celda-sparkline,
+.tabla-evolucion-sectores th.celda-sparkline {
+  width: 90px;
+  min-width: 90px;
+  max-width: 100px;
+}
+.tabla-evolucion-sectores td.celda-sparkline canvas.sparkline {
+  width: 86px !important; /* asegura que Chart.js no expanda el canvas */
+  height: 24px !important;
+}
+
+/* Encabezados: mantener tamaño legible del título de columnas */
+.tabla-evolucion-sectores thead th {
+  font-size: 0.85rem;
+  padding: .15rem .25rem;
+}

@@ -129,29 +129,31 @@ router.get('/editar/:Id', logueado, async (req, res) => {
 //Ruta para agregar una nueva categoría
 router.post('/editar', logueado, async (req, res) => {
     const {Descripcion, Area}= req.body;
-    const itemsHabilitados = JSON.parse(req.body.Items);
+    let itemsHabilitados = [];
+    try { itemsHabilitados = JSON.parse(req.body.Items || '[]'); } catch { itemsHabilitados = []; }
 
     const iArea = parseInt(Area);
     const sql = "INSERT INTO categorias (Descripcion, Area) VALUES (?, ?)";
     const sqlItemsNomina = 'INSERT INTO nominahabilitada (IdCategoria, IdNomina) VALUES (?, ?)';
 
-
+    let conn;
     try {
-        let conn = await pool.getConnection();
+        conn = await pool.getConnection();
         await conn.beginTransaction();
         const [result] = await conn.query(sql, [Descripcion, iArea]);
         const IdCategoria = result.insertId;
         for (let i = 0; i < itemsHabilitados.length; i++) {
             await conn.query(sqlItemsNomina, [IdCategoria, itemsHabilitados[i].itemId]);
         }
-        conn.commit();
+        await conn.commit();
         enviarMensaje(req, res, 'Categoría agregada', 'La categoría se ha agregado correctamente', 'success');
 
     } catch (error) {
-        // Handle the error here
-        conn.rollback();
+        if (conn) { try { await conn.rollback(); } catch (_) {} }
         enviarMensaje(req, res, 'Error', error.message, 'error');
         console.error(error);
+    } finally {
+        if (conn) conn.release();
     }
     return res.redirect('/categorias');
 });
@@ -161,26 +163,29 @@ router.post('/editar/:Id', logueado, async (req, res) => {
     const { Id } = req.params;
     const {Descripcion, Area}= req.body;
     const iArea = parseInt(Area);
-    const itemsHabilitados = JSON.parse(req.body.Items);
+    let itemsHabilitados = [];
+    try { itemsHabilitados = JSON.parse(req.body.Items || '[]'); } catch { itemsHabilitados = []; }
     const sql = "UPDATE categorias SET Descripcion = ?, Area = ? WHERE Id = ?";
     const sqlItemsNomina = 'INSERT INTO nominahabilitada (IdCategoria, IdNomina) VALUES (?, ?)';
 
-    console.log (itemsHabilitados);
-    let conn = await pool.getConnection();
+    let conn;
     try {
+        conn = await pool.getConnection();
         await conn.beginTransaction();
         await conn.query('DELETE FROM nominahabilitada WHERE IdCategoria = ?', [Id]);
-        await pool.query(sql, [Descripcion, iArea, Id]);
+        await conn.query(sql, [Descripcion, iArea, Id]);
         for (let i = 0; i < itemsHabilitados.length; i++) {
             await conn.query(sqlItemsNomina, [Id, itemsHabilitados[i].itemId]);
         }
-        conn.commit();
+        await conn.commit();
         enviarMensaje(req, res, 'Categoría actualizada', 'La categoría se ha editado correctamente', 'success');
     } catch (error) {
-        conn.rollback();
+        if (conn) { try { await conn.rollback(); } catch (_) {} }
         // Handle the error here
         enviarMensaje(req, res, 'Error', error.message, 'error');
         console.error(error);
+    } finally {
+        if (conn) conn.release();
     }
 
     return res.redirect('/categorias');
