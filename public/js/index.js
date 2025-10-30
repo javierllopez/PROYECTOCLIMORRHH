@@ -44,10 +44,12 @@
 
     registrarDataLabels();
 
-    const ctxSectores = document.getElementById('tortaMinutosSectores');
-    const ctxMotivos = document.getElementById('tortaMinutosMotivos');
-    const ctxLinea = document.getElementById('lineaHoras');
-    const ctxBarras = document.getElementById('barrasImportes');
+  const ctxSectores = document.getElementById('tortaMinutosSectores');
+  const ctxMotivos = document.getElementById('tortaMinutosMotivos');
+  const ctxLinea = document.getElementById('lineaHoras');
+  const ctxBarras = document.getElementById('barrasImportes');
+  const tituloHorasEl = document.getElementById('tituloHoras');
+  const tituloImportesEl = document.getElementById('tituloImportes');
 
     if (ctxSectores && dashboard.graficoTortaSectores) {
       const colores = obtenerColores((dashboard.graficoTortaSectores.labels || []).length);
@@ -122,6 +124,10 @@
     }
 
     if (ctxLinea && dashboard.graficoLineaHoras && (dashboard.graficoLineaHoras.labels || []).length) {
+      var cantMeses = (dashboard.graficoLineaHoras.labels || []).length;
+      if (tituloHorasEl) {
+        tituloHorasEl.textContent = 'Evolución de horas (últimos ' + cantMeses + ' meses)';
+      }
       new Chart(ctxLinea, {
         type: 'line',
         data: {
@@ -135,6 +141,7 @@
         options: {
           plugins: {
             legend: { position: 'bottom' },
+            title: { display: true, text: 'Últimos ' + cantMeses + ' meses' },
             datalabels: { display: false },
             tooltip: {
               callbacks: {
@@ -158,6 +165,10 @@
     }
 
     if (ctxBarras && dashboard.graficoLineaImportes && (dashboard.graficoLineaImportes.labels || []).length) {
+      var cantMesesImp = (dashboard.graficoLineaImportes.labels || []).length;
+      if (tituloImportesEl) {
+        tituloImportesEl.textContent = 'Importes pagados (últimos ' + cantMesesImp + ' meses)';
+      }
       new Chart(ctxBarras, {
         type: 'bar',
         data: {

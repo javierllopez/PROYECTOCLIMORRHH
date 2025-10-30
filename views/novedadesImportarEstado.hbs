@@ -1,0 +1,69 @@
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Importación de novedades</h5>
+          <div id="datosNovedades" data-trabajo-id="{{trabajoId}}" class="d-none"></div>
+
+          <div id="estado">
+            <div class="d-flex align-items-center">
+              <div class="spinner-border text-primary me-3" role="status" aria-hidden="true"></div>
+              <div>
+                <p class="mb-1">Procesando archivo... Esto puede tardar unos minutos.</p>
+                <small class="text-muted">Podés dejar esta pestaña abierta. Se actualizará automáticamente.</small>
+              </div>
+            </div>
+          </div>
+
+          <div id="resultado" class="d-none mt-3">
+            <div class="alert alert-info" role="alert">
+              <div id="mensajeFinal"></div>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-6">
+                <div class="border rounded p-2 h-100">
+                  <h6 class="fw-semibold mb-2">Resumen</h6>
+                  <ul class="small mb-0">
+                    <li>Insertados en histórico: <span id="insHistorico">0</span></li>
+                  </ul>
+                  <div class="mt-2">
+                    <div class="fw-semibold small mb-1">Omitidos por motivo</div>
+                    <ul id="listaOmitidos" class="small mb-0"></ul>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div class="border rounded p-2 h-100">
+                  <h6 class="fw-semibold mb-2">Validación de horas</h6>
+                  <ul class="small mb-0">
+                    <li>HS al 50 — válidas: <span id="hs50Validas">0</span> — inválidas: <span id="hs50Invalidas">0</span></li>
+                    <li>HS al 100 — válidas: <span id="hs100Validas">0</span> — inválidas: <span id="hs100Invalidas">0</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <h6 class="fw-semibold">Columnas detectadas</h6>
+              <ul id="listaColumnas" class="small"></ul>
+            </div>
+            <div class="mb-2">
+              <h6 class="fw-semibold">Muestra de filas (hasta 5)</h6>
+              <pre id="ejemploFilas" class="bg-light p-2 border rounded small"></pre>
+            </div>
+            <a href="/novedades/importar" class="btn btn-outline-secondary">Volver</a>
+          </div>
+
+          <div id="error" class="d-none mt-3">
+            <div class="alert alert-danger" role="alert">
+              <div id="mensajeError"></div>
+            </div>
+            <a href="/novedades/importar" class="btn btn-outline-secondary">Volver a Importar</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/novedadesImportarEstado.js" defer></script>

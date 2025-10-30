@@ -116,9 +116,9 @@ router.get('/', logueado, async (req, res) => {
             dashboard.graficoTortaSectores = graficoTortaSectores;
             dashboard.graficoTortaMotivos = graficoTortaMotivos;
 
-            // Serie de líneas: últimos 5 meses (Min50, Min100, Total) desde histórico
+            // Serie de líneas: últimos 12 meses (Min50, Min100, Total) desde histórico
             try {
-                const [periodosRows] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo FROM novedadese ORDER BY Periodo DESC LIMIT 5");
+                const [periodosRows] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo FROM novedadese ORDER BY Periodo DESC LIMIT 12");
                 if (periodosRows && periodosRows.length) {
                     const ids = periodosRows.map(r => r.Id);
                     // Sumas por IdNovedadesE en histórico
@@ -140,12 +140,12 @@ router.get('/', logueado, async (req, res) => {
                         sumasMap = new Map();
                     }
 
-                    // Sumas de importes pagados por período desde liquidaciones_historico
+                    // Sumas de importes pagados por período desde novedadesr_historico (no liquidaciones_historico)
                     let importesMap = new Map();
                     try {
                         const [impRows] = await pool.query(
                             `SELECT IdNovedadesE, SUM(COALESCE(Monto,0)) AS Total
-                             FROM liquidaciones_historico
+                             FROM novedadesr_historico
                              WHERE IdNovedadesE IN (${ids.map(() => '?').join(',')})
                              GROUP BY IdNovedadesE`, ids
                         );
@@ -273,62 +273,7 @@ router.get('/', logueado, async (req, res) => {
 
 });
 
-// Evolución de importes pagados por sector (últimos 5 meses) con matriz Sector x Período
-router.get('/evolucionImportesSectores', logueado, async (req, res) => {
-    if (req.session.nivelUsuario != 1) return res.redirect('/');
-    try {
-        const [periodosRows] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo FROM novedadese ORDER BY Periodo DESC LIMIT 5");
-        if (!periodosRows || !periodosRows.length) {
-            return render(req, res, 'evolucionImportesSectores', { labels: [], sectores: [], hayDatos: false });
-        }
-        const mesesAsc = [...periodosRows].sort((a, b) => (a.Periodo < b.Periodo ? -1 : 1));
-        const labels = mesesAsc.map(p => {
-            const [y, m] = String(p.Periodo).split('-');
-            return `${m}/${y}`;
-        });
-        const ids = mesesAsc.map(p => p.Id);
-        try {
-            const [rows] = await pool.query(
-                `SELECT s.Id AS SectorId, s.Descripcion AS Sector, l.IdNovedadesE,
-                        SUM(COALESCE(l.Monto,0)) AS Importe
-                 FROM liquidaciones_historico l
-                 INNER JOIN sectores s ON s.Id = l.Sector
-                 WHERE l.IdNovedadesE IN (${ids.map(() => '?').join(',')})
-                 GROUP BY s.Id, s.Descripcion, l.IdNovedadesE`, ids
-            );
-            const sectoresMap = new Map();
-            for (const r of rows) {
-                const secId = r.SectorId;
-                if (!sectoresMap.has(secId)) {
-                    sectoresMap.set(secId, { id: secId, sector: r.Sector, importes: Array(ids.length).fill(0) });
-                }
-                const idx = ids.indexOf(r.IdNovedadesE);
-                const imp = Number(r.Importe) || 0;
-                if (idx >= 0) sectoresMap.get(secId).importes[idx] = imp;
-            }
-            let totalesImportes = Array(ids.length).fill(0);
-            const sectores = Array.from(sectoresMap.values())
-                .map(s => ({
-                    id: s.id,
-                    sector: s.sector,
-                    importes: s.importes,
-                    totalImportes: s.importes.reduce((a, b) => (Number(a) || 0) + (Number(b) || 0), 0)
-                }))
-                .filter(s => s.totalImportes > 0)
-                .sort((a, b) => b.totalImportes - a.totalImportes);
-
-            for (const s of sectores) {
-                s.importes.forEach((v, i) => { totalesImportes[i] += Number(v) || 0; });
-            }
-
-            return render(req, res, 'evolucionImportesSectores', { labels, sectores, totalesImportes, hayDatos: sectores.length > 0 });
-        } catch (e) {
-            return render(req, res, 'evolucionImportesSectores', { labels, sectores: [], totalesImportes: [], hayDatos: false, error: e.message });
-        }
-    } catch (e) {
-        return render(req, res, 'evolucionImportesSectores', { labels: [], sectores: [], totalesImportes: [], hayDatos: false, error: e.message });
-    }
-});
+// (ruta unificada más abajo)
 
 // Detalle de horas por sector (admin)
 router.get('/detalleHorasSectores', logueado, async (req, res) => {
@@ -396,7 +341,7 @@ router.get('/detalleHorasMotivos', logueado, async (req, res) => {
     router.get('/evolucionHorasSectores', logueado, async (req, res) => {
         if (req.session.nivelUsuario != 1) return res.redirect('/');
         try {
-            const [periodosRows] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo FROM novedadese ORDER BY Periodo DESC LIMIT 5");
+            const [periodosRows] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo FROM novedadese ORDER BY Periodo DESC LIMIT 12");
             if (!periodosRows || !periodosRows.length) {
                 return render(req, res, 'evolucionHorasSectores', { labels: [], sectores: [], hayDatos: false });
             }
@@ -453,11 +398,11 @@ router.get('/detalleHorasMotivos', logueado, async (req, res) => {
             return render(req, res, 'evolucionHorasSectores', { labels: [], sectores: [], hayDatos: false, error: e.message });
         }
     });
-// Evolución de importes pagados por sector (últimos 5 meses) con matriz Sector x Período
+// Evolución de importes pagados por sector (últimos 12 meses) con matriz Sector x Período
 router.get('/evolucionImportesSectores', logueado, async (req, res) => {
     if (req.session.nivelUsuario != 1) return res.redirect('/');
     try {
-        const [periodosRows] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo FROM novedadese ORDER BY Periodo DESC LIMIT 5");
+        const [periodosRows] = await pool.query("SELECT Id, DATE_FORMAT(Periodo, '%Y-%m-%d') AS Periodo FROM novedadese ORDER BY Periodo DESC LIMIT 12");
         if (!periodosRows || !periodosRows.length) {
             return render(req, res, 'evolucionImportesSectores', { labels: [], sectores: [], hayDatos: false });
         }
@@ -471,7 +416,7 @@ router.get('/evolucionImportesSectores', logueado, async (req, res) => {
             const [rows] = await pool.query(
                 `SELECT s.Id AS SectorId, s.Descripcion AS Sector, h.IdNovedadesE,
                         SUM(COALESCE(h.Monto,0)) AS Importe
-                 FROM liquidaciones_historico h
+                 FROM novedadesr_historico h
                  INNER JOIN sectores s ON s.Id = h.IdSector
                  WHERE h.IdNovedadesE IN (${ids.map(() => '?').join(',')})
                  GROUP BY s.Id, s.Descripcion, h.IdNovedadesE`, ids

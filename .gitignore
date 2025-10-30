@@ -36,3 +36,9 @@ uploads/
 
 # Secrets / local config
 account_transport.json
+
+# Local HTTPS certs (no versionar)
+certs/
+*.key
+*.crt
+*.pem
