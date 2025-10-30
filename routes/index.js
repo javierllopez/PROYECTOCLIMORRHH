@@ -337,7 +337,7 @@ router.get('/detalleHorasMotivos', logueado, async (req, res) => {
         return render(req, res, 'detalleHorasMotivos', { detalle: [], total: { min50:0, min100:0, monto:0 }, periodoActual: '', error: e.message });
     }
 });
-    // Evolución de horas por sector (últimos 5 meses) con matriz Sector x Período
+    // Evolución de horas por sector (últimos 12 meses) con matriz Sector x Período
     router.get('/evolucionHorasSectores', logueado, async (req, res) => {
         if (req.session.nivelUsuario != 1) return res.redirect('/');
         try {
