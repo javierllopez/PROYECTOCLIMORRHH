@@ -130,13 +130,6 @@
   height: 320px;
 }
 
-@media (max-width: 576px) {
-  /* Asegura altura suficiente en móviles para evitar líneas "aplastadas" */
-  .chart-responsive {
-    height: 280px;
-  }
-}
-
 .contenedor-importacion {
   max-width: 600px;
 }

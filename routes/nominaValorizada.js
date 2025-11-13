@@ -108,17 +108,14 @@ router.get('/', logueado, async (req, res) => {
 
     try {
         const [tablaNominaValoreseRaw] = await pool.query(sqlNominaValorese);
-        // Tomar fechas tal como están (sin conversión de huso): construir Date local a partir de 'YYYY-MM-DD'
+        // Para la vista, devolver strings 'YYYY-MM-DD' para evitar cualquier conversión por TZ en helpers
         const tablaNominaValorese = tablaNominaValoreseRaw.map(r => {
-            const normalizar = (val) => {
+            const aStr = (val) => {
                 if (!val) return val;
-                const s = typeof val === 'string'
-                    ? val.substring(0, 10)
-                    : `${val.getFullYear()}-${String(val.getMonth() + 1).padStart(2, '0')}-${String(val.getDate()).padStart(2, '0')}`;
-                const [y, m, d] = s.split('-').map(Number);
-                return new Date(y, m - 1, d);
+                if (typeof val === 'string') return val.substring(0, 10);
+                return `${val.getFullYear()}-${String(val.getMonth() + 1).padStart(2, '0')}-${String(val.getDate()).padStart(2, '0')}`;
             };
-            return { ...r, VigenteDesde: normalizar(r.VigenteDesde), VigenteHasta: normalizar(r.VigenteHasta) };
+            return { ...r, VigenteDesde: aStr(r.VigenteDesde), VigenteHasta: aStr(r.VigenteHasta) };
         });
         let idNomina
         if (nominavaloresr.filtroGeneral == "") {
