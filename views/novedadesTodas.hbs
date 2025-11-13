@@ -1,13 +1,16 @@
 <div class="container-fluid">
-    <div class="row justify-content-between mt-2">
-        <div class="col-10 text-center">
-            <h1 class="h1">Detalle completo de novedades a autorizar</h1>
+    <div class="row justify-content-between align-items-center mt-2 g-2">
+        <div class="col-12 col-lg-10 text-center text-lg-start">
+            <h1 class="h1 mb-0">Detalle completo de novedades a autorizar</h1>
         </div>
-        <div class="col-2 text-center">
+        <div class="col-12 col-lg-2 text-center text-lg-end mt-2 mt-lg-0">
             <a href="/novedadesTodas/Agregar" class="btn btn-primary rounded-circle"> <i class="bi-plus h1"></i> </a>
         </div>
-        <div class="row mt-2">
-            <table class="table table-bordered table-striped table-responsive">
+    </div>
+    <div class="row mt-2">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
                 <thead>
                     <tr>
                         <th class="text-center">Empleado</th>
@@ -243,8 +246,7 @@
                     </tr>
                     {{/each}}
                 </tbody>
-
-            </table>
-
+                </table>
+            </div>
         </div>
     </div>
