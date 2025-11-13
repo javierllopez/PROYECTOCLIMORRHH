@@ -50,6 +50,8 @@
   const ctxBarras = document.getElementById('barrasImportes');
   const tituloHorasEl = document.getElementById('tituloHoras');
   const tituloImportesEl = document.getElementById('tituloImportes');
+  // Detectar pantallas pequeñas para ajustar sólo en mobile
+  const esMobile = (typeof window !== 'undefined' && window.matchMedia) ? window.matchMedia('(max-width: 576px)').matches : false;
 
     if (ctxSectores && dashboard.graficoTortaSectores) {
       const colores = obtenerColores((dashboard.graficoTortaSectores.labels || []).length);
@@ -133,16 +135,17 @@
         data: {
           labels: dashboard.graficoLineaHoras.labels,
           datasets: [
-            { label: 'Hs 50%', data: dashboard.graficoLineaHoras.min50, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.15)', tension: 0.2, fill: false, borderWidth: 2, pointRadius: 0 },
-            { label: 'Hs 100%', data: dashboard.graficoLineaHoras.min100, borderColor: '#dc3545', backgroundColor: 'rgba(220,53,69,0.15)', tension: 0.2, fill: false, borderWidth: 2, pointRadius: 0 },
-            { label: 'Total', data: dashboard.graficoLineaHoras.total, borderColor: '#198754', backgroundColor: 'rgba(25,135,84,0.10)', tension: 0.2, fill: false, borderWidth: 3, pointRadius: 0 }
+            { label: 'Hs 50%', data: dashboard.graficoLineaHoras.min50, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.15)', tension: 0.2, fill: esMobile ? false : true, pointRadius: esMobile ? 0 : 3, borderWidth: 2 },
+            { label: 'Hs 100%', data: dashboard.graficoLineaHoras.min100, borderColor: '#dc3545', backgroundColor: 'rgba(220,53,69,0.15)', tension: 0.2, fill: esMobile ? false : true, pointRadius: esMobile ? 0 : 3, borderWidth: 2 },
+            { label: 'Total', data: dashboard.graficoLineaHoras.total, borderColor: '#198754', backgroundColor: 'rgba(25,135,84,0.15)', tension: 0.2, fill: esMobile ? false : true, pointRadius: esMobile ? 0 : 3, borderWidth: esMobile ? 3 : 2 }
           ]
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false,
+          maintainAspectRatio: true,
+          // Relación de aspecto más "alta" en móviles para evitar aplastamiento sin estirar en desktop
+          aspectRatio: esMobile ? 1.2 : 2,
           interaction: { mode: 'index', intersect: false },
-          elements: { point: { radius: 0 }, line: { borderJoinStyle: 'round' } },
           plugins: {
             legend: { position: 'bottom' },
             title: { display: true, text: 'Últimos ' + cantMeses + ' meses' },
@@ -158,7 +161,6 @@
           },
           scales: {
             y: {
-              beginAtZero: true,
               ticks: {
                 callback: function (value) { return minutosAFormato(value); }
               }
@@ -184,7 +186,8 @@
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false,
+          maintainAspectRatio: true,
+          aspectRatio: esMobile ? 1.2 : 2,
           plugins: {
             legend: { position: 'bottom' },
             datalabels: { display: false },
@@ -199,7 +202,6 @@
           },
           scales: {
             y: {
-              beginAtZero: true,
               ticks: {
                 callback: function (value) { return monedaArs(value); }
               }
