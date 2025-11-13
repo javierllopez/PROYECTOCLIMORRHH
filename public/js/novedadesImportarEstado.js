@@ -15,6 +15,7 @@
     var listaColumnas = document.getElementById('listaColumnas');
     var ejemploFilas = document.getElementById('ejemploFilas');
   var insHistorico = document.getElementById('insHistorico');
+  var insVigente = document.getElementById('insVigente');
   var listaOmitidos = document.getElementById('listaOmitidos');
   var hs50Val = document.getElementById('hs50Validas');
   var hs50Inv = document.getElementById('hs50Invalidas');
@@ -63,6 +64,9 @@
           // Resumen insertados/omitidos
           if (typeof data.insertadosHistorico === 'number' && insHistorico) {
             insHistorico.textContent = String(data.insertadosHistorico);
+          }
+          if (typeof data.insertadosVigente === 'number' && insVigente) {
+            insVigente.textContent = String(data.insertadosVigente);
           }
           if (data.omitidosPorMotivo && listaOmitidos) {
             listaOmitidos.innerHTML = '';

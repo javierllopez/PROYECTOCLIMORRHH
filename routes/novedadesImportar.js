@@ -75,6 +75,8 @@ function crearTrabajo() {
     personasEncontradas: 0,
     personasNoEncontradas: 0,
     preparadas: 0,
+    insertadosHistorico: 0,
+    insertadosVigente: 0,
     // validación de horas
     horas50Validas: 0,
     horas50Invalidas: 0,
@@ -166,6 +168,7 @@ router.get('/api/estado/:id', requiereAdminJson, (req, res) => {
     personasNoEncontradas: t.personasNoEncontradas,
     preparadas: t.preparadas,
     insertadosHistorico: t.insertadosHistorico,
+    insertadosVigente: t.insertadosVigente,
     omitidosPorMotivo: t.omitidosPorMotivo,
     horas50Validas: t.horas50Validas,
     horas50Invalidas: t.horas50Invalidas,
@@ -198,6 +201,7 @@ router.get('/estado/:id.json', requiereAdminJson, (req, res) => {
     personasNoEncontradas: t.personasNoEncontradas,
     preparadas: t.preparadas,
     insertadosHistorico: t.insertadosHistorico,
+    insertadosVigente: t.insertadosVigente,
     omitidosPorMotivo: t.omitidosPorMotivo,
     horas50Validas: t.horas50Validas,
     horas50Invalidas: t.horas50Invalidas,
@@ -271,7 +275,8 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
 
     let total = 0, procesadas = 0, vacias = 0, errores = 0;
     let liqsEncontradas = 0, liqsCreadas = 0, personasEncontradas = 0, personasNoEncontradas = 0, preparadas = 0;
-    let insertadosHistorico = 0;
+  let insertadosHistorico = 0;
+  let insertadosVigente = 0;
     let horas50Validas = 0, horas50Invalidas = 0, horas100Validas = 0, horas100Invalidas = 0;
     const omitidosPorMotivo = {};
     const ejemplo = [];
@@ -348,6 +353,7 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
   const sqlSelNovedadesE = 'SELECT Id FROM novedadese WHERE YEAR(Periodo)=? AND MONTH(Periodo)=? LIMIT 1';
   // Al crear un período, también seteamos NovedadesHasta con el último día del mes de Periodo
   const sqlInsNovedadesE = 'INSERT INTO novedadese (Periodo, Observaciones, Actual, NovedadesHasta) VALUES (?, ?, 0, LAST_DAY(?))';
+      const sqlPeriodoActual = 'SELECT DATE_FORMAT(Periodo, "%Y-%m") AS ym FROM novedadese WHERE Actual=1 LIMIT 1';
       const sqlSelPersonal = 'SELECT Id, IdTurno, IdCategoria FROM personal WHERE Legajo = ? LIMIT 1';
       const sqlSelSector = 'SELECT Id, IdSupervisor FROM sectores WHERE Descripcion = ? LIMIT 1';
       const sqlSelMotivo = 'SELECT Id FROM motivos WHERE Descripcion = ? LIMIT 1';
@@ -360,6 +366,20 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
         IdNovedadesE, Area, IdSector, IdEmpleado, Fecha, Hs50, Hs100, GuardiasDiurnas, GuardiasNocturnas, GuardiasPasivas, Monto,
         IdNomina, IdTurno, IdCategoria, IdEstado, ObservacionesEstado, IdSupervisor, MinutosAl50, MinutosAl100, MinutosGD, MinutosGN, IdMotivo
       ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+      // Insert vigente (tabla novedadesr) con mismo set de columnas obligatorias
+      const sqlInsVigente = `INSERT INTO novedadesr (
+        IdNovedadesE, Area, IdSector, IdEmpleado, Fecha, Hs50, Hs100, GuardiasDiurnas, GuardiasNocturnas, GuardiasPasivas, Monto,
+        IdNomina, IdTurno, IdCategoria, IdEstado, ObservacionesEstado, IdSupervisor, MinutosAl50, MinutosAl100, MinutosGD, MinutosGN, IdMotivo
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+
+      // Obtener período actual (YYYY-MM) si existe
+      let periodoActualKey = null;
+      try {
+        const [act] = await conn.query(sqlPeriodoActual);
+        if (Array.isArray(act) && act.length > 0 && act[0].ym) {
+          periodoActualKey = String(act[0].ym);
+        }
+      } catch(_) { /* si falla, seguimos sin período actual */ }
 
       // Eliminamos el primer recorrido bloqueante; contamos dentro del bucle principal
 
@@ -600,7 +620,7 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
         const idCategoria = idCategoriaPers != null ? idCategoriaPers : null;
   if (idTurno == null || idCategoria == null) { errores++; omitidosPorMotivo['datos empleado incompletos'] = (omitidosPorMotivo['datos empleado incompletos'] || 0) + 1; await maybeYield(rowNumber); continue; }
 
-        // Insertar en historico
+        // Valores comunes para ambos destinos
         const valores = [
           cachePeriodo.get(periodoSql.slice(0,7)), // IdNovedadesE garantizado arriba en cache
           areaEnum,
@@ -627,9 +647,15 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
         ];
 
         try {
-
-          await conn.query(sqlInsHistorico, valores);
-          insertadosHistorico++;
+          // Según período: vigente (Actual=1) -> novedadesr, caso contrario -> histórico
+          const key = periodoSql.slice(0,7);
+          if (periodoActualKey && key === periodoActualKey) {
+            await conn.query(sqlInsVigente, valores);
+            insertadosVigente++;
+          } else {
+            await conn.query(sqlInsHistorico, valores);
+            insertadosHistorico++;
+          }
         } catch (e) {
           // Si por restricciones NOT NULL de algún campo ignorado fallara, lo contamos como omitido
           console.log('Error inserción histórico:', e);
@@ -672,7 +698,15 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
       resumenOmitidos = clavesOmitidos.map(k => `${k}: ${omitidosPorMotivo[k]}`).join(' | ');
     }
     const totalTratados = procesadas; // filas no vacías recorridas
-    const mensaje = `Archivo leído: ${total} filas (procesadas: ${procesadas}, vacías: ${vacias}, errores: ${errores}). Insertados en histórico: ${insertadosHistorico}. Omitidos por motivo: ${resumenOmitidos}. Total tratados: ${totalTratados}. Columnas detectadas: ${headers.join(', ')}.`;
+    const partesMsg = [
+      `Archivo leído: ${total} filas (procesadas: ${procesadas}, vacías: ${vacias}, errores: ${errores}).`,
+      `Insertados en período vigente: ${insertadosVigente}.`,
+      `Insertados en histórico: ${insertadosHistorico}.`,
+      `Omitidos por motivo: ${resumenOmitidos}.`,
+      `Total tratados: ${totalTratados}.`,
+      `Columnas detectadas: ${headers.join(', ')}.`
+    ];
+    const mensaje = partesMsg.join(' ');
     actualizarTrabajo(trabajoId, {
       estado: 'terminado',
       totalFilas: total,
@@ -685,6 +719,7 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
       personasNoEncontradas,
       preparadas,
       insertadosHistorico,
+      insertadosVigente,
       omitidosPorMotivo,
       horas50Validas,
       horas50Invalidas,
