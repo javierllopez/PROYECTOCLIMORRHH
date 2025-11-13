@@ -133,12 +133,16 @@
         data: {
           labels: dashboard.graficoLineaHoras.labels,
           datasets: [
-            { label: 'Hs 50%', data: dashboard.graficoLineaHoras.min50, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.15)', tension: 0.2, fill: true },
-            { label: 'Hs 100%', data: dashboard.graficoLineaHoras.min100, borderColor: '#dc3545', backgroundColor: 'rgba(220,53,69,0.15)', tension: 0.2, fill: true },
-            { label: 'Total', data: dashboard.graficoLineaHoras.total, borderColor: '#198754', backgroundColor: 'rgba(25,135,84,0.15)', tension: 0.2, fill: true }
+            { label: 'Hs 50%', data: dashboard.graficoLineaHoras.min50, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.15)', tension: 0.2, fill: false, borderWidth: 2, pointRadius: 0 },
+            { label: 'Hs 100%', data: dashboard.graficoLineaHoras.min100, borderColor: '#dc3545', backgroundColor: 'rgba(220,53,69,0.15)', tension: 0.2, fill: false, borderWidth: 2, pointRadius: 0 },
+            { label: 'Total', data: dashboard.graficoLineaHoras.total, borderColor: '#198754', backgroundColor: 'rgba(25,135,84,0.10)', tension: 0.2, fill: false, borderWidth: 3, pointRadius: 0 }
           ]
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          elements: { point: { radius: 0 }, line: { borderJoinStyle: 'round' } },
           plugins: {
             legend: { position: 'bottom' },
             title: { display: true, text: 'Últimos ' + cantMeses + ' meses' },
@@ -154,6 +158,7 @@
           },
           scales: {
             y: {
+              beginAtZero: true,
               ticks: {
                 callback: function (value) { return minutosAFormato(value); }
               }
@@ -178,6 +183,8 @@
           ]
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: { position: 'bottom' },
             datalabels: { display: false },
@@ -192,6 +199,7 @@
           },
           scales: {
             y: {
+              beginAtZero: true,
               ticks: {
                 callback: function (value) { return monedaArs(value); }
               }
