@@ -8,12 +8,15 @@
     if (!entrada) return '';
     const s = String(entrada);
     const ymd = s.includes('T') ? s.split('T')[0] : (s.includes(' ') ? s.split(' ')[0] : s);
-    const d = new Date(ymd + 'T00:00:00Z');
-    if (isNaN(d.getTime())) return '';
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
+    // Construir fecha en horario local a partir de YYYY-MM-DD para evitar desplazamientos por TZ
+    const parts = ymd.split('-').map(p => parseInt(p, 10));
+    if (parts.length < 3 || parts.some(p => Number.isNaN(p))) return '';
+    const [yyyy, mm, dd] = parts;
+    const d = new Date(yyyy, mm - 1, dd); // medianoche local
+    const ddStr = String(d.getDate()).padStart(2, '0');
+    const mmStr = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyyStr = d.getFullYear();
+    return `${ddStr}/${mmStr}/${yyyyStr}`;
   }
 
   function ajustarTextoPeriodo() {
