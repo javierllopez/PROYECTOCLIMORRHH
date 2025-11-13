@@ -271,15 +271,17 @@ router.post('/agregarHoras',logueado, async (req, res) => {
             area = 2;
         }
         //Controlo que las horas ingresadas no se superpongan con otras cargadas anteriormente
-    console.log(`Controlando fechas: ${personal[0].Id}, ${FechaASqlFecha(FechaDesde)}, ${FechaASqlFecha(FechaHasta)}`);
-    const [controlFecha] = await pool.query(sqlControlFecha, [personal[0].Id, FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaHasta), FechaASqlFecha(FechaHasta)]);
+        const [controlFecha] = await pool.query(sqlControlFecha, [personal[0].Id, FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaHasta), FechaASqlFecha(FechaHasta)]);
         if (controlFecha.length > 0) {
             throw new Error('Las horas ingresadas se superponen con otras ingresadas anteriormente'); 
         }
 
         const [sectores] = await pool.query(sqlSectores, [personal[0].IdSector]);
         idSupervisor = sectores[0].IdSupervisor;
-    const [nominaValoresR] = await pool.query(sqlNominaValoresR, [ItemNomina, FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaDesde)]);
+        const [nominaValoresR] = await pool.query(sqlNominaValoresR, [ItemNomina, FechaASqlFecha(FechaDesde), FechaASqlFecha(FechaDesde)]);
+        if (nominaValoresR.length <= 0) {
+            throw new Error('No hay valores de nómina vigentes para la fecha seleccionada');
+        }
         valorMinutos50 = nominaValoresR[0].ValorHora50 / 60 * TotalHoras50(FechaDesde, FechaHasta)[0];
         valorMinutos100 = nominaValoresR[0].ValorHora100 / 60 * TotalHoras100(FechaDesde, FechaHasta)[0];
         monto = valorMinutos50 + valorMinutos100;
