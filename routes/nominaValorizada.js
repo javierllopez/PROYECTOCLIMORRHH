@@ -4,7 +4,7 @@ const { pool } = require('../conexion');
 const { render, enviarMensaje } = require('../Middleware/render');
 const { confirmar } = require('../Middleware/render');
 const { logueado } = require('../Middleware/validarUsuario');
-const { FechaSqlAFechaCorta, FechaASqlFecha, FechaSqlAFecha, FechaLocalASqlDate, FechaHTMLaFecha } = require('../lib/libreria');
+const { FechaSqlAFechaCorta, FechaASqlFecha, FechaSqlAFecha, /*FechaLocalASqlDate*/ FechaHTMLaFecha } = require('../lib/libreria');
 const router = express.Router();
 const nivelAceptado = [1]; //Nivel de usuario aceptado para esta ruta
 
@@ -108,21 +108,17 @@ router.get('/', logueado, async (req, res) => {
 
     try {
         const [tablaNominaValoreseRaw] = await pool.query(sqlNominaValorese);
-        // Convertir fechas UTC (DATE) a objetos Date locales para mostrar correctamente en la vista
+        // Tomar fechas tal como están (sin conversión de huso): construir Date local a partir de 'YYYY-MM-DD'
         const tablaNominaValorese = tablaNominaValoreseRaw.map(r => {
             const normalizar = (val) => {
                 if (!val) return val;
-                // Unificar a 'YYYY-MM-DD'
-                const s = typeof val === 'string' ? val.substring(0, 10) : `${val.getUTCFullYear()}-${String(val.getUTCMonth() + 1).padStart(2, '0')}-${String(val.getUTCDate()).padStart(2, '0')}`;
+                const s = typeof val === 'string'
+                    ? val.substring(0, 10)
+                    : `${val.getFullYear()}-${String(val.getMonth() + 1).padStart(2, '0')}-${String(val.getDate()).padStart(2, '0')}`;
                 const [y, m, d] = s.split('-').map(Number);
-                // Construir Date local en medianoche local
                 return new Date(y, m - 1, d);
             };
-            return {
-                ...r,
-                VigenteDesde: normalizar(r.VigenteDesde),
-                VigenteHasta: normalizar(r.VigenteHasta)
-            };
+            return { ...r, VigenteDesde: normalizar(r.VigenteDesde), VigenteHasta: normalizar(r.VigenteHasta) };
         });
         let idNomina
         if (nominavaloresr.filtroGeneral == "") {
@@ -382,7 +378,7 @@ router.post('/generarNomina', logueado, async (req, res) => {
         opcionNomina
     } = req.body;
 
-    // Parseo sin huso: tratar fechas como calendario local
+    // Parseo sin huso: tratar fechas como calendario local (sin conversiones de zona horaria)
     const VigenteDesdeDate = VigenteDesde ? FechaHTMLaFecha(VigenteDesde) : null;
     const VigenteHastaDate = VigenteHasta ? FechaHTMLaFecha(VigenteHasta) : null;
     if (VigenteDesdeDate) VigenteDesdeDate.setHours(0, 0, 0, 0);
@@ -402,8 +398,8 @@ router.post('/generarNomina', logueado, async (req, res) => {
         // Validación de superposición de rangos de fechas (inclusive)
         // [desde,hasta] del nuevo período no debe solaparse con ninguno existente
         for (const fila of nominaValoreseCompleta) {
-            const desdeStr = typeof fila.VigenteDesde === 'string' ? fila.VigenteDesde.substring(0,10) : `${fila.VigenteDesde.getUTCFullYear()}-${String(fila.VigenteDesde.getUTCMonth()+1).padStart(2,'0')}-${String(fila.VigenteDesde.getUTCDate()).padStart(2,'0')}`;
-            const hastaStr = typeof fila.VigenteHasta === 'string' ? fila.VigenteHasta.substring(0,10) : `${fila.VigenteHasta.getUTCFullYear()}-${String(fila.VigenteHasta.getUTCMonth()+1).padStart(2,'0')}-${String(fila.VigenteHasta.getUTCDate()).padStart(2,'0')}`;
+            const desdeStr = typeof fila.VigenteDesde === 'string' ? fila.VigenteDesde.substring(0,10) : `${fila.VigenteDesde.getFullYear()}-${String(fila.VigenteDesde.getMonth()+1).padStart(2,'0')}-${String(fila.VigenteDesde.getDate()).padStart(2,'0')}`;
+            const hastaStr = typeof fila.VigenteHasta === 'string' ? fila.VigenteHasta.substring(0,10) : `${fila.VigenteHasta.getFullYear()}-${String(fila.VigenteHasta.getMonth()+1).padStart(2,'0')}-${String(fila.VigenteHasta.getDate()).padStart(2,'0')}`;
             const desdeExist = FechaHTMLaFecha(desdeStr); if (desdeExist) desdeExist.setHours(0,0,0,0);
             const hastaExist = FechaHTMLaFecha(hastaStr); if (hastaExist) hastaExist.setHours(23,59,59,999);
             const solapa = (VigenteDesdeDate <= hastaExist) && (VigenteHastaDate >= desdeExist);
@@ -413,8 +409,10 @@ router.post('/generarNomina', logueado, async (req, res) => {
         }
     } catch (error) {
         console.log(error);
-        // Devolver valores compatibles con inputs type=date (local calendar)
-        return render(req, res, 'generarNomina', { Mensaje: { title: 'Atención', text: 'Error en las fechas de vigencia', icon: 'error' }, Paquete: { VigenteDesde: FechaLocalASqlDate(VigenteDesdeDate), VigenteHasta: FechaLocalASqlDate(VigenteHastaDate), Aumento: (parseFloat(Aumento) || 0), IdNominaBase: IdNominaBase } });
+        // Devolver valores compatibles con inputs type=date (sin conversiones de zona)
+        const pad2 = (n) => (n < 10 ? '0' + n : '' + n);
+        const aSqlDate = (d) => (d instanceof Date) ? `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}` : '';
+        return render(req, res, 'generarNomina', { Mensaje: { title: 'Atención', text: 'Error en las fechas de vigencia', icon: 'error' }, Paquete: { VigenteDesde: aSqlDate(VigenteDesdeDate), VigenteHasta: aSqlDate(VigenteHastaDate), Aumento: (parseFloat(Aumento) || 0), IdNominaBase: IdNominaBase } });
 
     }
     if (opcionNomina == 2) {
@@ -431,13 +429,15 @@ router.post('/generarNomina', logueado, async (req, res) => {
             await conn.beginTransaction();
             const [nomina] = await conn.query(cadenaNomina);
             const sqlNominaValorese = "INSERT INTO nominavalorese (VigenteDesde, VigenteHasta) VALUES (?, ?)";
-            const [rNominaValoresE] = await conn.query(sqlNominaValorese, [FechaLocalASqlDate(VigenteDesdeDate), FechaLocalASqlDate(VigenteHastaDate)]);
+            const pad2 = (n) => (n < 10 ? '0' + n : '' + n);
+            const aSqlDate = (d) => (d instanceof Date) ? `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}` : '';
+            const [rNominaValoresE] = await conn.query(sqlNominaValorese, [aSqlDate(VigenteDesdeDate), aSqlDate(VigenteHastaDate)]);
             let idNominaValoresE = rNominaValoresE.insertId;
             let i = 0;
             do {
                 let sqlNominaR = "";
                 sqlNominaR = "INSERT INTO nominavaloresr (IdNomina, IdNominaValoresE, ValorSueldoBasico, HorasMensuales, ValorHoraSimple, ValorHora50, ValorHora100, ValorGuardiaDiurna, HsGuardiaDiurna, ValorHoraGuardiaDiurna, ValorGuardiaNocturna, HsGuardiaNocturna, ValorHoraGuardiaNocturna, ValorGuardiaPasiva, ValorAdicional, VigenciaDesde, VigenciaHasta) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )";
-                await conn.query(sqlNominaR, [nomina[i].Id, idNominaValoresE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, FechaLocalASqlDate(VigenteDesdeDate), FechaLocalASqlDate(VigenteHastaDate)]);
+                await conn.query(sqlNominaR, [nomina[i].Id, idNominaValoresE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, aSqlDate(VigenteDesdeDate), aSqlDate(VigenteHastaDate)]);
                 i += 1;
             } while (i < nomina.length);
 
@@ -448,7 +448,9 @@ router.post('/generarNomina', logueado, async (req, res) => {
             console.error('Error al generar la nómina', err);
             await conn.rollback();
             conn.release();
-            return res.render('generarNomina', { Mensaje: { title: 'Atención', text: "Error generando valores de nómina", icon: 'error' }, Paquete: { VigenteDesde: FechaASqlFecha(VigenteDesde), VigenteHasta: FechaASqlFecha(VigenteHasta), Aumento: Aumento, IdNominaBase: IdNominaBase } });
+            const pad2b = (n) => (n < 10 ? '0' + n : '' + n);
+            const aSqlDate2 = (d) => (d instanceof Date) ? `${d.getFullYear()}-${pad2b(d.getMonth()+1)}-${pad2b(d.getDate())}` : '';
+            return res.render('generarNomina', { Mensaje: { title: 'Atención', text: "Error generando valores de nómina", icon: 'error' }, Paquete: { VigenteDesde: aSqlDate2(VigenteDesdeDate), VigenteHasta: aSqlDate2(VigenteHastaDate), Aumento: Aumento, IdNominaBase: IdNominaBase } });
         }
 
     } else {
@@ -479,7 +481,9 @@ router.post('/generarNomina', logueado, async (req, res) => {
 
             try {
                 await conn.beginTransaction();
-                const [rNominaValoresE] = await conn.query(cadenaNominaValoresE, [FechaLocalASqlDate(VigenteDesdeDate), FechaLocalASqlDate(VigenteHastaDate)]);
+                const pad2c = (n) => (n < 10 ? '0' + n : '' + n);
+                const aSqlDate3 = (d) => (d instanceof Date) ? `${d.getFullYear()}-${pad2c(d.getMonth()+1)}-${pad2c(d.getDate())}` : '';
+                const [rNominaValoresE] = await conn.query(cadenaNominaValoresE, [aSqlDate3(VigenteDesdeDate), aSqlDate3(VigenteHastaDate)]);
                 idNominaValoresE = rNominaValoresE.insertId;
 
                 const [rNominaValoresR] = await conn.query(SelectCadenaNominaValoresR, [IdNominaBase]);
@@ -527,7 +531,7 @@ router.post('/generarNomina', logueado, async (req, res) => {
                         valorAdicional = 0;
                     }
 
-                    await conn.query(InsertcadenaNominaValoresR, [rNominaValoresR[i].IdNomina, idNominaValoresE, valorSueldoBasico, horasMensuales, valorHoraSimple, valorHora50, valorHora100, valorGuardiaDiurna, hsGuardiaDiurna, valorHoraGuardiaDiurna, valorGuardiaNocturna, hsGuardiaNocturna, valorHoraGuardiaNocturna, valorGuardiaPasiva, valorAdicional, FechaLocalASqlDate(VigenteDesdeDate), FechaLocalASqlDate(VigenteHastaDate)]);
+                    await conn.query(InsertcadenaNominaValoresR, [rNominaValoresR[i].IdNomina, idNominaValoresE, valorSueldoBasico, horasMensuales, valorHoraSimple, valorHora50, valorHora100, valorGuardiaDiurna, hsGuardiaDiurna, valorHoraGuardiaDiurna, valorGuardiaNocturna, hsGuardiaNocturna, valorHoraGuardiaNocturna, valorGuardiaPasiva, valorAdicional, aSqlDate3(VigenteDesdeDate), aSqlDate3(VigenteHastaDate)]);
                     i += 1;
                 } while (i < rNominaValoresR.length);
 
