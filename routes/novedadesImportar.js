@@ -633,7 +633,7 @@ async function procesarExcelNovedades({ ruta, sobrescribir, trabajoId }) {
           gn,
           gp,
           monto,
-          0, // IdNomina (no disponible en importación, se utiliza 0 como valor neutro)
+          57, // IdNomina (Se agrega valor fijo 57 según requerimiento)
           idTurno,
           idCategoria,
           6, // IdEstado = 6
