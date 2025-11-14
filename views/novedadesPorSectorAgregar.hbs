@@ -6,9 +6,8 @@
         <div class="card-header bg-primary text-white rounded-top-3 d-flex align-items-center justify-content-between">
           <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Agregar novedad por sector</h4>
           <a href="/novedadesPorSector?IdSector={{sector.Id}}"
-            class="btn btn-outline-light btn-sm d-flex align-items-center">
-            <i class="bi bi-arrow-left me-2"></i> Volver
-          </a>
+            class="btn btn-outline-light btn-sm ms-2">
+            <i class="bi bi-arrow-left me-2"></i></a>
         </div>
         <form id="formNovedadSector" action="/novedadesPorSector/Agregar" method="POST" autocomplete="off">
           <div class="card-body">
@@ -32,7 +31,9 @@
                 <!-- Plantilla oculta con todas las nóminas -->
                 <select id="NominaTemplate" class="d-none">
                   {{#each nominas}}
-                  <option value="{{this.Id}}" data-categoria="{{this.IdCategoria}}" data-horasmensuales="{{this.HorasMensuales}}" data-haceguardiasdiurnas="{{this.HaceGuardiasDiurnas}}">{{this.Descripcion}}</option>
+                  <option value="{{this.Id}}" data-categoria="{{this.IdCategoria}}"
+                    data-horasmensuales="{{this.HorasMensuales}}"
+                    data-haceguardiasdiurnas="{{this.HaceGuardiasDiurnas}}">{{this.Descripcion}}</option>
                   {{/each}}
                 </select>
               </div>
@@ -107,11 +108,13 @@
             <!-- Row visible solo si tipoGuardia = Parcial -->
             <div class="row mb-3" id="rowGuardiaParcial" style="display: none;">
               <div class="col-md-6 mb-3 mb-md-0">
-                <label for="InicioGuardiaParcial" class="form-label"><i class="bi bi-clock"></i> Inicio (parcial)</label>
+                <label for="InicioGuardiaParcial" class="form-label"><i class="bi bi-clock"></i> Inicio
+                  (parcial)</label>
                 <input type="time" class="form-control" id="InicioGuardiaParcial" name="InicioGuardiaParcial">
               </div>
               <div class="col-md-6">
-                <label for="FinGuardiaParcial" class="form-label"><i class="bi bi-clock-history"></i> Fin (parcial)</label>
+                <label for="FinGuardiaParcial" class="form-label"><i class="bi bi-clock-history"></i> Fin
+                  (parcial)</label>
                 <input type="time" class="form-control" id="FinGuardiaParcial" name="FinGuardiaParcial">
               </div>
             </div>

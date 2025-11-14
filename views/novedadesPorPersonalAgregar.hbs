@@ -24,7 +24,8 @@
                             <select class="form-select form-select-sm" id="Sector" name="Sector" required>
                                 <option value="" selected disabled>Seleccione un sector</option>
                                 {{#each sectores}}
-                                <option value="{{this.Id}}" {{#ifeq this.Id @root.personal.IdSector}} selected {{/ifeq}}>{{this.Descripcion}}</option>
+                                <option value="{{this.Id}}" {{#ifeq this.Id @root.personal.IdSector}} selected
+                                    {{/ifeq}}>{{this.Descripcion}}</option>
                                 {{/each}}
                             </select>
                         </div>
@@ -76,7 +77,8 @@
                                     name="GuardiaRealizada">
                                     <option value="" selected disabled>Seleccione una opción</option>
                                     {{#each guardias}}
-                                    <option value="{{this.Id}}">{{this.Descripcion}} de {{HoraLocal this.Inicio}} a {{HoraLocal
+                                    <option value="{{this.Id}}">{{this.Descripcion}} de {{HoraLocal this.Inicio}} a
+                                        {{HoraLocal
                                         this.Fin}}</option>
                                     {{/each}}
                                 </select>
@@ -111,17 +113,21 @@
                     <!-- Motivo Extra como último renglón -->
                     <div class="row g-3 mt-2">
                         <div class="col-md-4">
-                            <label for="MotivoExtra" class="form-label fw-semibold"><i class="bi bi-exclamation-circle"></i> Motivo Extra</label>
+                            <label for="MotivoExtra" class="form-label fw-semibold"><i
+                                    class="bi bi-exclamation-circle"></i> Motivo Extra</label>
                             <select class="form-select form-select-sm" id="MotivoExtra" name="MotivoExtra" required>
                                 <option value="" selected disabled>Seleccione un motivo extra</option>
                                 {{#each motivos}}
-                                <option value="{{this.Id}}" data-Reemplazo="{{this.InformaReemplazo}}" data-Observaciones="{{this.DescripcionObligatoria}}">{{this.Descripcion}}</option>
+                                <option value="{{this.Id}}" data-Reemplazo="{{this.InformaReemplazo}}"
+                                    data-Observaciones="{{this.DescripcionObligatoria}}">{{this.Descripcion}}</option>
                                 {{/each}}
                             </select>
                         </div>
                         <div class="col-md-4" id="ReemplazoExtra" style="display: none;">
-                            <label for="IdEmpleadoReemplazoExtra" class="form-label fw-semibold"><i class="bi bi-arrow-repeat"></i> Reemplaza a</label>
-                            <select class="form-select form-select-sm" id="IdEmpleadoReemplazoExtra" name="IdEmpleadoReemplazoExtra">
+                            <label for="IdEmpleadoReemplazoExtra" class="form-label fw-semibold"><i
+                                    class="bi bi-arrow-repeat"></i> Reemplaza a</label>
+                            <select class="form-select form-select-sm" id="IdEmpleadoReemplazoExtra"
+                                name="IdEmpleadoReemplazoExtra">
                                 <option value="" selected disabled>Seleccione un empleado</option>
                                 {{#each personalLista}}
                                 <option value="{{this.Id}}">{{this.ApellidoYNombre}}</option>
@@ -129,8 +135,10 @@
                             </select>
                         </div>
                         <div class="col-md-4" id="ObservacionesExtra" style="display: none;">
-                            <label for="DescripcionObligatoriaExtra" class="form-label fw-semibold"><i class="bi bi-chat-left-text"></i> Observaciones</label>
-                            <input type="text" class="form-control form-control-sm" id="DescripcionObligatoriaExtra" name="DescripcionObligatoriaExtra" placeholder="Ingrese observaciones">
+                            <label for="DescripcionObligatoriaExtra" class="form-label fw-semibold"><i
+                                    class="bi bi-chat-left-text"></i> Observaciones</label>
+                            <input type="text" class="form-control form-control-sm" id="DescripcionObligatoriaExtra"
+                                name="DescripcionObligatoriaExtra" placeholder="Ingrese observaciones">
                         </div>
                     </div>
                 </div>

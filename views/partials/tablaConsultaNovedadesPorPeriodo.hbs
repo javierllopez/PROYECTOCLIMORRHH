@@ -1,0 +1,42 @@
+<div class="table-responsive">
+  <table class="table table-striped table-bordered align-middle">
+    <thead class="table-light">
+      <tr>
+        <th class="text-start">{{etiqueta}}</th>
+        <th class="text-center">Horas al 50%</th>
+        <th class="text-center">Horas al 100%</th>
+        <th class="text-center">Total horas</th>
+        <th class="text-end">Monto</th>
+        <th class="text-end">Porcentaje</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#if filas}}
+        {{#each filas}}
+        <tr>
+          <td class="text-start">{{this.Nombre}}</td>
+          <td class="text-center">{{minutosAHoras this.Min50}}</td>
+          <td class="text-center">{{minutosAHoras this.Min100}}</td>
+          <td class="text-center">{{minutosAHoras (add this.Min50 this.Min100)}}</td>
+          <td class="text-end">{{formatoMoneda this.Monto}}</td>
+          <td class="text-end">{{porcentajeDe this.Monto ../total.Monto}}</td>
+        </tr>
+        {{/each}}
+      {{else}}
+        <tr><td colspan="6" class="text-center text-muted">Sin datos</td></tr>
+      {{/if}}
+    </tbody>
+    {{#if total}}
+    <tfoot>
+      <tr class="table-secondary fw-semibold">
+        <td class="text-end">Totales</td>
+        <td class="text-center">{{minutosAHoras total.Min50}}</td>
+        <td class="text-center">{{minutosAHoras total.Min100}}</td>
+        <td class="text-center">{{minutosAHoras total.TotalMin}}</td>
+        <td class="text-end">{{formatoMoneda total.Monto}}</td>
+        <td class="text-end">100%</td>
+      </tr>
+    </tfoot>
+    {{/if}}
+  </table>
+</div>

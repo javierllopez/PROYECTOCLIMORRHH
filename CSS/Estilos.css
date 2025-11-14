@@ -222,3 +222,18 @@
   font-size: 0.85rem;
   padding: .15rem .25rem;
 }
+
+/* Gráficos en resultados de Consulta Novedades por período */
+.chart-box {
+  position: relative;
+  height: 35vh; /* móviles: dos gráficos apilados ~70vh + títulos */
+  max-height: 45vh;
+}
+@media (min-width: 768px) {
+  .chart-box { height: 42vh; }
+}
+.chart-box > canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}

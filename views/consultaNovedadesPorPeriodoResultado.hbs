@@ -1,0 +1,175 @@
+<div class="container-fluid">
+  <div class="row mt-2 align-items-center">
+    <div class="col-12 col-md-8">
+      <h1 class="h4 mb-0"><i class="bi bi-calendar-week me-2"></i>{{titulo}} — {{tituloPeriodo}}</h1>
+      <div class="text-muted small mt-1">Agrupar por: {{agrupar}} • Mostrar: {{#ifeq mostrar "5"}}Primeros 5{{/ifeq}}{{#ifeq mostrar "10"}}Primeros 10{{/ifeq}}{{#ifeq mostrar "todos"}}Todos{{/ifeq}}</div>
+    </div>
+    <div class="col-12 col-md-4 text-md-end mt-2 mt-md-0">
+      <a class="btn btn-danger btn-circular" href="/consultaNovedadesPorPeriodo/exportar?periodo={{periodo}}&agrupar={{agrupar}}&mostrar={{mostrar}}" aria-label="Exportar PDF" title="Exportar PDF">
+        <i class="bi bi-filetype-pdf"></i>
+      </a>
+    </div>
+  </div>
+
+  <div class="row mt-3">
+    <div class="col-12">
+      {{#ifeq agrupar "ambos"}}
+        <ul class="nav nav-tabs" id="tabsInforme" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-sector-tab" data-bs-toggle="tab" data-bs-target="#tab-sector" type="button" role="tab" aria-controls="tab-sector" aria-selected="true">
+              <i class="bi bi-diagram-3 me-1"></i>Por sector
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-motivo-tab" data-bs-toggle="tab" data-bs-target="#tab-motivo" type="button" role="tab" aria-controls="tab-motivo" aria-selected="false">
+              <i class="bi bi-ui-checks me-1"></i>Por motivo
+            </button>
+          </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-sector-graf-tab" data-bs-toggle="tab" data-bs-target="#tab-sector-graf" type="button" role="tab" aria-controls="tab-sector-graf" aria-selected="false">
+                <i class="bi bi-pie-chart me-1"></i>Gráficos (sector)
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-motivo-graf-tab" data-bs-toggle="tab" data-bs-target="#tab-motivo-graf" type="button" role="tab" aria-controls="tab-motivo-graf" aria-selected="false">
+                <i class="bi bi-pie-chart me-1"></i>Gráficos (motivo)
+              </button>
+            </li>
+        </ul>
+        <div class="tab-content border-start border-end border-bottom p-3" id="tabsInformeContent">
+          <div class="tab-pane fade show active" id="tab-sector" role="tabpanel" aria-labelledby="tab-sector-tab">
+            {{#if sector}}
+              {{> tablaConsultaNovedadesPorPeriodo filas=sector.filasMostrar etiqueta="Sector" total=sector.total}}
+            {{else}}
+              <div class="alert alert-warning">Sin datos para sector.</div>
+            {{/if}}
+          </div>
+          <div class="tab-pane fade" id="tab-motivo" role="tabpanel" aria-labelledby="tab-motivo-tab">
+            {{#if motivo}}
+              {{> tablaConsultaNovedadesPorPeriodo filas=motivo.filasMostrar etiqueta="Motivo" total=motivo.total}}
+            {{else}}
+              <div class="alert alert-warning">Sin datos para motivo.</div>
+            {{/if}}
+          </div>
+            <div class="tab-pane fade" id="tab-sector-graf" role="tabpanel" aria-labelledby="tab-sector-graf-tab">
+              {{#if chartSector}}
+              <div id="chart-sector-data" class="d-none">{{json chartSector}}</div>
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <h6 class="text-center">Distribución por horas</h6>
+                  <div class="chart-box"><canvas id="pie-sector-horas"></canvas></div>
+                </div>
+                <div class="col-12 col-md-6">
+                  <h6 class="text-center">Distribución por monto</h6>
+                  <div class="chart-box"><canvas id="pie-sector-montos"></canvas></div>
+                </div>
+              </div>
+              {{else}}
+                <div class="alert alert-warning">Sin datos para sector.</div>
+              {{/if}}
+            </div>
+            <div class="tab-pane fade" id="tab-motivo-graf" role="tabpanel" aria-labelledby="tab-motivo-graf-tab">
+              {{#if chartMotivo}}
+              <div id="chart-motivo-data" class="d-none">{{json chartMotivo}}</div>
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <h6 class="text-center">Distribución por horas</h6>
+                  <div class="chart-box"><canvas id="pie-motivo-horas"></canvas></div>
+                </div>
+                <div class="col-12 col-md-6">
+                  <h6 class="text-center">Distribución por monto</h6>
+                  <div class="chart-box"><canvas id="pie-motivo-montos"></canvas></div>
+                </div>
+              </div>
+              {{else}}
+                <div class="alert alert-warning">Sin datos para motivo.</div>
+              {{/if}}
+            </div>
+        </div>
+      {{/ifeq}}
+
+      {{#ifeq agrupar "sector"}}
+        <ul class="nav nav-tabs" id="tabsSector" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-sector-tabla-tab" data-bs-toggle="tab" data-bs-target="#tab-sector-tabla" type="button" role="tab" aria-controls="tab-sector-tabla" aria-selected="true">
+              <i class="bi bi-table me-1"></i>Tabla
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-sector-graf-tab" data-bs-toggle="tab" data-bs-target="#tab-sector-graf" type="button" role="tab" aria-controls="tab-sector-graf" aria-selected="false">
+              <i class="bi bi-pie-chart me-1"></i>Gráficos (sector)
+            </button>
+          </li>
+        </ul>
+        <div class="tab-content border-start border-end border-bottom p-3" id="tabsSectorContent">
+          <div class="tab-pane fade show active" id="tab-sector-tabla" role="tabpanel" aria-labelledby="tab-sector-tabla-tab">
+            {{#if sector}}
+              {{> tablaConsultaNovedadesPorPeriodo filas=sector.filasMostrar etiqueta="Sector" total=sector.total}}
+            {{else}}
+              <div class="alert alert-warning">Sin datos para sector.</div>
+            {{/if}}
+          </div>
+          <div class="tab-pane fade" id="tab-sector-graf" role="tabpanel" aria-labelledby="tab-sector-graf-tab">
+            {{#if chartSector}}
+            <div id="chart-sector-data" class="d-none">{{json chartSector}}</div>
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <h6 class="text-center">Distribución por horas</h6>
+                <div class="chart-box"><canvas id="pie-sector-horas"></canvas></div>
+              </div>
+              <div class="col-12 col-md-6">
+                <h6 class="text-center">Distribución por monto</h6>
+                <div class="chart-box"><canvas id="pie-sector-montos"></canvas></div>
+              </div>
+            </div>
+            {{else}}
+              <div class="alert alert-warning">Sin datos para sector.</div>
+            {{/if}}
+          </div>
+        </div>
+      {{/ifeq}}
+
+      {{#ifeq agrupar "motivo"}}
+        <ul class="nav nav-tabs" id="tabsMotivo" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-motivo-tabla-tab" data-bs-toggle="tab" data-bs-target="#tab-motivo-tabla" type="button" role="tab" aria-controls="tab-motivo-tabla" aria-selected="true">
+              <i class="bi bi-table me-1"></i>Tabla
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-motivo-graf-tab" data-bs-toggle="tab" data-bs-target="#tab-motivo-graf" type="button" role="tab" aria-controls="tab-motivo-graf" aria-selected="false">
+              <i class="bi bi-pie-chart me-1"></i>Gráficos (motivo)
+            </button>
+          </li>
+        </ul>
+        <div class="tab-content border-start border-end border-bottom p-3" id="tabsMotivoContent">
+          <div class="tab-pane fade show active" id="tab-motivo-tabla" role="tabpanel" aria-labelledby="tab-motivo-tabla-tab">
+            {{#if motivo}}
+              {{> tablaConsultaNovedadesPorPeriodo filas=motivo.filasMostrar etiqueta="Motivo" total=motivo.total}}
+            {{else}}
+              <div class="alert alert-warning">Sin datos para motivo.</div>
+            {{/if}}
+          </div>
+          <div class="tab-pane fade" id="tab-motivo-graf" role="tabpanel" aria-labelledby="tab-motivo-graf-tab">
+            {{#if chartMotivo}}
+            <div id="chart-motivo-data" class="d-none">{{json chartMotivo}}</div>
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <h6 class="text-center">Distribución por horas</h6>
+                <div class="chart-box"><canvas id="pie-motivo-horas"></canvas></div>
+              </div>
+              <div class="col-12 col-md-6">
+                <h6 class="text-center">Distribución por monto</h6>
+                <div class="chart-box"><canvas id="pie-motivo-montos"></canvas></div>
+              </div>
+            </div>
+            {{else}}
+              <div class="alert alert-warning">Sin datos para motivo.</div>
+            {{/if}}
+          </div>
+        </div>
+      {{/ifeq}}
+    </div>
+  </div>
+  <script src="/js/consulta-novedades-por-periodo-resultado.js"></script>
+</div>

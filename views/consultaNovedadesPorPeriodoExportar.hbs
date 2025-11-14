@@ -1,0 +1,39 @@
+<div class="container-fluid">
+  <div class="row mt-3">
+    <div class="col-12 col-md-8 col-lg-6 mx-auto">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-filetype-pdf me-2"></i>
+            <div>
+              <div class="fw-semibold">Exportar a PDF</div>
+              <div class="small">Novedades por período</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <div class="text-muted small">Período: <span class="fw-semibold">{{periodo}}</span> • Agrupar: <span class="fw-semibold">{{agrupar}}</span> • Mostrar: <span class="fw-semibold">{{mostrar}}</span></div>
+          </div>
+          <form method="post" action="/consultaNovedadesPorPeriodo/exportar">
+            <input type="hidden" name="periodo" value="{{periodo}}"/>
+            <input type="hidden" name="agrupar" value="{{agrupar}}"/>
+            <input type="hidden" name="mostrar" value="{{mostrar}}"/>
+            <div class="mb-3">
+              <label for="nombreArchivo" class="form-label">Nombre de archivo</label>
+              <div class="input-group">
+                <input id="nombreArchivo" name="nombreArchivo" type="text" class="form-control" value="{{nombreSugerido}}" aria-describedby="sufijoPdf"/>
+                <span class="input-group-text" id="sufijoPdf">.pdf</span>
+              </div>
+              <div class="form-text">La ubicación la define tu navegador al descargar el archivo.</div>
+            </div>
+            <div class="d-flex justify-content-end gap-2">
+              <a href="/consultaNovedadesPorPeriodo/resultado?periodo={{periodo}}&agrupar={{agrupar}}&mostrar={{mostrar}}" class="btn btn-outline-secondary">Cancelar</a>
+              <button type="submit" class="btn btn-danger"><i class="bi bi-filetype-pdf me-1"></i>Exportar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,106 @@
+<div class="container-fluid">
+  <div class="row mt-3 justify-content-center">
+    <div class="col-12 col-lg-8 col-xl-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="bi bi-calendar-week me-2"></i>
+          <span class="fw-semibold">{{titulo}}</span>
+        </div>
+        <div class="card-body">
+          <div class="row row-cols-1 row-cols-md-3 g-3 align-items-end">
+            <div class="col d-flex flex-column justify-content-end">
+              <label for="periodo" class="form-label fw-semibold mb-1"><i class="bi bi-calendar3 me-1"></i>Período (mm/aaaa)</label>
+              <input type="text" id="periodo" class="form-control" inputmode="numeric" autocomplete="off" placeholder="mm/aaaa" maxlength="7">
+            </div>
+            <div class="col d-flex flex-column justify-content-end">
+              <label for="agruparPor" class="form-label fw-semibold mb-1"><i class="bi bi-diagram-3 me-1"></i>Agrupar por</label>
+              <select id="agruparPor" class="form-select">
+                <option value="sector">Sector</option>
+                <option value="motivo">Motivo</option>
+                <option value="ambos">Ambos</option>
+              </select>
+            </div>
+            <div class="col d-flex flex-column justify-content-end">
+              <label for="mostrarCantidad" class="form-label fw-semibold mb-1"><i class="bi bi-list-ol me-1"></i>Mostrar</label>
+              <select id="mostrarCantidad" class="form-select">
+                <option value="5">Primeros 5</option>
+                <option value="10">Primeros 10</option>
+                <option value="todos">Todos</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer bg-light d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-outline-secondary" id="btnLimpiar">
+            <i class="bi bi-x-circle me-1"></i>Limpiar
+          </button>
+          <button type="button" class="btn btn-primary" id="btnBuscar">
+            <i class="bi bi-search me-1"></i>Buscar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-3">
+    <div class="col-12">
+      {{#if error}}
+      <div class="alert alert-danger" role="alert">{{error}}</div>
+      {{/if}}
+
+      {{#if periodo}}
+        {{#ifeq agrupar "ambos"}}
+        <ul class="nav nav-tabs" id="tabsInforme" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-sector-tab" data-bs-toggle="tab" data-bs-target="#tab-sector" type="button" role="tab" aria-controls="tab-sector" aria-selected="true">
+              <i class="bi bi-diagram-3 me-1"></i>Por sector
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-motivo-tab" data-bs-toggle="tab" data-bs-target="#tab-motivo" type="button" role="tab" aria-controls="tab-motivo" aria-selected="false">
+              <i class="bi bi-ui-checks me-1"></i>Por motivo
+            </button>
+          </li>
+        </ul>
+        <div class="tab-content border-start border-end border-bottom p-3" id="tabsInformeContent">
+          <div class="tab-pane fade show active" id="tab-sector" role="tabpanel" aria-labelledby="tab-sector-tab">
+            {{#if resultadoSector}}
+              {{> tablaConsultaNovedadesPorPeriodo filas=resultadoSector etiqueta="Sector"}}
+            {{else}}
+              <div class="alert alert-warning">No se encontraron resultados por sector para {{periodo}}.</div>
+            {{/if}}
+          </div>
+          <div class="tab-pane fade" id="tab-motivo" role="tabpanel" aria-labelledby="tab-motivo-tab">
+            {{#if resultadoMotivo}}
+              {{> tablaConsultaNovedadesPorPeriodo filas=resultadoMotivo etiqueta="Motivo"}}
+            {{else}}
+              <div class="alert alert-warning">No se encontraron resultados por motivo para {{periodo}}.</div>
+            {{/if}}
+          </div>
+        </div>
+        {{else}}
+          {{#ifeq agrupar "sector"}}
+            {{#if resultadoSector}}
+              {{> tablaConsultaNovedadesPorPeriodo filas=resultadoSector etiqueta="Sector"}}
+            {{else}}
+              <div class="alert alert-warning">No se encontraron resultados por sector para {{periodo}}.</div>
+            {{/if}}
+          {{/ifeq}}
+          {{#ifeq agrupar "motivo"}}
+            {{#if resultadoMotivo}}
+              {{> tablaConsultaNovedadesPorPeriodo filas=resultadoMotivo etiqueta="Motivo"}}
+            {{else}}
+              <div class="alert alert-warning">No se encontraron resultados por motivo para {{periodo}}.</div>
+            {{/if}}
+          {{/ifeq}}
+        {{/ifeq}}
+      {{else}}
+        <div class="alert alert-info" role="alert">
+          Seleccioná el período y los parámetros, luego pulsá Buscar.
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>
+
+<script src="/js/consulta-novedades-por-periodo.js"></script>

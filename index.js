@@ -151,6 +151,7 @@ app.use('/liquidacionesProcesar', require('./routes/liquidacionesProcesar'));
 app.use('/ajustesLiquidacion', require('./routes/ajustesLiquidacion'));
 app.use('/cierreLiquidacion', require('./routes/cierreLiquidacion'));
 app.use('/liquidacionesPorPeriodo', require('./routes/liquidacionesPorPeriodo'));
+app.use('/consultaNovedadesPorPeriodo', require('./routes/consultaNovedadesPorPeriodo'));
 app.use('/misPagos', require('./routes/misPagos'));
 // Inicializo servidor (HTTP por defecto; HTTPS opcional en desarrollo)
 
