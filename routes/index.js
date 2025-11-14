@@ -12,6 +12,8 @@ router.get('/', logueado, async (req, res) => {
     let supervisorSectores = [];
     // Datos para vista de usuario final (nivel 3)
     let usuarioPerfil = null;
+    let idPeriodoActual = null;
+    let resumenPeriodoActual = null;
     if (req.session.nivelUsuario == 1) {
         try {
             // Personal vigente al día de hoy: Ingreso <= hoy y Baja NULL o >= hoy
@@ -53,6 +55,7 @@ router.get('/', logueado, async (req, res) => {
                 const idNovedadesE = await pool.query("SELECT Id FROM novedadese WHERE Actual = 1 LIMIT 1");
                 if (idNovedadesE[0].length > 0) {
                     const idPeriodo = idNovedadesE[0][0].Id;
+                    idPeriodoActual = idPeriodo;
                     // Empleados con horas cargadas (DISTINCT IdEmpleado) en el período actual
                     const [empHorasRows] = await pool.query(
                         "SELECT COUNT(DISTINCT IdEmpleado) AS cant FROM novedadesr WHERE IdNovedadesE = ?",
@@ -65,6 +68,20 @@ router.get('/', logueado, async (req, res) => {
                         [idPeriodo]
                     );
                     dashboard.montoTotalPagar = (montoRows && montoRows[0] && Number(montoRows[0].total)) ? Number(montoRows[0].total) : 0;
+
+                    const [minutosActualRows] = await pool.query(
+                        `SELECT SUM(COALESCE(MinutosAl50,0) + COALESCE(MinutosGD,0)) AS Min50,
+                                SUM(COALESCE(MinutosAl100,0) + COALESCE(MinutosGN,0)) AS Min100,
+                                SUM(COALESCE(Monto,0)) AS Importe
+                         FROM novedadesr
+                         WHERE IdNovedadesE = ?`,
+                        [idPeriodo]
+                    );
+                    resumenPeriodoActual = {
+                        min50: (minutosActualRows && minutosActualRows[0] && Number(minutosActualRows[0].Min50)) ? Number(minutosActualRows[0].Min50) : 0,
+                        min100: (minutosActualRows && minutosActualRows[0] && Number(minutosActualRows[0].Min100)) ? Number(minutosActualRows[0].Min100) : 0,
+                        importe: (minutosActualRows && minutosActualRows[0] && Number(minutosActualRows[0].Importe)) ? Number(minutosActualRows[0].Importe) : 0
+                    };
 
                     // Sumar minutos agrupados por sector
                     const [minutosSectoresRows] = await pool.query(`
@@ -135,6 +152,29 @@ router.get('/', logueado, async (req, res) => {
                         for (const r of sumasRows) {
                             sumasMap.set(r.IdNovedadesE, { min50: Number(r.Min50) || 0, min100: Number(r.Min100) || 0 });
                         }
+                        if (idPeriodoActual) {
+                            if (!resumenPeriodoActual) {
+                                try {
+                                    const [actualRows] = await pool.query(
+                                        `SELECT SUM(COALESCE(MinutosAl50,0) + COALESCE(MinutosGD,0)) AS Min50,
+                                                SUM(COALESCE(MinutosAl100,0) + COALESCE(MinutosGN,0)) AS Min100
+                                         FROM novedadesr
+                                         WHERE IdNovedadesE = ?`, [idPeriodoActual]
+                                    );
+                                    resumenPeriodoActual = {
+                                        min50: (actualRows && actualRows[0] && Number(actualRows[0].Min50)) ? Number(actualRows[0].Min50) : 0,
+                                        min100: (actualRows && actualRows[0] && Number(actualRows[0].Min100)) ? Number(actualRows[0].Min100) : 0,
+                                        importe: resumenPeriodoActual && typeof resumenPeriodoActual.importe === 'number' ? resumenPeriodoActual.importe : 0
+                                    };
+                                } catch (e) {
+                                    resumenPeriodoActual = resumenPeriodoActual || { min50: 0, min100: 0, importe: 0 };
+                                }
+                            }
+                            sumasMap.set(idPeriodoActual, {
+                                min50: resumenPeriodoActual ? Number(resumenPeriodoActual.min50) || 0 : 0,
+                                min100: resumenPeriodoActual ? Number(resumenPeriodoActual.min100) || 0 : 0
+                            });
+                        }
                     } catch (e) {
                         // Si no existe la tabla histórico o falla, dejar los datos en cero
                         sumasMap = new Map();
@@ -151,6 +191,25 @@ router.get('/', logueado, async (req, res) => {
                         );
                         for (const r of impRows) {
                             importesMap.set(r.IdNovedadesE, Number(r.Total) || 0);
+                        }
+                        if (idPeriodoActual) {
+                            if (!resumenPeriodoActual) {
+                                try {
+                                    const [actualImporteRows] = await pool.query(
+                                        `SELECT SUM(COALESCE(Monto,0)) AS Total
+                                         FROM novedadesr
+                                         WHERE IdNovedadesE = ?`, [idPeriodoActual]
+                                    );
+                                    resumenPeriodoActual = {
+                                        min50: 0,
+                                        min100: 0,
+                                        importe: (actualImporteRows && actualImporteRows[0] && Number(actualImporteRows[0].Total)) ? Number(actualImporteRows[0].Total) : 0
+                                    };
+                                } catch (e) {
+                                    resumenPeriodoActual = resumenPeriodoActual || { min50: 0, min100: 0, importe: 0 };
+                                }
+                            }
+                            importesMap.set(idPeriodoActual, resumenPeriodoActual ? Number(resumenPeriodoActual.importe) || 0 : 0);
                         }
                     } catch (e) {
                         importesMap = new Map();
