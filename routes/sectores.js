@@ -8,6 +8,18 @@ const {logueado} = require('../Middleware/validarUsuario');
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
 
+const obtenerIdSupervisorValido = (supervisor) => {
+    if (supervisor === undefined || supervisor === null) {
+        return null;
+    }
+    const texto = supervisor.toString().trim();
+    if (texto === '') {
+        return null;
+    }
+    const numero = Number(texto);
+    return Number.isNaN(numero) ? null : numero;
+};
+
 
 const nivelAceptado = [1]; //Niveles de usuario que pueden acceder a la ruta
 
@@ -96,7 +108,7 @@ router.get('/', logueado, async (req, res) => {
 //Ruta para cargar página que agregará un nuevo sector
 
 router.get('/editar', logueado, async (req, res) => {
-    const sqlPersonal = "SELECT Id, ApellidoYNombre, nivel FROM personal WHERE nivel = 2";
+    const sqlPersonal = "SELECT Id, ApellidoYNombre, idUsuario FROM personal WHERE nivel = 2 AND idUsuario IS NOT NULL";
 
     try {
         [personal] = await pool.query(sqlPersonal);
@@ -113,7 +125,7 @@ router.get('/editar', logueado, async (req, res) => {
 
 router.get('/editar/:Id', logueado, async (req, res) => {
     const { Id } = req.params;
-    const sqlPersonal = "SELECT Id, ApellidoYNombre, idUsuario, nivel FROM personal WHERE nivel = 2";
+    const sqlPersonal = "SELECT Id, ApellidoYNombre, idUsuario FROM personal WHERE nivel = 2 AND idUsuario IS NOT NULL";
     const sql = 'SELECT * FROM sectores WHERE Id = ?';
 
     try {
@@ -136,7 +148,8 @@ router.post('/editar', logueado, async (req, res) => {
     const sql = "INSERT INTO sectores (Descripcion, IdSupervisor) VALUES (?, ?)";
 
     try {
-        await pool.query(sql, [Descripcion, Supervisor]);
+        const supervisorId = obtenerIdSupervisorValido(Supervisor);
+        await pool.query(sql, [Descripcion, supervisorId]);
         enviarMensaje(req, res, 'Sector agregado', 'El sector fue agregado correctamente', 'success');
         return res.redirect('/sectores');
     } catch (error) {
@@ -156,7 +169,8 @@ router.post('/editar/:Id', logueado, async (req, res) => {
     const sql = "UPDATE sectores SET Descripcion = ?, IdSupervisor = ? WHERE Id = ?";
 
     try {
-        await pool.query(sql, [Descripcion, Supervisor, Id]);
+        const supervisorId = obtenerIdSupervisorValido(Supervisor);
+        await pool.query(sql, [Descripcion, supervisorId, Id]);
         enviarMensaje(req, res, 'Sector modificado', 'El sector fue editado correctamente', 'success');
     } catch (error) {
         // Handle the error here
@@ -280,7 +294,9 @@ router.post('/importar/ejecutar', logueado, async (req, res) => {
                 values.push(valor);
             }
             if (values[0] && values[0].toString().trim() !== '') {
-                await pool.query('INSERT INTO sectores (Descripcion, IdSupervisor) VALUES (?, ?)', values);
+                const descripcion = values[0].toString().trim();
+                const supervisorId = obtenerIdSupervisorValido(values[1]);
+                await pool.query('INSERT INTO sectores (Descripcion, IdSupervisor) VALUES (?, ?)', [descripcion, supervisorId]);
                 insertados++;
             }
         }

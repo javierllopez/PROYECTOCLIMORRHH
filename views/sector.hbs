@@ -20,7 +20,7 @@
                                 value="{{sector.Descripcion}}">
                             <label for="Supervisor" class="form-label mt-2">Supervisor</label>
                             <select class="form-select" id="Supervisor" name="Supervisor" required>
-                                <option value="" disabled selected>Selecciona el supervisor del sector</option>
+                                <option value="" disabled {{#unless sector.IdSupervisor}}selected{{/unless}}>Seleccioná al supervisor del sector</option>
                                 {{#each personal}}
                                 <option value="{{this.idUsuario}}" {{#ifeq this.idUsuario @root.sector.IdSupervisor}}selected{{/ifeq}}>{{this.ApellidoYNombre}}</option>
                                 {{/each}}
