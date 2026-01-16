@@ -61,5 +61,22 @@
     ajustarTextoPeriodo();
     const sel = document.getElementById('periodoNomina');
     if (sel) sel.addEventListener('change', onPeriodoChange, false);
+    const botonActualizar = document.getElementById('botonActualizarNomina');
+    if (sel && botonActualizar) {
+      botonActualizar.addEventListener('click', function(evt){
+        evt.preventDefault();
+        const idSeleccionado = sel.value;
+        const opcion = sel.options[sel.selectedIndex];
+        const desde = opcion ? opcion.dataset.desde : null;
+        const hasta = opcion ? opcion.dataset.hasta : null;
+        const params = new URLSearchParams();
+        if (idSeleccionado) params.append('idNomina', idSeleccionado);
+        if (desde) params.append('vigenciaDesde', desde);
+        if (hasta) params.append('vigenciaHasta', hasta);
+        const queryString = params.toString();
+        const destino = queryString ? `/nominaValorizada/actualizarNomina?${queryString}` : '/nominaValorizada/actualizarNomina';
+        window.location.href = destino;
+      }, false);
+    }
   });
 })();

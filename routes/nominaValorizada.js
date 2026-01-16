@@ -8,6 +8,19 @@ const { FechaSqlAFechaCorta, FechaASqlFecha, FechaSqlAFecha, /*FechaLocalASqlDat
 const router = express.Router();
 const nivelAceptado = [1]; //Nivel de usuario aceptado para esta ruta
 
+const redondearDosDecimales = (valor) => {
+    const numero = Number(valor);
+    if (!Number.isFinite(numero)) return 0;
+    const ajustado = Math.round(numero * 100) / 100;
+    return Object.is(ajustado, -0) ? 0 : ajustado;
+};
+
+const redondearMultiploDiezArriba = (valor) => {
+    const numero = Number(valor);
+    if (!Number.isFinite(numero) || numero <= 0) return 0;
+    return Math.ceil(numero / 10) * 10;
+};
+
 const nominavaloresr = new Tabla('nominavaloresr', true, false, 'nominaValorizada');
 nominavaloresr.agregarCampo({ campo: 'Id', titulo: 'Id', tipoDato: 'numero', ancho: '10%' });
 nominavaloresr.agregarCampo({ campo: 'IdNomina', titulo: 'IdNomina', tipoDato: 'numero', ancho: '10%', visible: false });
@@ -158,6 +171,187 @@ router.get('/', logueado, async (req, res) => {
     }
 
 
+});
+
+router.get('/actualizarNomina', logueado, async (req, res) => {
+    const { idNomina } = req.query;
+    const idNominaNumero = idNomina ? parseInt(idNomina, 10) : null;
+    let { vigenciaDesde, vigenciaHasta } = req.query;
+
+    const normalizarFecha = (valor) => {
+        if (!valor) return null;
+        const texto = String(valor).trim();
+        if (texto.length === 0) return null;
+        return texto.substring(0, 10);
+    };
+
+    vigenciaDesde = normalizarFecha(vigenciaDesde);
+    vigenciaHasta = normalizarFecha(vigenciaHasta);
+
+    if ((!vigenciaDesde || !vigenciaHasta) && Number.isInteger(idNominaNumero)) {
+        try {
+            const [resultados] = await pool.query('SELECT VigenteDesde, VigenteHasta FROM nominavalorese WHERE Id = ? LIMIT 1', [idNominaNumero]);
+            if (resultados && resultados[0]) {
+                const convertir = (fecha) => {
+                    if (!fecha) return null;
+                    if (typeof fecha === 'string') return fecha.substring(0, 10);
+                    return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
+                };
+                vigenciaDesde = vigenciaDesde || convertir(resultados[0].VigenteDesde);
+                vigenciaHasta = vigenciaHasta || convertir(resultados[0].VigenteHasta);
+            }
+        } catch (err) {
+            console.error('Error obteniendo vigencias de la nómina:', err);
+            enviarMensaje(req, res, 'Nómina valorizada', 'No se pudo recuperar la vigencia seleccionada.', 'danger');
+            return res.redirect('/nominaValorizada');
+        }
+    }
+
+    return render(req, res, 'nominaValorizadaActualizar', { idNomina, vigenciaDesde, vigenciaHasta });
+});
+
+router.post('/actualizarNomina', logueado, async (req, res) => {
+    const { porcentajeActualizacion, idNomina, vigenciaDesde, vigenciaHasta } = req.body;
+    const idNominaValoresE = idNomina ? parseInt(idNomina, 10) : null;
+    const porcentaje = porcentajeActualizacion ? parseFloat(porcentajeActualizacion) : null;
+
+    if (!Number.isInteger(idNominaValoresE)) {
+        enviarMensaje(req, res, 'Nómina valorizada', 'No se recibió un identificador de nómina válido.', 'danger');
+        return res.redirect('/nominaValorizada');
+    }
+
+    if (!Number.isFinite(porcentaje)) {
+        enviarMensaje(req, res, 'Nómina valorizada', 'Ingresá un porcentaje válido para la actualización.', 'danger');
+        return res.redirect(`/nominaValorizada/actualizarNomina?idNomina=${idNominaValoresE}`);
+    }
+
+    const factor = 1 + (porcentaje / 100);
+
+    const vigenciaDesdeStr = typeof vigenciaDesde === 'string' ? vigenciaDesde.trim() : '';
+    const vigenciaHastaStr = typeof vigenciaHasta === 'string' ? vigenciaHasta.trim() : '';
+
+    if (!vigenciaDesdeStr || !vigenciaHastaStr) {
+        enviarMensaje(req, res, 'Nómina valorizada', 'Definí ambas fechas de vigencia para continuar.', 'danger');
+        return res.redirect(`/nominaValorizada/actualizarNomina?idNomina=${idNominaValoresE}`);
+    }
+
+    const vigenciaDesdeDate = FechaHTMLaFecha(vigenciaDesdeStr);
+    const vigenciaHastaDate = FechaHTMLaFecha(vigenciaHastaStr);
+
+    if (!vigenciaDesdeDate || !vigenciaHastaDate) {
+        enviarMensaje(req, res, 'Nómina valorizada', 'Las fechas de vigencia no tienen un formato válido (YYYY-MM-DD).', 'danger');
+        return res.redirect(`/nominaValorizada/actualizarNomina?idNomina=${idNominaValoresE}`);
+    }
+
+    const vigenciaDesdeSQL = vigenciaDesdeStr.substring(0, 10);
+    const vigenciaHastaSQL = vigenciaHastaStr.substring(0, 10);
+
+    const conexion = await pool.getConnection();
+    try {
+        await conexion.beginTransaction();
+
+        const [items] = await conexion.query(`
+            SELECT Id, ValorSueldoBasico, HorasMensuales, ValorGuardiaDiurna, ValorGuardiaNocturna,
+                   ValorGuardiaPasiva, ValorHoraGuardiaDiurna, ValorHoraGuardiaNocturna,
+                   ValorHoraSimple, ValorHora50, ValorHora100, ValorAdicional,
+                   HsGuardiaDiurna, HsGuardiaNocturna
+            FROM nominavaloresr
+            WHERE IdNominaValoresE = ?
+        `, [idNominaValoresE]);
+
+        let actualizados = 0;
+
+        for (const item of items) {
+            const sueldoBasico = Number(item.ValorSueldoBasico) || 0;
+            const horasMensuales = Number(item.HorasMensuales) || 0;
+            const guardiaDiurna = Number(item.ValorGuardiaDiurna) || 0;
+            const guardiaNocturna = Number(item.ValorGuardiaNocturna) || 0;
+            const guardiaPasiva = Number(item.ValorGuardiaPasiva) || 0;
+            const adicional = Number(item.ValorAdicional) || 0;
+            const hsGD = Number(item.HsGuardiaDiurna) || 0;
+            const hsGN = Number(item.HsGuardiaNocturna) || 0;
+
+            const nuevoSueldoBasico = redondearDosDecimales(sueldoBasico * factor);
+            const nuevoValorHoraSimple = nuevoSueldoBasico > 0 && horasMensuales > 0
+                ? redondearDosDecimales(nuevoSueldoBasico / horasMensuales)
+                : 0;
+            const nuevoValorHora50 = redondearDosDecimales(nuevoValorHoraSimple * 1.5);
+            const nuevoValorHora100 = redondearDosDecimales(nuevoValorHoraSimple * 2);
+
+            const nuevoValorGuardiaDiurna = guardiaDiurna > 0
+                ? redondearMultiploDiezArriba(guardiaDiurna * factor)
+                : 0;
+            const nuevoValorGuardiaNocturna = guardiaNocturna > 0
+                ? redondearMultiploDiezArriba(guardiaNocturna * factor)
+                : 0;
+            const nuevoValorGuardiaPasiva = guardiaPasiva > 0
+                ? redondearMultiploDiezArriba(guardiaPasiva * factor)
+                : 0;
+
+            const nuevoValorHoraGuardiaDiurna = nuevoValorGuardiaDiurna > 0 && hsGD > 0
+                ? redondearDosDecimales(nuevoValorGuardiaDiurna / hsGD)
+                : 0;
+            const nuevoValorHoraGuardiaNocturna = nuevoValorGuardiaNocturna > 0 && hsGN > 0
+                ? redondearDosDecimales(nuevoValorGuardiaNocturna / hsGN)
+                : 0;
+
+            const nuevoValorAdicional = redondearDosDecimales(adicional * factor);
+
+            await conexion.query(`
+                UPDATE nominavaloresr
+                SET ValorSueldoBasico = ?,
+                    ValorHoraSimple = ?,
+                    ValorHora50 = ?,
+                    ValorHora100 = ?,
+                    ValorGuardiaDiurna = ?,
+                    ValorHoraGuardiaDiurna = ?,
+                    ValorGuardiaNocturna = ?,
+                    ValorHoraGuardiaNocturna = ?,
+                    ValorGuardiaPasiva = ?,
+                    ValorAdicional = ?,
+                    VigenciaDesde = ?,
+                    VigenciaHasta = ?
+                WHERE Id = ?
+            `, [
+                nuevoSueldoBasico,
+                nuevoValorHoraSimple,
+                nuevoValorHora50,
+                nuevoValorHora100,
+                nuevoValorGuardiaDiurna,
+                nuevoValorHoraGuardiaDiurna,
+                nuevoValorGuardiaNocturna,
+                nuevoValorHoraGuardiaNocturna,
+                nuevoValorGuardiaPasiva,
+                nuevoValorAdicional,
+                vigenciaDesdeSQL,
+                vigenciaHastaSQL,
+                item.Id
+            ]);
+
+            actualizados += 1;
+        }
+
+        await conexion.query(
+            'UPDATE nominavalorese SET VigenteDesde = ?, VigenteHasta = ? WHERE Id = ?',
+            [vigenciaDesdeSQL, vigenciaHastaSQL, idNominaValoresE]
+        );
+
+        await conexion.commit();
+
+        if (actualizados === 0) {
+            enviarMensaje(req, res, 'Nómina valorizada', 'No se encontraron registros para actualizar en el período seleccionado.', 'warning');
+        } else {
+            enviarMensaje(req, res, 'Nómina valorizada', `Se actualizaron ${actualizados} registros de la nómina valorizada.`, 'success');
+        }
+    } catch (err) {
+        await conexion.rollback();
+        console.error('Error aplicando actualización de nómina valorizada:', err);
+        enviarMensaje(req, res, 'Nómina valorizada', err.message, 'danger');
+    } finally {
+        conexion.release();
+    }
+
+    return res.redirect('/nominaValorizada');
 });
 
 // Vista para agregar manualmente un registro faltante
@@ -422,7 +616,6 @@ router.post('/generarNomina', logueado, async (req, res) => {
 
 
         try {
-            console.log('Iniciando transacción');
             await conn.beginTransaction();
             const [nomina] = await conn.query(cadenaNomina);
             const sqlNominaValorese = "INSERT INTO nominavalorese (VigenteDesde, VigenteHasta) VALUES (?, ?)";

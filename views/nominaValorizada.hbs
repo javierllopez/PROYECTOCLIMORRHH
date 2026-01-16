@@ -16,7 +16,10 @@
     </div>
     <div class="col flex-column text-end">
         <div class="btn-group" role="group" aria-label="Acciones nómina">
-            <a type="button" class="btn btn-primary rounded-circle text-end" href="/nomina/generarNomina" title="Generar nueva nómina">
+            <a type="button" class="btn btn-outline-primary rounded-circle text-end" id="botonActualizarNomina" href="/nominaValorizada/actualizarNomina?idNomina={{idNomina}}" title="Actualizar valores por porcentaje">
+                <i class="bi-percent h3"></i>
+            </a>
+            <a type="button" class="btn btn-primary rounded-circle text-end ms-2" href="/nomina/generarNomina" title="Generar nueva nómina">
                 <i class="bi-coin h3"></i>
             </a>
             {{#if hayFaltantes}}
