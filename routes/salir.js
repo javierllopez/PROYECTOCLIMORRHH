@@ -7,6 +7,8 @@ router.get('/', (req, res) => {
     try {
         req.session.usuario = undefined;
         req.session.nivelUsuario = undefined;
+        req.session.idUsuario = undefined;
+        req.session.delegacionActiva = undefined;
         return res.redirect('/login');
     } catch (error) {
         console.error(error);

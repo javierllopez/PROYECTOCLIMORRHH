@@ -2,12 +2,13 @@ module.exports = {
     render(req, res, pagina, parametros) {
 
         if (!req.session.Mensaje) {
-            return res.render(pagina, {
-                pantalla: req.device.type,
-                usuario: req.session.usuario,
-                nivelUsuario: req.session.nivelUsuario,
-                ...parametros
-            });
+                return res.render(pagina, {
+                    pantalla: req.device.type,
+                    usuario: req.session.usuario,
+                    nivelUsuario: req.session.nivelUsuario,
+                    delegacionActiva: req.session.delegacionActiva,
+                    ...parametros
+                });
         }
         else {
             if (req.session.Mensaje.tipo == "Mensaje") {
@@ -15,13 +16,14 @@ module.exports = {
                 let text = req.session.Mensaje.text;
                 let icon = req.session.Mensaje.icon;
                 delete req.session.Mensaje;
-                return res.render(pagina, {
-                    pantalla: req.device.type,
-                    usuario: req.session.usuario,
-                    nivelUsuario: req.session.nivelUsuario,
-                    Mensaje: { title: title, text: text, icon: icon },
-                    ...parametros
-                });
+                    return res.render(pagina, {
+                        pantalla: req.device.type,
+                        usuario: req.session.usuario,
+                        nivelUsuario: req.session.nivelUsuario,
+                        delegacionActiva: req.session.delegacionActiva,
+                        Mensaje: { title: title, text: text, icon: icon },
+                        ...parametros
+                    });
             }
             if (req.session.Mensaje.tipo == "Confirmar") {
                 let title = req.session.Mensaje.title;
@@ -30,13 +32,14 @@ module.exports = {
                 let Ok = req.session.Mensaje.Ok;
                 let Cancel = req.session.Mensaje.Cancel;
                 delete req.session.Mensaje;
-                return res.render(pagina, {
-                    pantalla: req.device.type,
-                    usuario: req.session.usuario,
-                    nivelUsuario: req.session.nivelUsuario,
-                    Confirmar: { title: title, text: text, icon: icon, Ok: Ok, Cancel: Cancel },
-                    ...parametros
-                });
+                    return res.render(pagina, {
+                        pantalla: req.device.type,
+                        usuario: req.session.usuario,
+                        nivelUsuario: req.session.nivelUsuario,
+                        delegacionActiva: req.session.delegacionActiva,
+                        Confirmar: { title: title, text: text, icon: icon, Ok: Ok, Cancel: Cancel },
+                        ...parametros
+                    });
             }
         }
 

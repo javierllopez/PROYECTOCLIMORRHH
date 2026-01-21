@@ -3,6 +3,7 @@ const { render } = require('../Middleware/render');
 const router = require('express').Router();
 const { pool } = require('../conexion'); // Assuming you are using a database connection pool
 const bcrypt = require('bcrypt');
+const { procesarDelegaciones, obtenerDelegacionActivaPara } = require('../lib/delegaciones');
 
 router.get('/', noLogueado, (req, res) => {
     return render(req, res, 'login');
@@ -41,7 +42,28 @@ router.post('/', noLogueado, async (req, res) => {
         await pool.query('UPDATE usuarios SET Intentos = 0, BloqueadoHasta = NULL WHERE usuario = ?', [usuario]);
         req.session.idUsuario = user[0].Id; // Store user id in session
         req.session.usuario = user[0].Usuario; // Store username in session
-        req.session.nivelUsuario = user[0].Nivel; // Store user level in session
+        req.session.nivelUsuario = user[0].Nivel; // provisional hasta procesar delegaciones
+
+        try {
+            await procesarDelegaciones(pool, {
+                ejecutadoPor: user[0].Id,
+                ipOrigen: req.ip,
+                userAgent: req.headers['user-agent'] || null,
+            });
+        } catch (delegacionError) {
+            console.error('Error al procesar delegaciones:', delegacionError.message);
+        }
+
+        const [[usuarioActualizado]] = await pool.query('SELECT Id, Nivel FROM usuarios WHERE Id = ?', [user[0].Id]);
+        if (usuarioActualizado) {
+            req.session.nivelUsuario = usuarioActualizado.Nivel;
+        }
+        try {
+            req.session.delegacionActiva = await obtenerDelegacionActivaPara(pool, user[0].Id);
+        } catch (delegacionActivaErr) {
+            console.error('Error al obtener delegación activa:', delegacionActivaErr.message);
+            req.session.delegacionActiva = null;
+        }
 
         if (usuarioData.primerAcceso) {
             return render(req,res,'cambiarClave', {Id: user[0].Id, UsuarioActual: user[0].Usuario, CorreoElectronico: user[0].CorreoElectronico, primeraVez: true})  // Si es el primer acceso, redirigir a cambiar clave

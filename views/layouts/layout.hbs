@@ -32,6 +32,14 @@
                 {{/ifeq}}
             </div>
             <div class="col-10 justify-content-between">
+                {{#if delegacionActiva}}
+                <div class="alert alert-warning border-warning d-flex align-items-center gap-3" role="alert">
+                    <i class="bi-person-badge-fill fs-4"></i>
+                    <div>
+                        Operás como delegado de <strong>{{delegacionActiva.supervisorNombre}}</strong> desde {{delegacionActiva.fechaDesdeTexto}}{{#if delegacionActiva.fechaHastaTexto}} hasta {{delegacionActiva.fechaHastaTexto}}{{/if}}.
+                    </div>
+                </div>
+                {{/if}}
                 {{{body}}}
             </div>
         </div>
@@ -71,6 +79,14 @@
               </div>
           </nav>
           <main class="d-md-none" style="margin-left:56px;">
+              {{#if delegacionActiva}}
+              <div class="alert alert-warning border-warning d-flex align-items-center gap-3 mt-2" role="alert">
+                  <i class="bi-person-badge-fill fs-4"></i>
+                  <div>
+                      Operás como delegado de <strong>{{delegacionActiva.supervisorNombre}}</strong> desde {{delegacionActiva.fechaDesdeTexto}}{{#if delegacionActiva.fechaHastaTexto}} hasta {{delegacionActiva.fechaHastaTexto}}{{/if}}.
+                  </div>
+              </div>
+              {{/if}}
               {{{body}}}
           </main>
       </div>
@@ -118,6 +134,14 @@
               </div>
           </nav>
           <main class="d-md-none" style="margin-left:56px;">
+              {{#if delegacionActiva}}
+              <div class="alert alert-warning border-warning d-flex align-items-center gap-3 mt-2" role="alert">
+                  <i class="bi-person-badge-fill fs-4"></i>
+                  <div>
+                      Operás como delegado de <strong>{{delegacionActiva.supervisorNombre}}</strong> desde {{delegacionActiva.fechaDesdeTexto}}{{#if delegacionActiva.fechaHastaTexto}} hasta {{delegacionActiva.fechaHastaTexto}}{{/if}}.
+                  </div>
+              </div>
+              {{/if}}
               {{{body}}}
           </main>
       </div>
@@ -156,6 +180,14 @@
               </div>
           </nav>
           <main class="d-md-none" style="margin-left:56px;">
+              {{#if delegacionActiva}}
+              <div class="alert alert-warning border-warning d-flex align-items-center gap-3 mt-2" role="alert">
+                  <i class="bi-person-badge-fill fs-4"></i>
+                  <div>
+                      Operás como delegado de <strong>{{delegacionActiva.supervisorNombre}}</strong> desde {{delegacionActiva.fechaDesdeTexto}}{{#if delegacionActiva.fechaHastaTexto}} hasta {{delegacionActiva.fechaHastaTexto}}{{/if}}.
+                  </div>
+              </div>
+              {{/if}}
               {{{body}}}
           </main>
       </div>

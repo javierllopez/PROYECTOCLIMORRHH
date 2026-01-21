@@ -1,0 +1,42 @@
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h1 class="h4 mb-0">Delegación de derechos</h1>
+        </div>
+        <form action="/delegar" method="POST">
+          <div class="card-body">
+            <p class="text-muted small mb-4">Elegí a quién querés delegar tu rol de supervisor durante el período indicado.</p>
+            <div class="mb-3">
+              <label for="empleado" class="form-label">Empleado delegado</label>
+              <select id="empleado" name="empleado" class="form-select" required>
+                <option value="" disabled selected>Seleccioná un empleado</option>
+                {{#each empleados}}
+                <option value="{{this.IdUsuario}}">{{this.ApellidoYNombre}}</option>
+                {{/each}}
+              </select>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="desde" class="form-label">Fecha de inicio</label>
+                <input type="date" id="desde" name="desde" class="form-control" value="{{fechaDesde}}" required>
+              </div>
+              <div class="col-md-6">
+                <label for="hasta" class="form-label">Fecha de finalización</label>
+                <input type="date" id="hasta" name="hasta" class="form-control">
+              </div>
+            </div>
+            <div class="alert alert-info mt-4 mb-0" role="alert">
+              Esta pantalla sólo define la delegación. El alta efectiva se habilitará en el próximo paso.
+            </div>
+          </div>
+          <div class="card-footer bg-white border-0 px-3 d-flex justify-content-end gap-2">
+            <a href="/" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Guardar delegación</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
